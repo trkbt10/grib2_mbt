@@ -1,0 +1,9 @@
+{
+  "is-main": true,
+  "import": [
+    {
+      "path": "trkbt10/grib2_mbt",
+      "alias": "lib"
+    }
+  ]
+}
