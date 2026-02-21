@@ -1,0 +1,228 @@
+///|
+fn read_fixture(path : String) -> Result[Bytes, String] {
+  try @fs.read_file_to_bytes(path) catch {
+    error => Err("failed to read fixture " + path + ": " + error.to_string())
+  } noraise {
+    bytes => Ok(bytes)
+  }
+}
+
+///|
+fn parse_fixture(path : String) -> Result[@lib.Grib2FileContext, String] {
+  let bytes = match read_fixture(path) {
+    Ok(bytes) => bytes
+    Err(error) => return Err(error)
+  }
+  match @lib.parse_grib2_file(bytes) {
+    Ok(context) => Ok(context)
+    Err(error) =>
+      Err("failed to parse fixture " + path + ": " + error.to_string())
+  }
+}
+
+///|
+fn read_snapshot_lines(path : String) -> Result[Array[String], String] {
+  try @fs.read_file_to_string(path) catch {
+    error => Err("failed to read snapshot " + path + ": " + error.to_string())
+  } noraise {
+    content => {
+      let lines : Array[String] = []
+      for line in content.split("\n") {
+        let text = line.to_string()
+        if text != "" {
+          lines.push(text)
+        }
+      }
+      Ok(lines)
+    }
+  }
+}
+
+///|
+fn compare_with_snapshot(
+  name : String,
+  actual : Array[String],
+  snapshot_path : String,
+) -> Result[Unit, String] {
+  let expected = match read_snapshot_lines(snapshot_path) {
+    Ok(expected) => expected
+    Err(error) => return Err(error)
+  }
+  let min_len = if actual.length() < expected.length() {
+    actual.length()
+  } else {
+    expected.length()
+  }
+  loop 0 {
+    index => {
+      if index == min_len {
+        if actual.length() != expected.length() {
+          return Err(
+            name +
+            ": line count mismatch: actual=" +
+            actual.length().to_string() +
+            ", expected=" +
+            expected.length().to_string(),
+          )
+        }
+        return Ok(())
+      }
+      if actual[index] != expected[index] {
+        return Err(
+          name +
+          ": first mismatch at line " +
+          (index + 1).to_string() +
+          ", actual=\"" +
+          actual[index] +
+          "\", expected=\"" +
+          expected[index] +
+          "\"",
+        )
+      }
+      continue index + 1
+    }
+  }
+}
+
+///|
+fn verify_fixture_against_wgrib2_snapshots(
+  fixture_path : String,
+  snapshot_dir : String,
+) -> Result[Unit, String] {
+  let context = match parse_fixture(fixture_path) {
+    Ok(context) => context
+    Err(error) => return Err(error)
+  }
+  match
+    compare_with_snapshot(
+      fixture_path + " default",
+      @lib.wgrib2_default_lines(context),
+      snapshot_dir + "/default.txt",
+    ) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  match
+    compare_with_snapshot(
+      fixture_path + " s",
+      @lib.wgrib2_s_lines(context),
+      snapshot_dir + "/s.txt",
+    ) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  match
+    compare_with_snapshot(
+      fixture_path + " Sec0",
+      @lib.wgrib2_sec0_lines(context),
+      snapshot_dir + "/Sec0.txt",
+    ) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  match
+    compare_with_snapshot(
+      fixture_path + " Sec3",
+      @lib.wgrib2_sec3_lines(context),
+      snapshot_dir + "/Sec3.txt",
+    ) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  match
+    compare_with_snapshot(
+      fixture_path + " Sec4",
+      @lib.wgrib2_sec4_lines(context),
+      snapshot_dir + "/Sec4.txt",
+    ) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  compare_with_snapshot(
+    fixture_path + " var_lev",
+    @lib.wgrib2_var_lev_lines(context),
+    snapshot_dir + "/var_lev.txt",
+  )
+}
+
+///|
+test "parse JMA GSM fixture and raw roundtrip" {
+  let path = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let bytes = match read_fixture(path) {
+    Ok(bytes) => bytes
+    Err(error) => fail(error)
+  }
+  let context = match parse_fixture(path) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(context.message_count(), content="1")
+  inspect(context.record_count(), content="103")
+  inspect(@lib.rebuild_raw(context) == bytes, content="true")
+}
+
+///|
+test "parse NOAA pgrb2b fixture and raw roundtrip" {
+  let path = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let bytes = match read_fixture(path) {
+    Ok(bytes) => bytes
+    Err(error) => fail(error)
+  }
+  let context = match parse_fixture(path) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(context.message_count(), content="347")
+  inspect(context.record_count(), content="347")
+  inspect(@lib.rebuild_raw(context) == bytes, content="true")
+}
+
+///|
+test "parse NOAA gfswave fixture and raw roundtrip" {
+  let path = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let bytes = match read_fixture(path) {
+    Ok(bytes) => bytes
+    Err(error) => fail(error)
+  }
+  let context = match parse_fixture(path) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(context.message_count(), content="19")
+  inspect(context.record_count(), content="19")
+  inspect(@lib.rebuild_raw(context) == bytes, content="true")
+}
+
+///|
+test "wgrib2 compatibility snapshots: JMA" {
+  match
+    verify_fixture_against_wgrib2_snapshots(
+      "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin",
+      "fixtures/wgrib2_snapshots/jma_gsm",
+    ) {
+    Ok(_) => ()
+    Err(error) => fail(error)
+  }
+}
+
+///|
+test "wgrib2 compatibility snapshots: NOAA pgrb2b" {
+  match
+    verify_fixture_against_wgrib2_snapshots(
+      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2", "fixtures/wgrib2_snapshots/noaa_gfs_pgrb2b_1p00_f000",
+    ) {
+    Ok(_) => ()
+    Err(error) => fail(error)
+  }
+}
+
+///|
+test "wgrib2 compatibility snapshots: NOAA wave" {
+  match
+    verify_fixture_against_wgrib2_snapshots(
+      "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2", "fixtures/wgrib2_snapshots/noaa_gfswave_atlocn_0p16_f000",
+    ) {
+    Ok(_) => ()
+    Err(error) => fail(error)
+  }
+}

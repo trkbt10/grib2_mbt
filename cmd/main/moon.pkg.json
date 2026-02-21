@@ -4,6 +4,14 @@
     {
       "path": "trkbt10/grib2_mbt",
       "alias": "lib"
+    },
+    {
+      "path": "moonbitlang/x/fs",
+      "alias": "fs"
+    },
+    {
+      "path": "moonbitlang/x/sys",
+      "alias": "sys"
     }
   ]
 }
