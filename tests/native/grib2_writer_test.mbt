@@ -99,6 +99,31 @@ test "strict writer detects invariant violations" {
 }
 
 ///|
+test "strict writer rejects malformed typed section4 payload" {
+  let path = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let bytes = match read_fixture_bytes(path) {
+    Ok(bytes) => bytes
+    Err(error) => fail(error)
+  }
+  let parsed = match @lib.parse_grib2_file(bytes) {
+    Ok(context) => context
+    Err(error) => fail(error.to_string())
+  }
+  let section4_num_coord_offset = parsed.messages[0].submessages[0].section4.start +
+    5
+  let mutated_bytes = with_u16_be(bytes, section4_num_coord_offset, 4096)
+  let mutated = match @lib.parse_grib2_file(mutated_bytes) {
+    Ok(context) => context
+    Err(error) => fail(error.to_string())
+  }
+  let rejected = match @lib.rebuild_strict(mutated) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
+}
+
+///|
 test "unknown template id is preserved through parse and rebuild" {
   let path = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let bytes = match read_fixture_bytes(path) {

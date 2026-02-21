@@ -37,6 +37,101 @@ fn writer_has_end_magic(raw : Bytes) -> Bool {
 }
 
 ///|
+fn writer_section_bytes(
+  message : Grib2MessageContext,
+  section : Grib2SectionFrame,
+) -> Bytes {
+  let start = section.start - message.offset
+  let end = start + section.length
+  message.raw.sub(start~, end~).to_bytes()
+}
+
+///|
+fn check_typed_sections_roundtrip(
+  message : Grib2MessageContext,
+  message_index : Int,
+) -> Result[Unit, Grib2WriteError] {
+  let section1_raw = writer_section_bytes(message, message.section1)
+  let section1 = match decode_message_section1(message) {
+    Ok(section1) => section1
+    Err(error) =>
+      return Err(
+        write_error(
+          "message[" +
+          message_index.to_string() +
+          "] section1 typed decode failed: " +
+          error.to_string(),
+        ),
+      )
+  }
+  if encode_section1_bytes(section1) != section1_raw {
+    return Err(
+      write_error(
+        "message[" +
+        message_index.to_string() +
+        "] section1 typed roundtrip mismatch",
+      ),
+    )
+  }
+  for submessage_index in 0..<message.submessages.length() {
+    let submessage = message.submessages[submessage_index]
+    let section3_raw = writer_section_bytes(message, submessage.section3)
+    let section3 = match decode_submessage_section3(message, submessage) {
+      Ok(section3) => section3
+      Err(error) =>
+        return Err(
+          write_error(
+            "message[" +
+            message_index.to_string() +
+            "] submessage[" +
+            submessage_index.to_string() +
+            "] section3 typed decode failed: " +
+            error.to_string(),
+          ),
+        )
+    }
+    if encode_section3_bytes(section3) != section3_raw {
+      return Err(
+        write_error(
+          "message[" +
+          message_index.to_string() +
+          "] submessage[" +
+          submessage_index.to_string() +
+          "] section3 typed roundtrip mismatch",
+        ),
+      )
+    }
+    let section4_raw = writer_section_bytes(message, submessage.section4)
+    let section4 = match decode_submessage_section4(message, submessage) {
+      Ok(section4) => section4
+      Err(error) =>
+        return Err(
+          write_error(
+            "message[" +
+            message_index.to_string() +
+            "] submessage[" +
+            submessage_index.to_string() +
+            "] section4 typed decode failed: " +
+            error.to_string(),
+          ),
+        )
+    }
+    if encode_section4_bytes(section4) != section4_raw {
+      return Err(
+        write_error(
+          "message[" +
+          message_index.to_string() +
+          "] submessage[" +
+          submessage_index.to_string() +
+          "] section4 typed roundtrip mismatch",
+        ),
+      )
+    }
+  }
+  Ok(())
+}
+
+///|
 fn check_message_section(
   message : Grib2MessageContext,
   section : Grib2SectionFrame,
@@ -386,6 +481,10 @@ fn check_message_invariants(
       Ok(_) => ()
       Err(error) => return Err(error)
     }
+  }
+  match check_typed_sections_roundtrip(message, message_index) {
+    Ok(_) => ()
+    Err(error) => return Err(error)
   }
   Ok(())
 }
