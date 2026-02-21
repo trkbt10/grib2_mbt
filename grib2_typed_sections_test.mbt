@@ -1,0 +1,5443 @@
+///|
+test "section1 typed decode and encode roundtrip" {
+  let section1 : Grib2Section1Decoded = {
+    center: 34,
+    subcenter: 0,
+    master_table_version: 2,
+    local_table_version: 1,
+    significance_of_reference_time: 1,
+    reference_year: 2026,
+    reference_month: 2,
+    reference_day: 21,
+    reference_hour: 0,
+    reference_minute: 0,
+    reference_second: 30,
+    production_status: 0,
+    processed_data_type: 1,
+    identification_template: IdTemplate12(24, 2),
+    reserved_octets_22_23: b"\x00\x01",
+    reserved_tail: b"\xaa\xbb",
+  }
+  let encoded = encode_section1_bytes(section1)
+  inspect(encoded.length(), content="28")
+  let decoded = match decode_section1_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  inspect(decoded.reference_year, content="2026")
+  inspect(decoded.reference_second, content="30")
+  inspect(decoded.reserved_octets_22_23 == b"\x00\x01", content="true")
+  inspect(decoded.reserved_tail == b"\xaa\xbb", content="true")
+  let reencoded = encode_section1_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section1 no identification template keeps reserved octets" {
+  let section1 : Grib2Section1Decoded = {
+    center: 7,
+    subcenter: 0,
+    master_table_version: 2,
+    local_table_version: 1,
+    significance_of_reference_time: 1,
+    reference_year: 2026,
+    reference_month: 2,
+    reference_day: 21,
+    reference_hour: 0,
+    reference_minute: 0,
+    reference_second: 0,
+    production_status: 0,
+    processed_data_type: 1,
+    identification_template: IdTemplateNone,
+    reserved_octets_22_23: b"\xfe\xfd",
+    reserved_tail: b"",
+  }
+  let encoded = encode_section1_bytes(section1)
+  inspect(encoded.length(), content="23")
+  let decoded = match decode_section1_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  inspect(decoded.identification_template.to_string(), content="IdTemplateNone")
+  inspect(decoded.reserved_octets_22_23 == b"\xfe\xfd", content="true")
+  let reencoded = encode_section1_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+fn sample_template30_base() -> Grib2GridTemplate30 {
+  {
+    shape_of_earth: 6,
+    scale_factor_radius: 0,
+    scaled_value_radius: 0,
+    scale_factor_major_axis: 0,
+    scaled_value_major_axis: 0,
+    scale_factor_minor_axis: 0,
+    scaled_value_minor_axis: 0,
+    ni: 360,
+    nj: 181,
+    basic_angle: 0,
+    subdivisions_of_basic_angle: 0,
+    la1: -90000000,
+    lo1: 0,
+    resolution_and_component_flags: 48,
+    la2: 90000000,
+    lo2: 359000000,
+    di: 1000000,
+    dj: 1000000,
+    scanning_mode: 0,
+  }
+}
+
+///|
+test "section3 template30 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate30(sample_template30_base()),
+    optional_points_raw: b"",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  inspect(decoded.number_of_data_points, content="65160")
+  match decoded.template {
+    GridTemplate30(template30) => {
+      inspect(template30.ni, content="360")
+      inspect(template30.nj, content="181")
+      inspect(template30.la1, content="-90000000")
+    }
+    _ => fail("template3.0 was not decoded")
+  }
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template31 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 2,
+    optional_points_interpretation: 1,
+    template: GridTemplate31({
+      base: sample_template30_base(),
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+    }),
+    optional_points_raw: b"\x01\x02",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate31(template31) => {
+      inspect(template31.latitude_of_southern_pole, content="-30000000")
+      inspect(template31.longitude_of_southern_pole, content="120000000")
+      inspect(template31.angle_of_rotation, content="1000000")
+    }
+    _ => fail("template3.1 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\x01\x02", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template32 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate32({
+      base: sample_template30_base(),
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate32(template32) => {
+      inspect(template32.latitude_of_stretching_pole, content="45000000")
+      inspect(template32.longitude_of_stretching_pole, content="135000000")
+      inspect(template32.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.2 was not decoded")
+  }
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template33 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate33({
+      base: sample_template30_base(),
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"\xaa",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate33(template33) => {
+      inspect(template33.angle_of_rotation, content="1000000")
+      inspect(template33.latitude_of_stretching_pole, content="45000000")
+      inspect(template33.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.3 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xaa", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template34 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate34({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni: 3,
+      nj: 2,
+      basic_angle: 0,
+      subdivisions_of_basic_angle: 0,
+      resolution_and_component_flags: 0,
+      scanning_mode: 0,
+      longitude_list: [1000000, 2000000, 3000000],
+      latitude_list: [4000000, 5000000],
+    }),
+    optional_points_raw: b"\xff",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate34(template34) => {
+      inspect(template34.ni, content="3")
+      inspect(template34.nj, content="2")
+      inspect(template34.longitude_list.length(), content="3")
+      inspect(template34.latitude_list.length(), content="2")
+    }
+    _ => fail("template3.4 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xff", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template35 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate35({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        ni: 3,
+        nj: 2,
+        basic_angle: 0,
+        subdivisions_of_basic_angle: 0,
+        resolution_and_component_flags: 0,
+        scanning_mode: 0,
+        longitude_list: [1000000, 2000000, 3000000],
+        latitude_list: [4000000, 5000000],
+      },
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+    }),
+    optional_points_raw: b"",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate35(template35) => {
+      inspect(template35.base.longitude_list.length(), content="3")
+      inspect(template35.base.latitude_list.length(), content="2")
+      inspect(template35.angle_of_rotation, content="1000000")
+    }
+    _ => fail("template3.5 was not decoded")
+  }
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template310 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate310({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni: 3,
+      nj: 2,
+      la1: -1000000,
+      lo1: 130000000,
+      resolution_and_component_flags: 0,
+      lad: 0,
+      la2: 1000000,
+      lo2: 131000000,
+      scanning_mode: 0,
+      orientation_of_the_grid: 0,
+      di: 16000,
+      dj: 16000,
+    }),
+    optional_points_raw: b"\xdd",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate310(template310) => {
+      inspect(template310.ni, content="3")
+      inspect(template310.nj, content="2")
+      inspect(template310.lo1, content="130000000")
+      inspect(template310.di, content="16000")
+    }
+    _ => fail("template3.10 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xdd", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template312 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate312({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni: 3,
+      nj: 2,
+      lar: 35000000,
+      lor: 140000000,
+      resolution_and_component_flags: 0,
+      m: 1065353216,
+      xr: 100,
+      yr: 200,
+      scanning_mode: 0,
+      di: 1600,
+      dj: 1600,
+      x1: 1000,
+      y1: 2000,
+      x2: 3000,
+      y2: 4000,
+    }),
+    optional_points_raw: b"\xab",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate312(template312) => {
+      inspect(template312.ni, content="3")
+      inspect(template312.nj, content="2")
+      inspect(template312.lor, content="140000000")
+      inspect(template312.x2, content="3000")
+    }
+    _ => fail("template3.12 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xab", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template313 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate313({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        ni: 3,
+        nj: 2,
+        la1: -1000000,
+        lo1: 130000000,
+        resolution_and_component_flags: 0,
+        lad: 0,
+        la2: 1000000,
+        lo2: 131000000,
+        scanning_mode: 0,
+        orientation_of_the_grid: 0,
+        di: 16000,
+        dj: 16000,
+      },
+      nux: 20,
+      ncx: 2,
+      nuy: 30,
+      ncy: 3,
+    }),
+    optional_points_raw: b"",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate313(template313) => {
+      inspect(template313.base.ni, content="3")
+      inspect(template313.base.nj, content="2")
+      inspect(template313.nux, content="20")
+      inspect(template313.ncy, content="3")
+    }
+    _ => fail("template3.13 was not decoded")
+  }
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template320 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate320({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      nx: 3,
+      ny: 2,
+      la1: 60000000,
+      lo1: 120000000,
+      resolution_and_component_flags: 0,
+      lad: 60000000,
+      lov: 140000000,
+      dx: 10000,
+      dy: 10000,
+      projection_center_flag: 0,
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xac",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate320(template320) => {
+      inspect(template320.nx, content="3")
+      inspect(template320.ny, content="2")
+      inspect(template320.lov, content="140000000")
+      inspect(template320.dx, content="10000")
+    }
+    _ => fail("template3.20 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xac", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template323 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate323({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        nx: 3,
+        ny: 2,
+        la1: 60000000,
+        lo1: 120000000,
+        resolution_and_component_flags: 0,
+        lad: 60000000,
+        lov: 140000000,
+        dx: 10000,
+        dy: 10000,
+        projection_center_flag: 0,
+        scanning_mode: 0,
+      },
+      nux: 200,
+      ncx: 20,
+      nuy: 150,
+      ncy: 15,
+    }),
+    optional_points_raw: b"\xad",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate323(template323) => {
+      inspect(template323.base.nx, content="3")
+      inspect(template323.base.ny, content="2")
+      inspect(template323.nux, content="200")
+      inspect(template323.ncy, content="15")
+    }
+    _ => fail("template3.23 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xad", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template330 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate330({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        nx: 3,
+        ny: 2,
+        la1: 60000000,
+        lo1: 120000000,
+        resolution_and_component_flags: 0,
+        lad: 60000000,
+        lov: 140000000,
+        dx: 10000,
+        dy: 10000,
+        projection_center_flag: 0,
+        scanning_mode: 0,
+      },
+      latin1: 30000000,
+      latin2: 60000000,
+      latitude_of_southern_pole: -90000000,
+      longitude_of_southern_pole: 0,
+    }),
+    optional_points_raw: b"\xae",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate330(template330) => {
+      inspect(template330.base.nx, content="3")
+      inspect(template330.base.ny, content="2")
+      inspect(template330.latin1, content="30000000")
+      inspect(template330.latitude_of_southern_pole, content="-90000000")
+    }
+    _ => fail("template3.30 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xae", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template331 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate331({
+      base: {
+        base: {
+          shape_of_earth: 6,
+          scale_factor_radius: 0,
+          scaled_value_radius: 0,
+          scale_factor_major_axis: 0,
+          scaled_value_major_axis: 0,
+          scale_factor_minor_axis: 0,
+          scaled_value_minor_axis: 0,
+          nx: 3,
+          ny: 2,
+          la1: 60000000,
+          lo1: 120000000,
+          resolution_and_component_flags: 0,
+          lad: 60000000,
+          lov: 140000000,
+          dx: 10000,
+          dy: 10000,
+          projection_center_flag: 0,
+          scanning_mode: 0,
+        },
+        latin1: 25000000,
+        latin2: 55000000,
+        latitude_of_southern_pole: -90000000,
+        longitude_of_southern_pole: 0,
+      },
+    }),
+    optional_points_raw: b"",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate331(template331) => {
+      inspect(template331.base.base.nx, content="3")
+      inspect(template331.base.latin2, content="55000000")
+      inspect(template331.base.longitude_of_southern_pole, content="0")
+    }
+    _ => fail("template3.31 was not decoded")
+  }
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template333 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate333({
+      base: {
+        base: {
+          shape_of_earth: 6,
+          scale_factor_radius: 0,
+          scaled_value_radius: 0,
+          scale_factor_major_axis: 0,
+          scaled_value_major_axis: 0,
+          scale_factor_minor_axis: 0,
+          scaled_value_minor_axis: 0,
+          nx: 3,
+          ny: 2,
+          la1: 60000000,
+          lo1: 120000000,
+          resolution_and_component_flags: 0,
+          lad: 60000000,
+          lov: 140000000,
+          dx: 10000,
+          dy: 10000,
+          projection_center_flag: 0,
+          scanning_mode: 0,
+        },
+        latin1: 30000000,
+        latin2: 60000000,
+        latitude_of_southern_pole: -90000000,
+        longitude_of_southern_pole: 0,
+      },
+      nux: 200,
+      ncx: 20,
+      nuy: 150,
+      ncy: 15,
+    }),
+    optional_points_raw: b"\xaf",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate333(template333) => {
+      inspect(template333.base.base.nx, content="3")
+      inspect(template333.base.latin1, content="30000000")
+      inspect(template333.nux, content="200")
+      inspect(template333.ncy, content="15")
+    }
+    _ => fail("template3.33 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xaf", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template340 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate340({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni: 360,
+      nj: 181,
+      basic_angle: 0,
+      subdivisions_of_basic_angle: 0,
+      la1: -90000000,
+      lo1: 0,
+      resolution_and_component_flags: 48,
+      la2: 90000000,
+      lo2: 359000000,
+      di: 1000000,
+      n: 90,
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xb0",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate340(template340) => {
+      inspect(template340.ni, content="360")
+      inspect(template340.nj, content="181")
+      inspect(template340.di, content="1000000")
+      inspect(template340.n, content="90")
+    }
+    _ => fail("template3.40 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb0", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template341 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate341({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        ni: 360,
+        nj: 181,
+        basic_angle: 0,
+        subdivisions_of_basic_angle: 0,
+        la1: -90000000,
+        lo1: 0,
+        resolution_and_component_flags: 48,
+        la2: 90000000,
+        lo2: 359000000,
+        di: 1000000,
+        n: 90,
+        scanning_mode: 0,
+      },
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+    }),
+    optional_points_raw: b"\xb1",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate341(template341) => {
+      inspect(template341.base.ni, content="360")
+      inspect(template341.latitude_of_southern_pole, content="-30000000")
+      inspect(template341.angle_of_rotation, content="1000000")
+    }
+    _ => fail("template3.41 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb1", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template342 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate342({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        ni: 360,
+        nj: 181,
+        basic_angle: 0,
+        subdivisions_of_basic_angle: 0,
+        la1: -90000000,
+        lo1: 0,
+        resolution_and_component_flags: 48,
+        la2: 90000000,
+        lo2: 359000000,
+        di: 1000000,
+        n: 90,
+        scanning_mode: 0,
+      },
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"\xb2",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate342(template342) => {
+      inspect(template342.base.nj, content="181")
+      inspect(template342.latitude_of_stretching_pole, content="45000000")
+      inspect(template342.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.42 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb2", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template343 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 6,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate343({
+      base: {
+        shape_of_earth: 6,
+        scale_factor_radius: 0,
+        scaled_value_radius: 0,
+        scale_factor_major_axis: 0,
+        scaled_value_major_axis: 0,
+        scale_factor_minor_axis: 0,
+        scaled_value_minor_axis: 0,
+        ni: 360,
+        nj: 181,
+        basic_angle: 0,
+        subdivisions_of_basic_angle: 0,
+        la1: -90000000,
+        lo1: 0,
+        resolution_and_component_flags: 48,
+        la2: 90000000,
+        lo2: 359000000,
+        di: 1000000,
+        n: 90,
+        scanning_mode: 0,
+      },
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"\xb3",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate343(template343) => {
+      inspect(template343.base.di, content="1000000")
+      inspect(template343.longitude_of_southern_pole, content="120000000")
+      inspect(template343.longitude_of_stretching_pole, content="135000000")
+      inspect(template343.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.43 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb3", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template350 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate350({
+      j: 799,
+      k: 799,
+      m: 0,
+      representation_type: 1,
+      representation_mode: 2,
+    }),
+    optional_points_raw: b"\xb4",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate350(template350) => {
+      inspect(template350.j, content="799")
+      inspect(template350.k, content="799")
+      inspect(template350.representation_mode, content="2")
+    }
+    _ => fail("template3.50 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb4", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template351 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate351({
+      base: {
+        j: 799,
+        k: 799,
+        m: 0,
+        representation_type: 1,
+        representation_mode: 2,
+      },
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+    }),
+    optional_points_raw: b"\xb5",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate351(template351) => {
+      inspect(template351.base.j, content="799")
+      inspect(template351.latitude_of_southern_pole, content="-30000000")
+      inspect(template351.angle_of_rotation, content="1000000")
+    }
+    _ => fail("template3.51 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb5", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template352 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate352({
+      base: {
+        j: 799,
+        k: 799,
+        m: 0,
+        representation_type: 1,
+        representation_mode: 2,
+      },
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"\xb6",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate352(template352) => {
+      inspect(template352.base.k, content="799")
+      inspect(template352.latitude_of_stretching_pole, content="45000000")
+      inspect(template352.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.52 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb6", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template353 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate353({
+      base: {
+        j: 799,
+        k: 799,
+        m: 0,
+        representation_type: 1,
+        representation_mode: 2,
+      },
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+      latitude_of_stretching_pole: 45000000,
+      longitude_of_stretching_pole: 135000000,
+      stretching_factor: 1500000,
+    }),
+    optional_points_raw: b"\xb7",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate353(template353) => {
+      inspect(template353.base.m, content="0")
+      inspect(template353.longitude_of_southern_pole, content="120000000")
+      inspect(template353.longitude_of_stretching_pole, content="135000000")
+      inspect(template353.stretching_factor, content="1500000")
+    }
+    _ => fail("template3.53 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb7", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template360 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 16,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate360({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      nx: 4,
+      ny: 4,
+      nc: 3,
+      xshift: 0,
+      yshift: 1,
+      face_number: 2,
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+      angle_of_rotation: 1000000,
+      stretching_factor: 1000000,
+      gnomonic_grid_spacing_parameter: 500000,
+      resolution_and_component_flags: 48,
+      scanning_and_staggering_flags: 0,
+    }),
+    optional_points_raw: b"\xb8",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate360(template360) => {
+      inspect(template360.nx, content="4")
+      inspect(template360.nc, content="3")
+      inspect(template360.face_number, content="2")
+      inspect(template360.gnomonic_grid_spacing_parameter, content="500000")
+    }
+    _ => fail("template3.60 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb8", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template361 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate361({
+      spectral_representation_type: 1,
+      n: 128,
+      m: 64,
+      bi_fourier_truncation_type: 2,
+      lx: { high: 0, low: 1000000 },
+      lux: { high: 0, low: 800000 },
+      lcx: { high: 0, low: 10000 },
+      ly: { high: 0, low: 900000 },
+      luy: { high: 0, low: 700000 },
+      lcy: { high: 0, low: 10000 },
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      la1: -1000000,
+      lo1: 130000000,
+      lad: 0,
+      la2: 1000000,
+      lo2: 131000000,
+      orientation_of_the_grid: 0,
+    }),
+    optional_points_raw: b"\xb9",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate361(template361) => {
+      inspect(template361.n, content="128")
+      inspect(template361.lx.low, content="1000000")
+      inspect(template361.luy.low, content="700000")
+      inspect(template361.orientation_of_the_grid, content="0")
+    }
+    _ => fail("template3.61 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xb9", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template362 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate362({
+      spectral_representation_type: 1,
+      n: 128,
+      m: 64,
+      bi_fourier_truncation_type: 2,
+      lx: { high: 0, low: 1000000 },
+      lux: { high: 0, low: 800000 },
+      lcx: { high: 0, low: 10000 },
+      ly: { high: 0, low: 900000 },
+      luy: { high: 0, low: 700000 },
+      lcy: { high: 0, low: 10000 },
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      la1: -1000000,
+      lo1: 130000000,
+      resolution_and_component_flags: 48,
+      lad: 60000000,
+      lov: 140000000,
+      projection_center_flag: 0,
+    }),
+    optional_points_raw: b"\xba",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate362(template362) => {
+      inspect(template362.m, content="64")
+      inspect(template362.lcx.low, content="10000")
+      inspect(template362.lov, content="140000000")
+      inspect(template362.projection_center_flag, content="0")
+    }
+    _ => fail("template3.62 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xba", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template363 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate363({
+      spectral_representation_type: 1,
+      n: 128,
+      m: 64,
+      bi_fourier_truncation_type: 2,
+      lx: { high: 0, low: 1000000 },
+      lux: { high: 0, low: 800000 },
+      lcx: { high: 0, low: 10000 },
+      ly: { high: 0, low: 900000 },
+      luy: { high: 0, low: 700000 },
+      lcy: { high: 0, low: 10000 },
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      la1: -1000000,
+      lo1: 130000000,
+      lad: 60000000,
+      lov: 140000000,
+      projection_center_flag: 0,
+      latin1: 30000000,
+      latin2: 60000000,
+      latitude_of_southern_pole: -30000000,
+      longitude_of_southern_pole: 120000000,
+    }),
+    optional_points_raw: b"\xbb",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate363(template363) => {
+      inspect(template363.n, content="128")
+      inspect(template363.lx.low, content="1000000")
+      inspect(template363.latin2, content="60000000")
+      inspect(template363.longitude_of_southern_pole, content="120000000")
+    }
+    _ => fail("template3.63 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xbb", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template390 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 16,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate390({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      nx: 4,
+      ny: 4,
+      latitude_of_sub_satellite_point: 0,
+      longitude_of_sub_satellite_point: 140000000,
+      resolution_and_component_flags: 48,
+      dx: 1000,
+      dy: 1000,
+      xp: 2000,
+      yp: 1500,
+      scanning_mode: 0,
+      orientation_of_the_grid: 0,
+      nr: 42164000,
+      xo: 0,
+      yo: 0,
+    }),
+    optional_points_raw: b"\xbc",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate390(template390) => {
+      inspect(template390.nx, content="4")
+      inspect(template390.ny, content="4")
+      inspect(template390.longitude_of_sub_satellite_point, content="140000000")
+      inspect(template390.nr, content="42164000")
+    }
+    _ => fail("template3.90 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xbc", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3100 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 10,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3100({
+      n2: 4,
+      n3: 1,
+      ni: 48,
+      nd: 10,
+      latitude_of_the_pole_point: 90000000,
+      longitude_of_the_pole_point: 0,
+      longitude_of_the_centre_line_of_first_diamond: 180000000,
+      grid_point_position: 1,
+      numbering_order_of_diamonds: 0,
+      scanning_mode_for_one_diamond: 0,
+      nt: 1000,
+    }),
+    optional_points_raw: b"\xbd",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3100(template3100) => {
+      inspect(template3100.n2, content="4")
+      inspect(template3100.ni, content="48")
+      inspect(template3100.nd, content="10")
+      inspect(template3100.nt, content="1000")
+    }
+    _ => fail("template3.100 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xbd", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3101 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 10,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3101({
+      shape_of_earth: 6,
+      number_of_grid_used: 42,
+      number_of_grid_in_reference: 1,
+      uuid_of_horizontal_grid: b"\x00\x11\x22\x33\x44\x55\x66\x77\x88\x99\xaa\xbb\xcc\xdd\xee\xff",
+    }),
+    optional_points_raw: b"\xbe",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3101(template3101) => {
+      inspect(template3101.shape_of_earth, content="6")
+      inspect(template3101.number_of_grid_used, content="42")
+      inspect(template3101.number_of_grid_in_reference, content="1")
+      inspect(template3101.uuid_of_horizontal_grid.length(), content="16")
+    }
+    _ => fail("template3.101 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xbe", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3110 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 16,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3110({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      nx: 4,
+      ny: 4,
+      latitude_of_tangency_point: 0,
+      longitude_of_tangency_point: 140000000,
+      resolution_and_component_flags: 48,
+      dx: 1000,
+      dy: 1000,
+      projection_center_flag: 0,
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xbf",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3110(template3110) => {
+      inspect(template3110.nx, content="4")
+      inspect(template3110.ny, content="4")
+      inspect(template3110.longitude_of_tangency_point, content="140000000")
+      inspect(template3110.dx, content="1000")
+    }
+    _ => fail("template3.110 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xbf", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3120 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 12,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3120({
+      nb: 4,
+      nr: 3,
+      la1: 35000000,
+      lo1: 139000000,
+      dx: 1000,
+      dstart: 500,
+      scanning_mode: 0,
+      radials: [
+        { starting_azimuth: 0, azimuthal_width: 100 },
+        { starting_azimuth: 1200, azimuthal_width: 100 },
+        { starting_azimuth: 2400, azimuthal_width: 100 },
+      ],
+    }),
+    optional_points_raw: b"\xc0",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3120(template3120) => {
+      inspect(template3120.nb, content="4")
+      inspect(template3120.nr, content="3")
+      inspect(template3120.radials.length(), content="3")
+      inspect(template3120.radials[2].starting_azimuth, content="2400")
+    }
+    _ => fail("template3.120 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc0", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3140 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 16,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3140({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      nx: 4,
+      ny: 4,
+      la1: 35000000,
+      lo1: 139000000,
+      standard_parallel: 30000000,
+      central_longitude: 140000000,
+      resolution_and_component_flags: 48,
+      dx: 1000,
+      dy: 1000,
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xc1",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3140(template3140) => {
+      inspect(template3140.nx, content="4")
+      inspect(template3140.ny, content="4")
+      inspect(template3140.standard_parallel, content="30000000")
+      inspect(template3140.central_longitude, content="140000000")
+    }
+    _ => fail("template3.140 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc1", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3150 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 48,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3150({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      resolution_and_component_flags: 48,
+      nsides: 16,
+      lo: 180000000,
+      grid_point_position: 1,
+      numbering_order: 0,
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xc2",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3150(template3150) => {
+      inspect(template3150.shape_of_earth, content="6")
+      inspect(template3150.nsides, content="16")
+      inspect(template3150.lo, content="180000000")
+      inspect(template3150.grid_point_position, content="1")
+    }
+    _ => fail("template3.150 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc2", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template3204 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 12,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate3204({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni: 4,
+      nj: 3,
+      reserved_octets_39_54: b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+      resolution_and_component_flags: 48,
+      reserved_octets_56_71: b"\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01\x01",
+      scanning_mode: 0,
+    }),
+    optional_points_raw: b"\xc3",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate3204(template3204) => {
+      inspect(template3204.ni, content="4")
+      inspect(template3204.nj, content="3")
+      inspect(template3204.resolution_and_component_flags, content="48")
+      inspect(template3204.reserved_octets_56_71.length(), content="16")
+    }
+    _ => fail("template3.204 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc3", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template31000 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 24,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate31000({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      number_of_horizontal_points: 8,
+      basic_angle: 0,
+      subdivisions_of_basic_angle: 0,
+      la1: 35000000,
+      lo1: 139000000,
+      scanning_mode: 0,
+      la2: 36000000,
+      lo2: 140000000,
+      type_of_horizontal_line: 0,
+      number_of_vertical_points: 3,
+      physical_meaning_of_vertical_coordinate: 100,
+      vertical_dimension_coordinate_values_definition: 1,
+      nc: 2,
+      vertical_coordinate_values_raw: b"\x3f\x80\x00\x00\x40\x00\x00\x00",
+    }),
+    optional_points_raw: b"\xc4",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate31000(template31000) => {
+      inspect(template31000.number_of_horizontal_points, content="8")
+      inspect(template31000.number_of_vertical_points, content="3")
+      inspect(template31000.nc, content="2")
+      inspect(
+        template31000.vertical_coordinate_values_raw.length(),
+        content="8",
+      )
+    }
+    _ => fail("template3.1000 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc4", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template31100 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 16,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate31100({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      number_of_horizontal_points: 4,
+      basic_angle: 0,
+      subdivisions_of_basic_angle: 0,
+      la1: 35000000,
+      lo1: 139000000,
+      scanning_mode: 0,
+      la2: 36000000,
+      lo2: 140000000,
+      type_of_horizontal_line: 0,
+      nt: 12,
+      unit_of_offset_from_reference_time: 1,
+      offset_from_reference_of_first_time: 0,
+      type_of_time_increment: 2,
+      unit_of_time_increment: 1,
+      time_increment: 3,
+      last_year: 2026,
+      last_month: 2,
+      last_day: 21,
+      last_hour: 9,
+      last_minute: 30,
+      last_second: 0,
+    }),
+    optional_points_raw: b"\xc5",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate31100(template31100) => {
+      inspect(template31100.nt, content="12")
+      inspect(template31100.unit_of_time_increment, content="1")
+      inspect(template31100.time_increment, content="3")
+      inspect(template31100.last_year, content="2026")
+    }
+    _ => fail("template3.1100 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc5", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template31200 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 8,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate31200({
+      nt: 8,
+      unit_of_offset_from_reference_time: 1,
+      offset_from_reference_of_first_time: 0,
+      type_of_time_increment: 2,
+      unit_of_time_increment: 1,
+      time_increment: 3,
+      last_year: 2026,
+      last_month: 2,
+      last_day: 21,
+      last_hour: 9,
+      last_minute: 0,
+      last_second: 0,
+      number_of_vertical_points: 2,
+      physical_meaning_of_vertical_coordinate: 100,
+      vertical_dimension_coordinate_values_definition: 1,
+      nc: 2,
+      vertical_coordinate_values_raw: b"\x3f\x80\x00\x00\x40\x00\x00\x00",
+    }),
+    optional_points_raw: b"\xc6",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate31200(template31200) => {
+      inspect(template31200.nt, content="8")
+      inspect(template31200.number_of_vertical_points, content="2")
+      inspect(template31200.nc, content="2")
+      inspect(
+        template31200.vertical_coordinate_values_raw.length(),
+        content="8",
+      )
+    }
+    _ => fail("template3.1200 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc6", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template332768 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate332768({ base: sample_template30_base() }),
+    optional_points_raw: b"\xc7",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate332768(template332768) => {
+      inspect(template332768.base.ni, content="360")
+      inspect(template332768.base.nj, content="181")
+      inspect(template332768.base.scanning_mode, content="0")
+    }
+    _ => fail("template3.32768 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc7", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section3 template332769 typed decode and encode roundtrip" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 65160,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate332769({
+      base: sample_template30_base(),
+      latitude_of_grid_point_ni_nj: 35000000,
+      longitude_of_grid_point_ni_nj: 139000000,
+    }),
+    optional_points_raw: b"\xc8",
+  }
+  let encoded = encode_section3_bytes(section3)
+  let decoded = match decode_section3_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    GridTemplate332769(template332769) => {
+      inspect(template332769.base.ni, content="360")
+      inspect(template332769.latitude_of_grid_point_ni_nj, content="35000000")
+      inspect(template332769.longitude_of_grid_point_ni_nj, content="139000000")
+    }
+    _ => fail("template3.32769 was not decoded")
+  }
+  inspect(decoded.optional_points_raw == b"\xc8", content="true")
+  let reencoded = encode_section3_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+fn sample_template40_base() -> Grib2ProductTemplate40 {
+  {
+    parameter_category: 0,
+    parameter_number: 0,
+    type_of_generating_process: 2,
+    background_process_identifier: 0,
+    generating_process_identifier: 96,
+    hours_of_observational_data_cutoff: 0,
+    minutes_of_observational_data_cutoff: 0,
+    time_range_unit: 1,
+    forecast_time: 6,
+    type_of_first_fixed_surface: 100,
+    scale_factor_of_first_fixed_surface: 0,
+    scaled_value_of_first_fixed_surface: 50000,
+    type_of_second_fixed_surface: 255,
+    scale_factor_of_second_fixed_surface: 0,
+    scaled_value_of_second_fixed_surface: 0,
+  }
+}
+
+///|
+fn sample_time_range_specs() -> Array[Grib2TimeRangeSpec] {
+  [
+    {
+      statistical_process: 1,
+      type_of_time_increment: 2,
+      time_range_unit: 1,
+      time_range_length: 6,
+      time_increment_unit: 1,
+      time_increment_length: 3,
+    },
+    {
+      statistical_process: 3,
+      type_of_time_increment: 4,
+      time_range_unit: 1,
+      time_range_length: 12,
+      time_increment_unit: 1,
+      time_increment_length: 6,
+    },
+  ]
+}
+
+///|
+test "section4 template40 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 2,
+    template: ProductTemplate40(sample_template40_base()),
+    coordinate_values_raw: b"\x3f\x80\x00\x00\x40\x00\x00\x00",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  inspect(decoded.number_of_coordinate_values, content="2")
+  inspect(
+    decoded.coordinate_values_raw == b"\x3f\x80\x00\x00\x40\x00\x00\x00",
+    content="true",
+  )
+  match decoded.template {
+    ProductTemplate40(template40) => {
+      inspect(template40.parameter_number, content="0")
+      inspect(template40.forecast_time, content="6")
+      inspect(template40.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.0 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template41 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate41({
+      base: sample_template40_base(),
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate41(template41) => {
+      inspect(template41.type_of_ensemble_forecast, content="2")
+      inspect(template41.perturbation_number, content="3")
+      inspect(template41.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.1 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template42 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate42({
+      base: sample_template40_base(),
+      derived_forecast: 5,
+      number_of_forecasts_in_ensemble: 50,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate42(template42) => {
+      inspect(template42.derived_forecast, content="5")
+      inspect(template42.number_of_forecasts_in_ensemble, content="50")
+    }
+    _ => fail("template4.2 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template43 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate43({
+      base: sample_template40_base(),
+      derived_forecast: 5,
+      number_of_forecasts_in_ensemble: 50,
+      cluster_identifier: 1,
+      cluster_for_high_resolution_control: 2,
+      cluster_for_low_resolution_control: 3,
+      total_number_of_clusters: 4,
+      clustering_method: 1,
+      northern_latitude_of_cluster_domain: 50000000,
+      southern_latitude_of_cluster_domain: 30000000,
+      eastern_longitude_of_cluster_domain: 140000000,
+      western_longitude_of_cluster_domain: 120000000,
+      number_of_forecasts_in_cluster: 3,
+      scale_factor_of_standard_deviation: 0,
+      scaled_value_of_standard_deviation: 1234,
+      scale_factor_of_distance_from_ensemble_mean: 0,
+      scaled_value_of_distance_from_ensemble_mean: 5678,
+      ensemble_forecast_numbers: [1, 2, 3],
+      reserved_tail: b"\xaa",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate43(template43) => {
+      inspect(template43.number_of_forecasts_in_cluster, content="3")
+      inspect(template43.ensemble_forecast_numbers.length(), content="3")
+      inspect(template43.reserved_tail == b"\xaa", content="true")
+    }
+    _ => fail("template4.3 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template44 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate44({
+      base: sample_template40_base(),
+      derived_forecast: 5,
+      number_of_forecasts_in_ensemble: 50,
+      cluster_identifier: 1,
+      cluster_for_high_resolution_control: 2,
+      cluster_for_low_resolution_control: 3,
+      total_number_of_clusters: 4,
+      clustering_method: 1,
+      latitude_of_central_point: 40000000,
+      longitude_of_central_point: 130000000,
+      radius_of_cluster_domain: 1000000,
+      number_of_forecasts_in_cluster: 2,
+      scale_factor_of_standard_deviation: 0,
+      scaled_value_of_standard_deviation: 4321,
+      scale_factor_of_distance_from_ensemble_mean: 0,
+      scaled_value_of_distance_from_ensemble_mean: 8765,
+      ensemble_forecast_numbers: [4, 5],
+      reserved_tail: b"\xbb",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate44(template44) => {
+      inspect(template44.number_of_forecasts_in_cluster, content="2")
+      inspect(template44.ensemble_forecast_numbers.length(), content="2")
+      inspect(template44.reserved_tail == b"\xbb", content="true")
+    }
+    _ => fail("template4.4 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template45 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate45({
+      base: sample_template40_base(),
+      forecast_probability_number: 2,
+      total_number_of_forecast_probabilities: 10,
+      probability_type: 1,
+      scale_factor_of_lower_limit: 0,
+      scaled_value_of_lower_limit: 100,
+      scale_factor_of_upper_limit: 0,
+      scaled_value_of_upper_limit: 200,
+      reserved_tail: b"\xcc",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate45(template45) => {
+      inspect(template45.forecast_probability_number, content="2")
+      inspect(template45.scaled_value_of_upper_limit, content="200")
+      inspect(template45.reserved_tail == b"\xcc", content="true")
+    }
+    _ => fail("template4.5 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template46 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate46({
+      base: sample_template40_base(),
+      percentile_value: 90,
+      reserved_tail: b"\xee",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate46(template46) => {
+      inspect(template46.percentile_value, content="90")
+      inspect(template46.reserved_tail == b"\xee", content="true")
+    }
+    _ => fail("template4.6 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template47 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate47({
+      base: sample_template40_base(),
+      reserved_tail: b"\xef",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate47(template47) => {
+      inspect(template47.base.forecast_time, content="6")
+      inspect(template47.reserved_tail == b"\xef", content="true")
+    }
+    _ => fail("template4.7 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template48 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate48({
+      base: sample_template40_base(),
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 0,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xfa",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate48(template48) => {
+      inspect(template48.end_year, content="2026")
+      inspect(template48.number_of_time_ranges, content="2")
+      inspect(template48.time_range_specs.length(), content="2")
+      inspect(template48.reserved_tail == b"\xfa", content="true")
+    }
+    _ => fail("template4.8 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template49 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate49({
+      base: {
+        base: sample_template40_base(),
+        forecast_probability_number: 2,
+        total_number_of_forecast_probabilities: 10,
+        probability_type: 1,
+        scale_factor_of_lower_limit: 0,
+        scaled_value_of_lower_limit: 100,
+        scale_factor_of_upper_limit: 0,
+        scaled_value_of_upper_limit: 200,
+        reserved_tail: b"",
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xfb",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate49(template49) => {
+      inspect(template49.base.probability_type, content="1")
+      inspect(template49.end_year, content="2026")
+      inspect(template49.number_of_time_ranges, content="2")
+      inspect(template49.time_range_specs.length(), content="2")
+      inspect(template49.reserved_tail == b"\xfb", content="true")
+    }
+    _ => fail("template4.9 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template410 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate410({
+      base: {
+        base: sample_template40_base(),
+        percentile_value: 90,
+        reserved_tail: b"",
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 0,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xfc",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate410(template410) => {
+      inspect(template410.base.percentile_value, content="90")
+      inspect(template410.number_of_time_ranges, content="2")
+      inspect(template410.time_range_specs.length(), content="2")
+      inspect(template410.reserved_tail == b"\xfc", content="true")
+    }
+    _ => fail("template4.10 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template411 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate411({
+      base: {
+        base: sample_template40_base(),
+        type_of_ensemble_forecast: 2,
+        perturbation_number: 3,
+        number_of_forecasts_in_ensemble: 20,
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xfd",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate411(template411) => {
+      inspect(template411.base.type_of_ensemble_forecast, content="2")
+      inspect(template411.number_of_time_ranges, content="2")
+      inspect(template411.time_range_specs.length(), content="2")
+      inspect(template411.reserved_tail == b"\xfd", content="true")
+    }
+    _ => fail("template4.11 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template412 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate412({
+      base: {
+        base: sample_template40_base(),
+        derived_forecast: 5,
+        number_of_forecasts_in_ensemble: 50,
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xfe",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate412(template412) => {
+      inspect(template412.base.derived_forecast, content="5")
+      inspect(template412.number_of_time_ranges, content="2")
+      inspect(template412.time_range_specs.length(), content="2")
+      inspect(template412.reserved_tail == b"\xfe", content="true")
+    }
+    _ => fail("template4.12 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template413 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate413({
+      base: sample_template40_base(),
+      derived_forecast: 5,
+      number_of_forecasts_in_ensemble: 50,
+      cluster_identifier: 1,
+      cluster_for_high_resolution_control: 2,
+      cluster_for_low_resolution_control: 3,
+      total_number_of_clusters: 4,
+      clustering_method: 1,
+      northern_latitude_of_cluster_domain: 50000000,
+      southern_latitude_of_cluster_domain: 30000000,
+      eastern_longitude_of_cluster_domain: 140000000,
+      western_longitude_of_cluster_domain: 120000000,
+      number_of_forecasts_in_cluster: 3,
+      scale_factor_of_standard_deviation: 0,
+      scaled_value_of_standard_deviation: 1234,
+      scale_factor_of_distance_from_ensemble_mean: 0,
+      scaled_value_of_distance_from_ensemble_mean: 5678,
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      ensemble_forecast_numbers: [1, 2, 3],
+      reserved_tail: b"\xde",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate413(template413) => {
+      inspect(template413.number_of_forecasts_in_cluster, content="3")
+      inspect(template413.number_of_time_ranges, content="2")
+      inspect(template413.time_range_specs.length(), content="2")
+      inspect(template413.ensemble_forecast_numbers.length(), content="3")
+      inspect(template413.reserved_tail == b"\xde", content="true")
+    }
+    _ => fail("template4.13 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template414 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate414({
+      base: sample_template40_base(),
+      derived_forecast: 5,
+      number_of_forecasts_in_ensemble: 50,
+      cluster_identifier: 1,
+      cluster_for_high_resolution_control: 2,
+      cluster_for_low_resolution_control: 3,
+      total_number_of_clusters: 4,
+      clustering_method: 1,
+      latitude_of_central_point: 40000000,
+      longitude_of_central_point: 130000000,
+      radius_of_cluster_domain: 1000000,
+      number_of_forecasts_in_cluster: 3,
+      scale_factor_of_standard_deviation: 0,
+      scaled_value_of_standard_deviation: 1234,
+      scale_factor_of_distance_from_ensemble_mean: 0,
+      scaled_value_of_distance_from_ensemble_mean: 5678,
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 6,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      ensemble_forecast_numbers: [1, 2, 3],
+      reserved_tail: b"\xdf",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate414(template414) => {
+      inspect(template414.radius_of_cluster_domain, content="1000000")
+      inspect(template414.number_of_time_ranges, content="2")
+      inspect(template414.time_range_specs.length(), content="2")
+      inspect(template414.ensemble_forecast_numbers.length(), content="3")
+      inspect(template414.reserved_tail == b"\xdf", content="true")
+    }
+    _ => fail("template4.14 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template415 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate415({
+      base: sample_template40_base(),
+      statistical_process_within_spatial_area: 1,
+      type_of_spatial_processing: 2,
+      number_of_data_points_used: 9,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate415(template415) => {
+      inspect(template415.statistical_process_within_spatial_area, content="1")
+      inspect(template415.type_of_spatial_processing, content="2")
+      inspect(template415.number_of_data_points_used, content="9")
+    }
+    _ => fail("template4.15 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template420 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate420({
+      parameter_category: 15,
+      parameter_number: 2,
+      type_of_generating_process: 4,
+      number_of_radar_sites_used: 1,
+      indicator_of_unit_time_range: 1,
+      site_latitude: 35000000,
+      site_longitude: 139000000,
+      site_elevation: 50,
+      site_identifier_alphanumeric: 0x4b544c58,
+      site_identifier_numeric: 12,
+      operating_mode: 1,
+      reflectivity_calibration_constant: 25,
+      quality_control_indicator: 1,
+      clutter_filter_indicator: 2,
+      constant_antenna_elevation_angle: 5,
+      accumulation_interval: 10,
+      reference_reflectivity: 20,
+      range_bin_spacing: 1000,
+      radial_angular_spacing: 10,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate420(template420) => {
+      inspect(template420.number_of_radar_sites_used, content="1")
+      inspect(template420.site_latitude, content="35000000")
+      inspect(template420.site_identifier_alphanumeric, content="1263815768")
+      inspect(template420.range_bin_spacing, content="1000")
+    }
+    _ => fail("template4.20 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template430 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate430({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 4,
+      observation_generating_process_identifier: 7,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 5,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 6,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      reserved_tail: b"\xa0",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate430(template430) => {
+      inspect(template430.number_of_contributing_spectral_bands, content="2")
+      inspect(template430.bands.length(), content="2")
+      inspect(
+        template430.bands[1].scaled_value_of_central_wave_number,
+        content="654321",
+      )
+      inspect(template430.reserved_tail == b"\xa0", content="true")
+    }
+    _ => fail("template4.30 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template431 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate431({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 4,
+      observation_generating_process_identifier: 7,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 300,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 400,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      reserved_tail: b"\xa1",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate431(template431) => {
+      inspect(template431.number_of_contributing_spectral_bands, content="2")
+      inspect(template431.bands.length(), content="2")
+      inspect(template431.bands[0].instrument_type, content="300")
+      inspect(template431.bands[1].instrument_type, content="400")
+      inspect(template431.reserved_tail == b"\xa1", content="true")
+    }
+    _ => fail("template4.31 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template432 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate432({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 300,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 400,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      reserved_tail: b"\xa2",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate432(template432) => {
+      inspect(template432.forecast_time, content="6")
+      inspect(template432.number_of_contributing_spectral_bands, content="2")
+      inspect(template432.bands.length(), content="2")
+      inspect(template432.bands[0].instrument_type, content="300")
+      inspect(template432.bands[1].instrument_type, content="400")
+      inspect(template432.reserved_tail == b"\xa2", content="true")
+    }
+    _ => fail("template4.32 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template433 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate433({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 300,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 400,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      reserved_tail: b"\xa3",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate433(template433) => {
+      inspect(template433.forecast_time, content="6")
+      inspect(template433.number_of_contributing_spectral_bands, content="2")
+      inspect(template433.bands.length(), content="2")
+      inspect(template433.type_of_ensemble_forecast, content="2")
+      inspect(template433.perturbation_number, content="3")
+      inspect(template433.number_of_forecasts_in_ensemble, content="20")
+      inspect(template433.reserved_tail == b"\xa3", content="true")
+    }
+    _ => fail("template4.33 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template434 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate434({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 300,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 400,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 12,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xa4",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate434(template434) => {
+      inspect(template434.forecast_time, content="6")
+      inspect(template434.bands.length(), content="2")
+      inspect(template434.type_of_ensemble_forecast, content="2")
+      inspect(template434.number_of_time_ranges, content="2")
+      inspect(template434.time_range_specs.length(), content="2")
+      inspect(template434.number_of_missing_values, content="1")
+      inspect(template434.reserved_tail == b"\xa4", content="true")
+    }
+    _ => fail("template4.34 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template435 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate435({
+      parameter_category: 3,
+      parameter_number: 5,
+      type_of_generating_process: 4,
+      observation_generating_process_identifier: 7,
+      quality_value_associated_with_parameter: 1,
+      number_of_contributing_spectral_bands: 2,
+      bands: [
+        {
+          satellite_series: 1,
+          satellite_number: 100,
+          instrument_type: 300,
+          scale_factor_of_central_wave_number: 0,
+          scaled_value_of_central_wave_number: 123456,
+        },
+        {
+          satellite_series: 2,
+          satellite_number: 101,
+          instrument_type: 400,
+          scale_factor_of_central_wave_number: 1,
+          scaled_value_of_central_wave_number: 654321,
+        },
+      ],
+      reserved_tail: b"\xa5",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate435(template435) => {
+      inspect(template435.quality_value_associated_with_parameter, content="1")
+      inspect(template435.number_of_contributing_spectral_bands, content="2")
+      inspect(template435.bands.length(), content="2")
+      inspect(template435.bands[0].instrument_type, content="300")
+      inspect(template435.bands[1].instrument_type, content="400")
+      inspect(template435.reserved_tail == b"\xa5", content="true")
+    }
+    _ => fail("template4.35 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template440 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate440({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate440(template440) => {
+      inspect(
+        template440.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template440.forecast_time, content="6")
+      inspect(template440.type_of_first_fixed_surface, content="100")
+      inspect(template440.scaled_value_of_first_fixed_surface, content="50000")
+    }
+    _ => fail("template4.40 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template441 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate441({
+      base: {
+        parameter_category: 20,
+        parameter_number: 1,
+        atmospheric_chemical_constituent_type: 40001,
+        type_of_generating_process: 2,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate441(template441) => {
+      inspect(
+        template441.base.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template441.base.forecast_time, content="6")
+      inspect(template441.type_of_ensemble_forecast, content="2")
+      inspect(template441.perturbation_number, content="3")
+      inspect(template441.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.41 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template442 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate442({
+      base: {
+        parameter_category: 20,
+        parameter_number: 1,
+        atmospheric_chemical_constituent_type: 40001,
+        type_of_generating_process: 2,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 12,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xa6",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate442(template442) => {
+      inspect(
+        template442.base.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template442.base.forecast_time, content="6")
+      inspect(template442.number_of_time_ranges, content="2")
+      inspect(template442.time_range_specs.length(), content="2")
+      inspect(template442.number_of_missing_values, content="1")
+      inspect(template442.reserved_tail == b"\xa6", content="true")
+    }
+    _ => fail("template4.42 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template443 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate443({
+      base: {
+        base: {
+          parameter_category: 20,
+          parameter_number: 1,
+          atmospheric_chemical_constituent_type: 40001,
+          type_of_generating_process: 2,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        type_of_ensemble_forecast: 2,
+        perturbation_number: 3,
+        number_of_forecasts_in_ensemble: 20,
+      },
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 12,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xa7",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate443(template443) => {
+      inspect(
+        template443.base.base.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template443.base.base.forecast_time, content="6")
+      inspect(template443.base.type_of_ensemble_forecast, content="2")
+      inspect(template443.number_of_time_ranges, content="2")
+      inspect(template443.time_range_specs.length(), content="2")
+      inspect(template443.number_of_missing_values, content="1")
+      inspect(template443.reserved_tail == b"\xa7", content="true")
+    }
+    _ => fail("template4.43 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template444 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate444({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate444(template444) => {
+      inspect(template444.aerosol_type, content="62000")
+      inspect(
+        template444.type_of_interval_for_first_and_second_size,
+        content="2",
+      )
+      inspect(template444.scaled_value_of_first_size, content="1000")
+      inspect(template444.scaled_value_of_second_size, content="2000")
+      inspect(template444.forecast_time, content="6")
+      inspect(template444.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.44 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template445 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate445({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate445(template445) => {
+      inspect(template445.aerosol_type, content="62000")
+      inspect(template445.forecast_time, content="6")
+      inspect(template445.type_of_ensemble_forecast, content="2")
+      inspect(template445.perturbation_number, content="3")
+      inspect(template445.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.45 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template446 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate446({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 12,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xa8",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate446(template446) => {
+      inspect(template446.aerosol_type, content="62000")
+      inspect(template446.forecast_time, content="6")
+      inspect(template446.number_of_time_ranges, content="2")
+      inspect(template446.time_range_specs.length(), content="2")
+      inspect(template446.number_of_missing_values, content="1")
+      inspect(template446.reserved_tail == b"\xa8", content="true")
+    }
+    _ => fail("template4.46 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template447 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate447({
+      parameter_category: 20,
+      parameter_number: 1,
+      type_of_generating_process: 2,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2026,
+      end_month: 2,
+      end_day: 21,
+      end_hour: 12,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: sample_time_range_specs(),
+      reserved_tail: b"\xa9",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate447(template447) => {
+      inspect(template447.type_of_generating_process, content="2")
+      inspect(template447.aerosol_type, content="62000")
+      inspect(template447.forecast_time, content="6")
+      inspect(template447.type_of_ensemble_forecast, content="2")
+      inspect(template447.number_of_time_ranges, content="2")
+      inspect(template447.time_range_specs.length(), content="2")
+      inspect(template447.reserved_tail == b"\xa9", content="true")
+    }
+    _ => fail("template4.47 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template448 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate448({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_interval_for_first_and_second_wavelength: 2,
+      scale_factor_of_first_wavelength: 0,
+      scaled_value_of_first_wavelength: 550,
+      scale_factor_of_second_wavelength: 0,
+      scaled_value_of_second_wavelength: 700,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate448(template448) => {
+      inspect(template448.aerosol_type, content="62000")
+      inspect(
+        template448.type_of_interval_for_first_and_second_wavelength,
+        content="2",
+      )
+      inspect(template448.scaled_value_of_first_wavelength, content="550")
+      inspect(template448.scaled_value_of_second_wavelength, content="700")
+      inspect(template448.forecast_time, content="6")
+      inspect(template448.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.48 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template449 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate449({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_interval_for_first_and_second_wavelength: 2,
+      scale_factor_of_first_wavelength: 0,
+      scaled_value_of_first_wavelength: 550,
+      scale_factor_of_second_wavelength: 0,
+      scaled_value_of_second_wavelength: 700,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate449(template449) => {
+      inspect(template449.aerosol_type, content="62000")
+      inspect(
+        template449.type_of_interval_for_first_and_second_wavelength,
+        content="2",
+      )
+      inspect(template449.scaled_value_of_first_wavelength, content="550")
+      inspect(template449.scaled_value_of_second_wavelength, content="700")
+      inspect(template449.forecast_time, content="6")
+      inspect(template449.type_of_ensemble_forecast, content="2")
+      inspect(template449.perturbation_number, content="3")
+      inspect(template449.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.49 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template450 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate450({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 2,
+      scale_factor_of_first_size: 0,
+      scaled_value_of_first_size: 1000,
+      scale_factor_of_second_size: 0,
+      scaled_value_of_second_size: 2000,
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate450(template450) => {
+      inspect(template450.aerosol_type, content="62000")
+      inspect(
+        template450.type_of_interval_for_first_and_second_size,
+        content="2",
+      )
+      inspect(template450.scaled_value_of_first_size, content="1000")
+      inspect(template450.scaled_value_of_second_size, content="2000")
+      inspect(template450.forecast_time, content="6")
+      inspect(template450.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.50 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template451 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate451({
+      base: {
+        parameter_category: 3,
+        parameter_number: 5,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      number_of_categories: 2,
+      categories: [
+        {
+          code_figure: 1,
+          type_of_interval_for_first_and_second_limit: 2,
+          scale_factor_of_first_limit: 0,
+          scaled_value_of_first_limit: 100,
+          scale_factor_of_second_limit: 0,
+          scaled_value_of_second_limit: 200,
+        },
+        {
+          code_figure: 2,
+          type_of_interval_for_first_and_second_limit: 3,
+          scale_factor_of_first_limit: 1,
+          scaled_value_of_first_limit: 300,
+          scale_factor_of_second_limit: 1,
+          scaled_value_of_second_limit: 400,
+        },
+      ],
+      reserved_tail: b"\xaa",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate451(template451) => {
+      inspect(template451.base.parameter_category, content="3")
+      inspect(template451.number_of_categories, content="2")
+      inspect(template451.categories.length(), content="2")
+      inspect(template451.categories[0].code_figure, content="1")
+      inspect(
+        template451.categories[1].type_of_interval_for_first_and_second_limit,
+        content="3",
+      )
+      inspect(template451.reserved_tail == b"\xaa", content="true")
+    }
+    _ => fail("template4.51 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template453 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate453({
+      parameter_category: 3,
+      parameter_number: 5,
+      partition_table_number: 1,
+      number_of_partitions: 3,
+      partition_set: [10, 20, 30],
+      partition_number: 20,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      reserved_tail: b"\xab",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate453(template453) => {
+      inspect(template453.partition_table_number, content="1")
+      inspect(template453.number_of_partitions, content="3")
+      inspect(template453.partition_set.length(), content="3")
+      inspect(template453.partition_set[1], content="20")
+      inspect(template453.partition_number, content="20")
+      inspect(template453.forecast_time, content="6")
+      inspect(template453.reserved_tail == b"\xab", content="true")
+    }
+    _ => fail("template4.53 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template454 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate454({
+      parameter_category: 3,
+      parameter_number: 5,
+      partition_table_number: 1,
+      number_of_partitions: 3,
+      partition_set: [10, 20, 30],
+      partition_number: 20,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      reserved_tail: b"\xac",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate454(template454) => {
+      inspect(template454.partition_table_number, content="1")
+      inspect(template454.number_of_partitions, content="3")
+      inspect(template454.partition_set.length(), content="3")
+      inspect(template454.partition_number, content="20")
+      inspect(template454.type_of_ensemble_forecast, content="2")
+      inspect(template454.perturbation_number, content="3")
+      inspect(template454.number_of_forecasts_in_ensemble, content="20")
+      inspect(template454.reserved_tail == b"\xac", content="true")
+    }
+    _ => fail("template4.54 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template455 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate455({
+      parameter_category: 3,
+      parameter_number: 5,
+      tile_classification: 1,
+      total_number_of_tile_attribute_pairs: 5,
+      number_of_used_spatial_tiles: 3,
+      tile_index: 2,
+      number_of_used_tile_attributes: 2,
+      tile_attribute: 4,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate455(template455) => {
+      inspect(template455.tile_classification, content="1")
+      inspect(template455.total_number_of_tile_attribute_pairs, content="5")
+      inspect(template455.number_of_used_spatial_tiles, content="3")
+      inspect(template455.tile_index, content="2")
+      inspect(template455.number_of_used_tile_attributes, content="2")
+      inspect(template455.tile_attribute, content="4")
+      inspect(template455.forecast_time, content="6")
+    }
+    _ => fail("template4.55 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template456 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate456({
+      parameter_category: 3,
+      parameter_number: 5,
+      tile_classification: 1,
+      total_number_of_tile_attribute_pairs: 5,
+      number_of_used_spatial_tiles: 3,
+      tile_index: 2,
+      number_of_used_tile_attributes: 2,
+      tile_attribute: 4,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate456(template456) => {
+      inspect(template456.tile_classification, content="1")
+      inspect(template456.total_number_of_tile_attribute_pairs, content="5")
+      inspect(template456.number_of_used_spatial_tiles, content="3")
+      inspect(template456.tile_index, content="2")
+      inspect(template456.number_of_used_tile_attributes, content="2")
+      inspect(template456.tile_attribute, content="4")
+      inspect(template456.perturbation_number, content="3")
+      inspect(template456.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.56 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template457 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate457({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      number_of_mode_of_distribution: 2,
+      mode_number: 1,
+      type_of_distribution_function: 3,
+      number_of_following_function_parameters: 2,
+      function_parameters: [
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 0,
+          scaled_value_of_fixed_distribution_function_parameter: 123,
+        },
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 1,
+          scaled_value_of_fixed_distribution_function_parameter: 456,
+        },
+      ],
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      reserved_tail: b"\xae",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate457(template457) => {
+      inspect(
+        template457.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template457.number_of_mode_of_distribution, content="2")
+      inspect(template457.mode_number, content="1")
+      inspect(template457.type_of_distribution_function, content="3")
+      inspect(template457.number_of_following_function_parameters, content="2")
+      inspect(template457.function_parameters.length(), content="2")
+      inspect(
+        template457.function_parameters[1].scaled_value_of_fixed_distribution_function_parameter,
+        content="456",
+      )
+      inspect(template457.reserved_tail == b"\xae", content="true")
+    }
+    _ => fail("template4.57 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template458 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate458({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      number_of_mode_of_distribution: 2,
+      mode_number: 1,
+      type_of_distribution_function: 3,
+      number_of_following_function_parameters: 2,
+      function_parameters: [
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 0,
+          scaled_value_of_fixed_distribution_function_parameter: 123,
+        },
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 1,
+          scaled_value_of_fixed_distribution_function_parameter: 456,
+        },
+      ],
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      reserved_tail: b"\xaf",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate458(template458) => {
+      inspect(
+        template458.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template458.number_of_mode_of_distribution, content="2")
+      inspect(template458.mode_number, content="1")
+      inspect(template458.type_of_distribution_function, content="3")
+      inspect(template458.number_of_following_function_parameters, content="2")
+      inspect(template458.function_parameters.length(), content="2")
+      inspect(template458.type_of_ensemble_forecast, content="2")
+      inspect(template458.perturbation_number, content="3")
+      inspect(template458.number_of_forecasts_in_ensemble, content="20")
+      inspect(template458.reserved_tail == b"\xaf", content="true")
+    }
+    _ => fail("template4.58 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template459 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate459({
+      parameter_category: 3,
+      parameter_number: 5,
+      tile_classification: 1,
+      total_number_of_tile_attribute_pairs: 5,
+      number_of_used_spatial_tiles: 3,
+      tile_index: 2,
+      number_of_used_tile_attributes: 2,
+      tile_attribute: 4,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate459(template459) => {
+      inspect(template459.tile_classification, content="1")
+      inspect(template459.total_number_of_tile_attribute_pairs, content="5")
+      inspect(template459.number_of_used_spatial_tiles, content="3")
+      inspect(template459.tile_index, content="2")
+      inspect(template459.number_of_used_tile_attributes, content="2")
+      inspect(template459.tile_attribute, content="4")
+      inspect(template459.type_of_ensemble_forecast, content="2")
+      inspect(template459.perturbation_number, content="3")
+      inspect(template459.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.59 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template460 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate460({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      year_of_model_version_date: 2024,
+      month_of_model_version_date: 5,
+      day_of_model_version_date: 1,
+      hour_of_model_version_date: 12,
+      minute_of_model_version_date: 30,
+      second_of_model_version_date: 45,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate460(template460) => {
+      inspect(template460.type_of_ensemble_forecast, content="2")
+      inspect(template460.perturbation_number, content="3")
+      inspect(template460.number_of_forecasts_in_ensemble, content="20")
+      inspect(template460.year_of_model_version_date, content="2024")
+      inspect(template460.month_of_model_version_date, content="5")
+      inspect(template460.day_of_model_version_date, content="1")
+      inspect(template460.hour_of_model_version_date, content="12")
+      inspect(template460.minute_of_model_version_date, content="30")
+      inspect(template460.second_of_model_version_date, content="45")
+    }
+    _ => fail("template4.60 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template461 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate461({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      year_of_model_version_date: 2024,
+      month_of_model_version_date: 5,
+      day_of_model_version_date: 1,
+      hour_of_model_version_date: 12,
+      minute_of_model_version_date: 30,
+      second_of_model_version_date: 45,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb0",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate461(template461) => {
+      inspect(template461.type_of_ensemble_forecast, content="2")
+      inspect(template461.perturbation_number, content="3")
+      inspect(template461.number_of_forecasts_in_ensemble, content="20")
+      inspect(template461.year_of_model_version_date, content="2024")
+      inspect(template461.end_year, content="2024")
+      inspect(template461.number_of_time_ranges, content="2")
+      inspect(template461.time_range_specs.length(), content="2")
+      inspect(template461.number_of_missing_values, content="1")
+      inspect(template461.reserved_tail == b"\xb0", content="true")
+    }
+    _ => fail("template4.61 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template462 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate462({
+      parameter_category: 3,
+      parameter_number: 5,
+      tile_classification: 1,
+      total_number_of_tile_attribute_pairs: 5,
+      number_of_used_spatial_tiles: 3,
+      tile_index: 2,
+      number_of_used_tile_attributes: 2,
+      tile_attribute: 4,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb1",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate462(template462) => {
+      inspect(template462.tile_classification, content="1")
+      inspect(template462.end_year, content="2024")
+      inspect(template462.number_of_time_ranges, content="2")
+      inspect(template462.time_range_specs.length(), content="2")
+      inspect(template462.number_of_missing_values, content="1")
+      inspect(template462.reserved_tail == b"\xb1", content="true")
+    }
+    _ => fail("template4.62 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template463 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate463({
+      parameter_category: 3,
+      parameter_number: 5,
+      tile_classification: 1,
+      total_number_of_tile_attribute_pairs: 5,
+      number_of_used_spatial_tiles: 3,
+      tile_index: 2,
+      number_of_used_tile_attributes: 2,
+      tile_attribute: 4,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb2",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate463(template463) => {
+      inspect(template463.tile_classification, content="1")
+      inspect(template463.type_of_ensemble_forecast, content="2")
+      inspect(template463.perturbation_number, content="3")
+      inspect(template463.number_of_forecasts_in_ensemble, content="20")
+      inspect(template463.end_year, content="2024")
+      inspect(template463.number_of_time_ranges, content="2")
+      inspect(template463.time_range_specs.length(), content="2")
+      inspect(template463.number_of_missing_values, content="1")
+      inspect(template463.reserved_tail == b"\xb2", content="true")
+    }
+    _ => fail("template4.63 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template467 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate467({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      number_of_mode_of_distribution: 2,
+      mode_number: 1,
+      type_of_distribution_function: 3,
+      number_of_following_function_parameters: 2,
+      function_parameters: [
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 0,
+          scaled_value_of_fixed_distribution_function_parameter: 123,
+        },
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 1,
+          scaled_value_of_fixed_distribution_function_parameter: 456,
+        },
+      ],
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb3",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate467(template467) => {
+      inspect(
+        template467.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template467.number_of_following_function_parameters, content="2")
+      inspect(template467.function_parameters.length(), content="2")
+      inspect(template467.end_year, content="2024")
+      inspect(template467.number_of_time_ranges, content="2")
+      inspect(template467.time_range_specs.length(), content="2")
+      inspect(template467.number_of_missing_values, content="1")
+      inspect(template467.reserved_tail == b"\xb3", content="true")
+    }
+    _ => fail("template4.67 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template468 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate468({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      number_of_mode_of_distribution: 2,
+      mode_number: 1,
+      type_of_distribution_function: 3,
+      number_of_following_function_parameters: 2,
+      function_parameters: [
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 0,
+          scaled_value_of_fixed_distribution_function_parameter: 123,
+        },
+        {
+          scale_factor_of_fixed_distribution_function_parameter: 1,
+          scaled_value_of_fixed_distribution_function_parameter: 456,
+        },
+      ],
+      type_of_generating_process: 2,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb4",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate468(template468) => {
+      inspect(
+        template468.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template468.number_of_following_function_parameters, content="2")
+      inspect(template468.function_parameters.length(), content="2")
+      inspect(template468.type_of_ensemble_forecast, content="2")
+      inspect(template468.perturbation_number, content="3")
+      inspect(template468.number_of_forecasts_in_ensemble, content="20")
+      inspect(template468.end_year, content="2024")
+      inspect(template468.number_of_time_ranges, content="2")
+      inspect(template468.time_range_specs.length(), content="2")
+      inspect(template468.number_of_missing_values, content="1")
+      inspect(template468.reserved_tail == b"\xb4", content="true")
+    }
+    _ => fail("template4.68 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template470 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate470({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate470(template470) => {
+      inspect(template470.input_process_identifier, content="321")
+      inspect(template470.input_originating_centre, content="34")
+      inspect(template470.type_of_post_processing, content="2")
+      inspect(template470.forecast_time, content="6")
+      inspect(template470.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.70 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template471 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate471({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate471(template471) => {
+      inspect(template471.input_process_identifier, content="321")
+      inspect(template471.input_originating_centre, content="34")
+      inspect(template471.type_of_post_processing, content="2")
+      inspect(template471.type_of_ensemble_forecast, content="2")
+      inspect(template471.perturbation_number, content="3")
+      inspect(template471.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.71 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template472 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate472({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb5",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate472(template472) => {
+      inspect(template472.input_process_identifier, content="321")
+      inspect(template472.input_originating_centre, content="34")
+      inspect(template472.type_of_post_processing, content="2")
+      inspect(template472.end_year, content="2024")
+      inspect(template472.number_of_time_ranges, content="2")
+      inspect(template472.time_range_specs.length(), content="2")
+      inspect(template472.number_of_missing_values, content="1")
+      inspect(template472.reserved_tail == b"\xb5", content="true")
+    }
+    _ => fail("template4.72 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template473 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate473({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb6",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate473(template473) => {
+      inspect(template473.input_process_identifier, content="321")
+      inspect(template473.input_originating_centre, content="34")
+      inspect(template473.type_of_post_processing, content="2")
+      inspect(template473.type_of_ensemble_forecast, content="2")
+      inspect(template473.perturbation_number, content="3")
+      inspect(template473.number_of_forecasts_in_ensemble, content="20")
+      inspect(template473.end_year, content="2024")
+      inspect(template473.number_of_time_ranges, content="2")
+      inspect(template473.time_range_specs.length(), content="2")
+      inspect(template473.number_of_missing_values, content="1")
+      inspect(template473.reserved_tail == b"\xb6", content="true")
+    }
+    _ => fail("template4.73 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template476 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate476({
+      parameter_category: 20,
+      parameter_number: 1,
+      atmospheric_chemical_constituent_type: 40001,
+      source_or_sink: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate476(template476) => {
+      inspect(
+        template476.atmospheric_chemical_constituent_type,
+        content="40001",
+      )
+      inspect(template476.source_or_sink, content="2")
+      inspect(template476.forecast_time, content="6")
+    }
+    _ => fail("template4.76 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template477 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate477({
+      base: {
+        parameter_category: 20,
+        parameter_number: 1,
+        atmospheric_chemical_constituent_type: 40001,
+        source_or_sink: 2,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate477(template477) => {
+      inspect(template477.base.source_or_sink, content="2")
+      inspect(template477.type_of_ensemble_forecast, content="2")
+      inspect(template477.perturbation_number, content="3")
+      inspect(template477.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.77 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template478 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate478({
+      base: {
+        parameter_category: 20,
+        parameter_number: 1,
+        atmospheric_chemical_constituent_type: 40001,
+        source_or_sink: 2,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb7",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate478(template478) => {
+      inspect(template478.base.source_or_sink, content="2")
+      inspect(template478.end_year, content="2024")
+      inspect(template478.number_of_time_ranges, content="2")
+      inspect(template478.time_range_specs.length(), content="2")
+      inspect(template478.number_of_missing_values, content="1")
+      inspect(template478.reserved_tail == b"\xb7", content="true")
+    }
+    _ => fail("template4.78 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template479 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate479({
+      base: {
+        base: {
+          parameter_category: 20,
+          parameter_number: 1,
+          atmospheric_chemical_constituent_type: 40001,
+          source_or_sink: 2,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        type_of_ensemble_forecast: 2,
+        perturbation_number: 3,
+        number_of_forecasts_in_ensemble: 20,
+      },
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb8",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate479(template479) => {
+      inspect(template479.base.base.source_or_sink, content="2")
+      inspect(template479.base.type_of_ensemble_forecast, content="2")
+      inspect(template479.base.perturbation_number, content="3")
+      inspect(template479.base.number_of_forecasts_in_ensemble, content="20")
+      inspect(template479.end_year, content="2024")
+      inspect(template479.number_of_time_ranges, content="2")
+      inspect(template479.time_range_specs.length(), content="2")
+      inspect(template479.number_of_missing_values, content="1")
+      inspect(template479.reserved_tail == b"\xb8", content="true")
+    }
+    _ => fail("template4.79 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template480 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate480({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      source_or_sink: 2,
+      type_of_interval_for_first_and_second_size: 1,
+      scale_factor_of_first_size: 1,
+      scaled_value_of_first_size: 500,
+      scale_factor_of_second_size: 1,
+      scaled_value_of_second_size: 1500,
+      type_of_interval_for_first_and_second_wavelength: 1,
+      scale_factor_of_first_wavelength: 9,
+      scaled_value_of_first_wavelength: 550,
+      scale_factor_of_second_wavelength: 9,
+      scaled_value_of_second_wavelength: 650,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate480(template480) => {
+      inspect(template480.aerosol_type, content="62000")
+      inspect(template480.source_or_sink, content="2")
+      inspect(template480.scaled_value_of_first_wavelength, content="550")
+      inspect(template480.scaled_value_of_second_wavelength, content="650")
+    }
+    _ => fail("template4.80 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template481 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate481({
+      base: {
+        parameter_category: 20,
+        parameter_number: 1,
+        aerosol_type: 62000,
+        source_or_sink: 2,
+        type_of_interval_for_first_and_second_size: 1,
+        scale_factor_of_first_size: 1,
+        scaled_value_of_first_size: 500,
+        scale_factor_of_second_size: 1,
+        scaled_value_of_second_size: 1500,
+        type_of_interval_for_first_and_second_wavelength: 1,
+        scale_factor_of_first_wavelength: 9,
+        scaled_value_of_first_wavelength: 550,
+        scale_factor_of_second_wavelength: 9,
+        scaled_value_of_second_wavelength: 650,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate481(template481) => {
+      inspect(template481.base.aerosol_type, content="62000")
+      inspect(template481.base.source_or_sink, content="2")
+      inspect(template481.type_of_ensemble_forecast, content="2")
+      inspect(template481.perturbation_number, content="3")
+      inspect(template481.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.81 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template482 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate482({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      source_or_sink: 2,
+      type_of_interval_for_first_and_second_size: 1,
+      scale_factor_of_first_size: 1,
+      scaled_value_of_first_size: 500,
+      scale_factor_of_second_size: 1,
+      scaled_value_of_second_size: 1500,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xb9",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate482(template482) => {
+      inspect(template482.aerosol_type, content="62000")
+      inspect(template482.source_or_sink, content="2")
+      inspect(template482.end_year, content="2024")
+      inspect(template482.number_of_time_ranges, content="2")
+      inspect(template482.time_range_specs.length(), content="2")
+      inspect(template482.number_of_missing_values, content="1")
+      inspect(template482.reserved_tail == b"\xb9", content="true")
+    }
+    _ => fail("template4.82 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template483 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate483({
+      parameter_category: 20,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      aerosol_type: 62000,
+      source_or_sink: 2,
+      type_of_interval_for_first_and_second_size: 1,
+      scale_factor_of_first_size: 1,
+      scaled_value_of_first_size: 500,
+      scale_factor_of_second_size: 1,
+      scaled_value_of_second_size: 1500,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xba",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate483(template483) => {
+      inspect(template483.aerosol_type, content="62000")
+      inspect(template483.source_or_sink, content="2")
+      inspect(template483.type_of_ensemble_forecast, content="2")
+      inspect(template483.perturbation_number, content="3")
+      inspect(template483.number_of_forecasts_in_ensemble, content="20")
+      inspect(template483.end_year, content="2024")
+      inspect(template483.number_of_time_ranges, content="2")
+      inspect(template483.time_range_specs.length(), content="2")
+      inspect(template483.number_of_missing_values, content="1")
+      inspect(template483.reserved_tail == b"\xba", content="true")
+    }
+    _ => fail("template4.83 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template484 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate484({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      source_or_sink: 2,
+      type_of_interval_for_first_and_second_size: 1,
+      scale_factor_of_first_size: 1,
+      scaled_value_of_first_size: 500,
+      scale_factor_of_second_size: 1,
+      scaled_value_of_second_size: 1500,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xbb",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate484(template484) => {
+      inspect(template484.aerosol_type, content="62000")
+      inspect(template484.source_or_sink, content="2")
+      inspect(template484.type_of_ensemble_forecast, content="2")
+      inspect(template484.perturbation_number, content="3")
+      inspect(template484.number_of_forecasts_in_ensemble, content="20")
+      inspect(template484.end_year, content="2024")
+      inspect(template484.number_of_time_ranges, content="2")
+      inspect(template484.time_range_specs.length(), content="2")
+      inspect(template484.number_of_missing_values, content="1")
+      inspect(template484.reserved_tail == b"\xbb", content="true")
+    }
+    _ => fail("template4.84 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template485 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate485({
+      parameter_category: 20,
+      parameter_number: 1,
+      aerosol_type: 62000,
+      type_of_interval_for_first_and_second_size: 1,
+      scale_factor_of_first_size: 1,
+      scaled_value_of_first_size: 500,
+      scale_factor_of_second_size: 1,
+      scaled_value_of_second_size: 1500,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xbc",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate485(template485) => {
+      inspect(template485.aerosol_type, content="62000")
+      inspect(template485.type_of_ensemble_forecast, content="2")
+      inspect(template485.perturbation_number, content="3")
+      inspect(template485.number_of_forecasts_in_ensemble, content="20")
+      inspect(template485.end_year, content="2024")
+      inspect(template485.number_of_time_ranges, content="2")
+      inspect(template485.time_range_specs.length(), content="2")
+      inspect(template485.number_of_missing_values, content="1")
+      inspect(template485.reserved_tail == b"\xbc", content="true")
+    }
+    _ => fail("template4.85 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "unknown section3 and section4 templates keep raw payloads" {
+  let section3 : Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: 1,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplateUnknown(70, b"\x11\x22\x33"),
+    optional_points_raw: b"\xaa",
+  }
+  let encoded3 = encode_section3_bytes(section3)
+  let decoded3 = match decode_section3_bytes(encoded3) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  let reencoded3 = encode_section3_bytes(decoded3)
+  inspect(reencoded3 == encoded3, content="true")
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 1,
+    template: ProductTemplateUnknown(42, b"\x99\x88\x77"),
+    coordinate_values_raw: b"\x3f\x80\x00\x00",
+  }
+  let encoded4 = encode_section4_bytes(section4)
+  let decoded4 = match decode_section4_bytes(encoded4) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  let reencoded4 = encode_section4_bytes(decoded4)
+  inspect(reencoded4 == encoded4, content="true")
+}
