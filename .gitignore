@@ -1,0 +1,11 @@
+.DS_Store
+_build/
+target/
+target
+.mooncakes/
+.moonagent/
+
+# GRIB2 downloaded/generated artifacts
+spec/grib2/_upstream/
+spec/grib2/markdown/
+spec/grib2/IMPLEMENTATION_CHECKLIST.md
