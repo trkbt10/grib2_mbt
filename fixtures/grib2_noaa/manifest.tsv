@@ -1,0 +1,5 @@
+file	size_bytes	sha256	source_url
+gfs.t00z.pgrb2.1p00.f000.grib2	41606965	40ead762ad95ddf2eef87e80ee55c7b3d06f055cf033690808049524048791fb	https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.20260221/00/atmos/gfs.t00z.pgrb2.1p00.f000
+gfs.t00z.pgrb2b.1p00.f000.grib2	18774004	a7760d108eff7d8521689f29e27399659d788c39551ca52deaf17aab8e6b4e4a	https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.20260221/00/atmos/gfs.t00z.pgrb2b.1p00.f000
+gfswave.t00z.global.0p25.f000.grib2	12301722	e8781c50be3112db1dfce4e1e98d74b554807e35eb565f4d2ebe8c010577cca2	https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.20260221/00/wave/gridded/gfswave.t00z.global.0p25.f000.grib2
+gfswave.t00z.atlocn.0p16.f000.grib2	642357	bac93c48459354febe7cb21ecc8e3e6c86513fe0d72aef89fb6b17372b1152be	https://nomads.ncep.noaa.gov/pub/data/nccf/com/gfs/prod/gfs.20260221/00/wave/gridded/gfswave.t00z.atlocn.0p16.f000.grib2
