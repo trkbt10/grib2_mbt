@@ -1,0 +1,30 @@
+{
+  "import": [
+    {
+      "path": "trkbt10/grib2_mbt",
+      "alias": "lib"
+    },
+    {
+      "path": "moonbitlang/x/fs",
+      "alias": "fs"
+    }
+  ],
+  "targets": {
+    "grib2_parser_test.mbt": [
+      "native",
+      "llvm"
+    ],
+    "grib2_decode_test.mbt": [
+      "native",
+      "llvm"
+    ],
+    "grib2_writer_test.mbt": [
+      "native",
+      "llvm"
+    ],
+    "grib2_io_adapter_test.mbt": [
+      "native",
+      "llvm"
+    ]
+  }
+}

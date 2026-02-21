@@ -8,7 +8,10 @@ This directory contains helper tooling to convert downloaded NOAA GRIB2 HTML pag
 - `tools/build_markdown.sh`: HTML -> Markdown conversion script
 - `tools/build_implementation_checklist.sh`: catalog -> implementation checklist generator
 - `GRIB2_IMPLEMENTATION_SPEC.md`: parser/reader/writer implementation specification
+- `IMPLEMENTATION_STRATEGY.md`: architecture strategy for roundtrip, wgrib2-compatible CLI, and WASM constraints
+- `WORK_CHECKLIST.md`: living checklist to track implementation progress and prevent plan drift
 - `IMPLEMENTATION_CHECKLIST.md`: generated checklist for full coverage tracking
+- `JS_WASM_INTEGRATION_SAMPLE.md`: callback-based I/O adapter usage sample for Node/browser/WASM
 - `markdown/`: generated Markdown pages and catalog (created by script)
 
 ## Requirements

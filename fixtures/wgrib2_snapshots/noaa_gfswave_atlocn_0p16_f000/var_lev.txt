@@ -1,0 +1,19 @@
+1:0:WIND:surface
+2:41328:WDIR:surface
+3:96034:UGRD:surface
+4:137815:VGRD:surface
+5:178881:HTSGW:surface
+6:208620:PERPW:surface
+7:242905:DIRPW:surface
+8:298093:WVHGT:surface
+9:326076:SWELL:1 in sequence
+10:352278:SWELL:2 in sequence
+11:373431:SWELL:3 in sequence
+12:389501:WVPER:surface
+13:421261:SWPER:1 in sequence
+14:450607:SWPER:2 in sequence
+15:476364:SWPER:3 in sequence
+16:495320:WVDIR:surface
+17:540190:SWDIR:1 in sequence
+18:586002:SWDIR:2 in sequence
+19:620091:SWDIR:3 in sequence
