@@ -19,3 +19,17 @@ pub using @section4 {
   decode_section4_bytes,
   encode_section4_bytes,
 }
+
+///|
+pub using @section5 {
+  type Grib2Section5Decoded,
+  decode_section5_bytes,
+  encode_section5_bytes,
+}
+
+///|
+pub using @section7 {
+  type Grib2Section7Decoded,
+  decode_section7_bytes,
+  encode_section7_bytes,
+}

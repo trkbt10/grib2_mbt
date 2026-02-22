@@ -4,12 +4,18 @@ pub using @typed {
   type Grib2Section1Decoded,
   type Grib2Section3Decoded,
   type Grib2Section4Decoded,
+  type Grib2Section5Decoded,
+  type Grib2Section7Decoded,
   decode_section1_bytes,
   decode_section3_bytes,
   decode_section4_bytes,
+  decode_section5_bytes,
+  decode_section7_bytes,
   encode_section1_bytes,
   encode_section3_bytes,
   encode_section4_bytes,
+  encode_section5_bytes,
+  encode_section7_bytes,
 }
 
 ///|
@@ -20,6 +26,13 @@ fn typed_message_section_bytes(
   let start = frame.start - message.offset
   let end = frame.end_offset() - message.offset
   message.raw.sub(start~, end~).to_bytes()
+}
+
+///|
+fn typed_read_u16_be_bridge(bytes : Bytes, offset : Int) -> Int {
+  let high = bytes[offset].to_uint().reinterpret_as_int()
+  let low = bytes[offset + 1].to_uint().reinterpret_as_int()
+  (high << 8) | low
 }
 
 ///|
@@ -46,5 +59,36 @@ pub fn decode_submessage_section4(
 ) -> Result[Grib2Section4Decoded, Grib2SectionCodecError] {
   decode_section4_bytes(
     typed_message_section_bytes(message, submessage.section4),
+  )
+}
+
+///|
+pub fn decode_submessage_section5(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> Result[Grib2Section5Decoded, Grib2SectionCodecError] {
+  decode_section5_bytes(
+    typed_message_section_bytes(message, submessage.section5),
+  )
+}
+
+///|
+pub fn decode_submessage_section7(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> Result[Grib2Section7Decoded, Grib2SectionCodecError] {
+  let section5 = typed_message_section_bytes(message, submessage.section5)
+  if section5.length() < 11 {
+    return Err(
+      InvalidSectionLength(
+        "section5 too short for template number: " +
+        section5.length().to_string(),
+      ),
+    )
+  }
+  let template_number = typed_read_u16_be_bridge(section5, 9)
+  decode_section7_bytes(
+    typed_message_section_bytes(message, submessage.section7),
+    template_number,
   )
 }

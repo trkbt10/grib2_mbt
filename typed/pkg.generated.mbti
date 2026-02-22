@@ -5,6 +5,8 @@ import {
   "trkbt10/grib2_mbt/typed/section1",
   "trkbt10/grib2_mbt/typed/section3",
   "trkbt10/grib2_mbt/typed/section4",
+  "trkbt10/grib2_mbt/typed/section5",
+  "trkbt10/grib2_mbt/typed/section7",
 }
 
 // Values
@@ -14,11 +16,19 @@ pub fn decode_section3_bytes(Bytes) -> Result[@section3.Grib2Section3Decoded, @s
 
 pub fn decode_section4_bytes(Bytes) -> Result[@section4.Grib2Section4Decoded, @section1.Grib2SectionCodecError]
 
+pub fn decode_section5_bytes(Bytes) -> Result[@section5.Grib2Section5Decoded, @section1.Grib2SectionCodecError]
+
+pub fn decode_section7_bytes(Bytes, Int) -> Result[@section7.Grib2Section7Decoded, @section1.Grib2SectionCodecError]
+
 pub fn encode_section1_bytes(@section1.Grib2Section1Decoded) -> Bytes
 
 pub fn encode_section3_bytes(@section3.Grib2Section3Decoded) -> Bytes
 
 pub fn encode_section4_bytes(@section4.Grib2Section4Decoded) -> Bytes
+
+pub fn encode_section5_bytes(@section5.Grib2Section5Decoded) -> Bytes
+
+pub fn encode_section7_bytes(@section7.Grib2Section7Decoded) -> Bytes
 
 // Errors
 
@@ -30,6 +40,10 @@ pub using @section1 {type Grib2Section1Decoded}
 pub using @section3 {type Grib2Section3Decoded}
 
 pub using @section4 {type Grib2Section4Decoded}
+
+pub using @section5 {type Grib2Section5Decoded}
+
+pub using @section7 {type Grib2Section7Decoded}
 
 pub using @section1 {type Grib2SectionCodecError}
 
