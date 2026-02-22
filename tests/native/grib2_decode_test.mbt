@@ -612,6 +612,30 @@ test "table lookup foundation: parameter and level known-unknown split" {
     content="parameter_number=disc=0,cat=15,param=-1",
   )
   inspect(
+    @lib.decode_parameter_number_name(0, 16, 3).display(),
+    content="RETOP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 16, 44).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 16, 198).display(),
+    content="MAXREF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 16, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 16, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 16, -1).display(),
+    content="parameter_number=disc=0,cat=16,param=-1",
+  )
+  inspect(
     @lib.decode_parameter_number_name(0, 0, 193).display(),
     content="TTRAD",
   )
@@ -778,6 +802,18 @@ test "table lookup foundation: parameter and level known-unknown split" {
   inspect(
     @lib.decode_parameter_name(0, 15, -1).display(),
     content="disc=0,cat=15,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 16, 3).display(), content="RETOP")
+  inspect(@lib.decode_parameter_name(0, 16, 44).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 16, 198).display(), content="MAXREF")
+  inspect(
+    @lib.decode_parameter_name(0, 16, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 16, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 16, -1).display(),
+    content="disc=0,cat=16,param=-1",
   )
   inspect(
     @lib.decode_parameter_name(0, 99, 99).display(),
