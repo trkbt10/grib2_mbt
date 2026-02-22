@@ -60,6 +60,9 @@ This checklist is the execution control board for the GRIB2 parser/reader/writer
 - [x] Table 4.2-0-5 longwave radiation parameter decode (known/unknown split)
 - [x] Table 4.2-0-6 cloud parameter decode (known/unknown split)
 - [x] Table 4.2-0-7 thermodynamic stability parameter decode (known/unknown split)
+- [x] Table 4.2-0-13 aerosol parameter decode (known/unknown split)
+- [x] Table 4.2-0-14 trace gases parameter decode (known/unknown split)
+- [x] Table 4.2-0-15 radar parameter decode (known/unknown split)
 - [x] Context fields for var/lev/time extraction
 - [x] CLI output parity improvements for all baseline options
 

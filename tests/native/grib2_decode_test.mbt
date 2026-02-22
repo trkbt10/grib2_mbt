@@ -543,6 +543,75 @@ test "table lookup foundation: parameter and level known-unknown split" {
     content="parameter_number=disc=0,cat=7,param=-1",
   )
   inspect(
+    @lib.decode_parameter_number_name(0, 13, 0).display(),
+    content="AEROT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 13, 22).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 13, 194).display(),
+    content="LPMTF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 13, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 13, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 13, -1).display(),
+    content="parameter_number=disc=0,cat=13,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, 0).display(),
+    content="TOZNE",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, 5).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, 195).display(),
+    content="VDFOZ",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 14, -1).display(),
+    content="parameter_number=disc=0,cat=14,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(0, 15, 3).display(), content="VIL")
+  inspect(
+    @lib.decode_parameter_number_name(0, 15, 44).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 15, 192).display(),
+    content="RADARVIL",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 15, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 15, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 15, -1).display(),
+    content="parameter_number=disc=0,cat=15,param=-1",
+  )
+  inspect(
     @lib.decode_parameter_number_name(0, 0, 193).display(),
     content="TTRAD",
   )
@@ -673,6 +742,42 @@ test "table lookup foundation: parameter and level known-unknown split" {
   inspect(
     @lib.decode_parameter_name(0, 7, -1).display(),
     content="disc=0,cat=7,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 13, 0).display(), content="AEROT")
+  inspect(@lib.decode_parameter_name(0, 13, 22).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 13, 194).display(), content="LPMTF")
+  inspect(
+    @lib.decode_parameter_name(0, 13, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 13, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 13, -1).display(),
+    content="disc=0,cat=13,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 14, 0).display(), content="TOZNE")
+  inspect(@lib.decode_parameter_name(0, 14, 5).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 14, 195).display(), content="VDFOZ")
+  inspect(
+    @lib.decode_parameter_name(0, 14, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 14, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 14, -1).display(),
+    content="disc=0,cat=14,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 15, 3).display(), content="VIL")
+  inspect(@lib.decode_parameter_name(0, 15, 44).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 15, 192).display(), content="RADARVIL")
+  inspect(
+    @lib.decode_parameter_name(0, 15, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 15, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 15, -1).display(),
+    content="disc=0,cat=15,param=-1",
   )
   inspect(
     @lib.decode_parameter_name(0, 99, 99).display(),

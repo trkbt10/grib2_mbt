@@ -1788,6 +1788,126 @@ fn decode_parameter_number_4_2_0_7_name(parameter : Int) -> Grib2NameLookup {
 }
 
 ///|
+fn decode_parameter_number_4_2_0_13_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("AEROT")
+    192 => NameKnown("PMTC")
+    193 => NameKnown("PMTF")
+    194 => NameKnown("LPMTF")
+    195 => NameKnown("LIPMF")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 1 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=13,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_14_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("TOZNE")
+    1 => NameKnown("O3MR")
+    2 => NameKnown("TCIOZ")
+    192 => NameKnown("O3MR")
+    193 => NameKnown("OZCON")
+    194 => NameKnown("OZCAT")
+    195 => NameKnown("VDFOZ")
+    196 => NameKnown("POZ")
+    197 => NameKnown("TOZ")
+    198 => NameKnown("POZT")
+    199 => NameKnown("POZO")
+    200 => NameKnown("OZMAX1")
+    201 => NameKnown("OZMAX8")
+    202 => NameKnown("PDMAX1")
+    203 => NameKnown("PDMAX24")
+    204 => NameKnown("ALD2")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 3 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=14,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_15_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("BSWID")
+    1 => NameKnown("BREF")
+    2 => NameKnown("BRVEL")
+    3 => NameKnown("VIL")
+    4 => NameKnown("LMAXBR")
+    5 => NameKnown("PREC")
+    6 => NameKnown("RDSP1")
+    7 => NameKnown("RDSP2")
+    8 => NameKnown("RDSP3")
+    9 => NameKnown("RFCD")
+    10 => NameKnown("RFCI")
+    11 => NameKnown("RFSNOW")
+    12 => NameKnown("RFRAIN")
+    13 => NameKnown("RFGRPL")
+    14 => NameKnown("RFHAIL")
+    15 => NameKnown("HSR")
+    16 => NameKnown("HSRHT")
+    17 => NameKnown("PRATERAD")
+    18 => NameKnown("RQI")
+    19 => NameKnown("RDQF")
+    20 => NameKnown("LMAXPRATE")
+    192 => NameKnown("RADARVIL")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 21 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=15,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_16_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("REFZR")
+    1 => NameKnown("REFZI")
+    2 => NameKnown("REFZC")
+    3 => NameKnown("RETOP")
+    4 => NameKnown("REFD")
+    5 => NameKnown("REFC")
+    6 => NameKnown("PRATEFRAD")
+    7 => NameKnown("LMAXPRATEF")
+    8 => NameKnown("LMAXREF")
+    192 => NameKnown("REFZR")
+    193 => NameKnown("REFZI")
+    194 => NameKnown("REFZC")
+    195 => NameKnown("REFD")
+    196 => NameKnown("REFC")
+    197 => NameKnown("RETOP")
+    198 => NameKnown("MAXREF")
+    199 => NameKnown("MAXREFC")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 9 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=16,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
 pub fn decode_parameter_name(
   discipline : Int,
   category : Int,
@@ -1817,8 +1937,19 @@ pub fn decode_parameter_name(
   if discipline == 0 && category == 7 {
     return decode_parameter_number_4_2_0_7_name(parameter)
   }
+  if discipline == 0 && category == 13 {
+    return decode_parameter_number_4_2_0_13_name(parameter)
+  }
+  if discipline == 0 && category == 14 {
+    return decode_parameter_number_4_2_0_14_name(parameter)
+  }
+  if discipline == 0 && category == 15 {
+    return decode_parameter_number_4_2_0_15_name(parameter)
+  }
+  if discipline == 0 && category == 16 {
+    return decode_parameter_number_4_2_0_16_name(parameter)
+  }
   match (discipline, category, parameter) {
-    (0, 14, 192) => NameKnown("O3MR")
     (2, 0, 196) => NameKnown("CNWAT")
     (2, 3, 192) => NameKnown("SOILL")
     (10, 0, 3) => NameKnown("HTSGW")
