@@ -2251,6 +2251,512 @@ pub(all) struct Grib2ProductTemplate489 {
 } derive(Show)
 
 ///|
+pub(all) struct Grib2ProductTemplate490 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  total_number_of_quantiles : Int
+  quantile_value : Int
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate491 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  number_of_categories : Int
+  categories : Array[Grib2CategoryForecastSpec]
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate492 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate493 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate494 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate495 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate496 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate497 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate498 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate499 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  scale_factor_of_wave_directions : Int
+  scaled_wave_directions : Array[Int]
+  scale_factor_of_wave_frequencies : Int
+  scaled_wave_frequencies : Array[Int]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2WaveSequenceParameter {
+  scale_factor : Int
+  scaled_value : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4100 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  scale_factor_of_wave_directions : Int
+  scaled_wave_directions : Array[Int]
+  scale_factor_of_wave_frequencies : Int
+  scaled_wave_frequencies : Array[Int]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4101 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_wave_direction_sequence : Int
+  number_of_wave_direction_sequence_parameters : Int
+  wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  type_of_wave_frequency_sequence : Int
+  number_of_wave_frequency_sequence_parameters : Int
+  wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4102 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  type_of_wave_direction_sequence : Int
+  number_of_wave_direction_sequence_parameters : Int
+  wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  type_of_wave_frequency_sequence : Int
+  number_of_wave_frequency_sequence_parameters : Int
+  wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4103 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_wave_period_interval : Int
+  scale_factor_of_lower_wave_period_limit : Int
+  scaled_value_of_lower_wave_period_limit : Int
+  scale_factor_of_upper_wave_period_limit : Int
+  scaled_value_of_upper_wave_period_limit : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4104 {
+  base : Grib2ProductTemplate4103
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4108 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_interval_for_wavelength : Int
+  scale_factor_of_first_wavelength : Int
+  scaled_value_of_first_wavelength : Int
+  scale_factor_of_second_wavelength : Int
+  scaled_value_of_second_wavelength : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4109 {
+  base : Grib2ProductTemplate4108
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4110 {
+  base : Grib2ProductTemplate4108
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4111 {
+  base : Grib2ProductTemplate4109
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ReferencePeriodAdditionalParameter {
+  scale_factor : Int
+  scaled_value : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ReferencePeriodTimeRangeSpec {
+  statistical_processing_type : Int
+  time_range_unit : Int
+  time_range_length : Int
+} derive(Show)
+
+///|
+pub(all) struct Grib2ReferencePeriodDefinition {
+  type_of_reference_dataset : Int
+  type_of_relation_to_reference_dataset : Int
+  number_of_additional_parameters : Int
+  additional_parameters : Array[Grib2ReferencePeriodAdditionalParameter]
+  start_year : Int
+  start_month : Int
+  start_day : Int
+  start_hour : Int
+  start_minute : Int
+  start_second : Int
+  sample_size : Int
+  number_of_reference_period_time_ranges : Int
+  reference_period_time_range_specs : Array[Grib2ReferencePeriodTimeRangeSpec]
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4105 {
+  base : Grib2ProductTemplate48
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4106 {
+  base : Grib2ProductTemplate48
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4107 {
+  base : Grib2ProductTemplate48
+  derived_forecast : Int
+  number_of_forecasts_in_ensemble : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2ProductTemplate4112 {
+  base : Grib2ProductTemplate48
+  forecast_probability_number : Int
+  total_number_of_forecast_probabilities : Int
+  probability_type : Int
+  scale_factor_of_lower_limit : Int
+  scaled_value_of_lower_limit : Int
+  scale_factor_of_upper_limit : Int
+  scaled_value_of_upper_limit : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
 pub(all) enum Grib2Section4TemplateData {
   ProductTemplate40(Grib2ProductTemplate40)
   ProductTemplate41(Grib2ProductTemplate41)
@@ -2318,6 +2824,29 @@ pub(all) enum Grib2Section4TemplateData {
   ProductTemplate487(Grib2ProductTemplate487)
   ProductTemplate488(Grib2ProductTemplate488)
   ProductTemplate489(Grib2ProductTemplate489)
+  ProductTemplate490(Grib2ProductTemplate490)
+  ProductTemplate491(Grib2ProductTemplate491)
+  ProductTemplate492(Grib2ProductTemplate492)
+  ProductTemplate493(Grib2ProductTemplate493)
+  ProductTemplate494(Grib2ProductTemplate494)
+  ProductTemplate495(Grib2ProductTemplate495)
+  ProductTemplate496(Grib2ProductTemplate496)
+  ProductTemplate497(Grib2ProductTemplate497)
+  ProductTemplate498(Grib2ProductTemplate498)
+  ProductTemplate499(Grib2ProductTemplate499)
+  ProductTemplate4100(Grib2ProductTemplate4100)
+  ProductTemplate4101(Grib2ProductTemplate4101)
+  ProductTemplate4102(Grib2ProductTemplate4102)
+  ProductTemplate4103(Grib2ProductTemplate4103)
+  ProductTemplate4104(Grib2ProductTemplate4104)
+  ProductTemplate4105(Grib2ProductTemplate4105)
+  ProductTemplate4106(Grib2ProductTemplate4106)
+  ProductTemplate4107(Grib2ProductTemplate4107)
+  ProductTemplate4108(Grib2ProductTemplate4108)
+  ProductTemplate4109(Grib2ProductTemplate4109)
+  ProductTemplate4110(Grib2ProductTemplate4110)
+  ProductTemplate4111(Grib2ProductTemplate4111)
+  ProductTemplate4112(Grib2ProductTemplate4112)
   ProductTemplateUnknown(Int, Bytes)
 } derive(Show)
 
@@ -9274,6 +9803,2116 @@ fn typed_decode_template_485(
 }
 
 ///|
+fn typed_decode_template_486(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate486, Grib2SectionCodecError] {
+  if template_payload.length() != 29 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.86 expected 29 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 5,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[8].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 9),
+    type_of_first_fixed_surface: template_payload[13]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[14]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 15,
+    ),
+    type_of_second_fixed_surface: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[20]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 21,
+    ),
+    total_number_of_quantiles: typed_read_u16_be_view(template_payload, 25),
+    quantile_value: typed_read_u16_be_view(template_payload, 27),
+  })
+}
+
+///|
+fn typed_decode_template_487(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate487, Grib2SectionCodecError] {
+  if template_payload.length() < 41 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.87 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match typed_decode_template_486(template_payload.sub(end=29)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let n = template_payload[36].to_uint().reinterpret_as_int()
+  let required = 41 + n * 12
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.87 time-range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    base,
+    end_year: typed_read_u16_be_view(template_payload, 29),
+    end_month: template_payload[31].to_uint().reinterpret_as_int(),
+    end_day: template_payload[32].to_uint().reinterpret_as_int(),
+    end_hour: template_payload[33].to_uint().reinterpret_as_int(),
+    end_minute: template_payload[34].to_uint().reinterpret_as_int(),
+    end_second: template_payload[35].to_uint().reinterpret_as_int(),
+    number_of_time_ranges: n,
+    number_of_missing_values: typed_read_u32_be_view(template_payload, 37),
+    time_range_specs: typed_decode_time_range_specs(template_payload, 41, n),
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_488(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate488, Grib2SectionCodecError] {
+  if template_payload.length() < 37 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.88 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[18].to_uint().reinterpret_as_int()
+  let required = 19 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.88 analysis/forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let analysis_or_forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 19 + i * 18
+    analysis_or_forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[5]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[6]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 7,
+    ),
+    type_of_second_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 13,
+    ),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_analyses_or_forecasts_used: n,
+    analysis_or_forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_489(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate489, Grib2SectionCodecError] {
+  if template_payload.length() != 34 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.89 expected 34 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 10,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[13].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 14),
+    type_of_first_fixed_surface: template_payload[18]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 20,
+    ),
+    type_of_second_fixed_surface: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 26,
+    ),
+    total_number_of_quantiles: typed_read_u16_be_view(template_payload, 30),
+    quantile_value: typed_read_u16_be_view(template_payload, 32),
+  })
+}
+
+///|
+fn typed_decode_template_490(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate490, Grib2SectionCodecError] {
+  if template_payload.length() < 46 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.90 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[41].to_uint().reinterpret_as_int()
+  let required = 46 + n * 12
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.90 time-range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 10,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[13].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 14),
+    type_of_first_fixed_surface: template_payload[18]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 20,
+    ),
+    type_of_second_fixed_surface: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 26,
+    ),
+    total_number_of_quantiles: typed_read_u16_be_view(template_payload, 30),
+    quantile_value: typed_read_u16_be_view(template_payload, 32),
+    end_year: typed_read_u16_be_view(template_payload, 34),
+    end_month: template_payload[36].to_uint().reinterpret_as_int(),
+    end_day: template_payload[37].to_uint().reinterpret_as_int(),
+    end_hour: template_payload[38].to_uint().reinterpret_as_int(),
+    end_minute: template_payload[39].to_uint().reinterpret_as_int(),
+    end_second: template_payload[40].to_uint().reinterpret_as_int(),
+    number_of_time_ranges: n,
+    number_of_missing_values: typed_read_u32_be_view(template_payload, 42),
+    time_range_specs: typed_decode_time_range_specs(template_payload, 46, n),
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_491(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate491, Grib2SectionCodecError] {
+  if template_payload.length() < 26 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.91 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let nc = template_payload[25].to_uint().reinterpret_as_int()
+  let categories_offset = 26
+  let categories_length = nc * 12
+  let post_categories_offset = categories_offset + categories_length
+  if template_payload.length() < post_categories_offset + 12 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.91 category payload too short: expected at least " +
+        (post_categories_offset + 12).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let categories : Array[Grib2CategoryForecastSpec] = []
+  for i in 0..<nc {
+    let offset = categories_offset + i * 12
+    categories.push({
+      code_figure: template_payload[offset].to_uint().reinterpret_as_int(),
+      type_of_interval_for_first_and_second_limit: template_payload[offset + 1]
+      .to_uint()
+      .reinterpret_as_int(),
+      scale_factor_of_first_limit: template_payload[offset + 2]
+      .to_uint()
+      .reinterpret_as_int(),
+      scaled_value_of_first_limit: typed_read_u32_be_view(
+        template_payload,
+        offset + 3,
+      ),
+      scale_factor_of_second_limit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      scaled_value_of_second_limit: typed_read_u32_be_view(
+        template_payload,
+        offset + 8,
+      ),
+    })
+  }
+  let n = template_payload[post_categories_offset + 7]
+    .to_uint()
+    .reinterpret_as_int()
+  let required = post_categories_offset + 12 + n * 12
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.91 time-range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 5,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[8].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 9),
+    type_of_first_fixed_surface: template_payload[13]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[14]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 15,
+    ),
+    type_of_second_fixed_surface: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[20]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 21,
+    ),
+    number_of_categories: nc,
+    categories,
+    end_year: typed_read_u16_be_view(template_payload, post_categories_offset),
+    end_month: template_payload[post_categories_offset + 2]
+    .to_uint()
+    .reinterpret_as_int(),
+    end_day: template_payload[post_categories_offset + 3]
+    .to_uint()
+    .reinterpret_as_int(),
+    end_hour: template_payload[post_categories_offset + 4]
+    .to_uint()
+    .reinterpret_as_int(),
+    end_minute: template_payload[post_categories_offset + 5]
+    .to_uint()
+    .reinterpret_as_int(),
+    end_second: template_payload[post_categories_offset + 6]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_time_ranges: n,
+    number_of_missing_values: typed_read_u32_be_view(
+      template_payload,
+      post_categories_offset + 8,
+    ),
+    time_range_specs: typed_decode_time_range_specs(
+      template_payload,
+      post_categories_offset + 12,
+      n,
+    ),
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_492(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate492, Grib2SectionCodecError] {
+  if template_payload.length() < 40 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.92 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[21].to_uint().reinterpret_as_int()
+  let required = 22 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.92 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 22 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[5]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[6]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 7,
+    ),
+    type_of_second_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 13,
+    ),
+    type_of_ensemble_forecast: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[18].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[20]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_493(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate493, Grib2SectionCodecError] {
+  if template_payload.length() < 42 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.93 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[23].to_uint().reinterpret_as_int()
+  let required = 24 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.93 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 24 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 12,
+    ),
+    type_of_second_fixed_surface: template_payload[16]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 18,
+    ),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[22]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_494(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate494, Grib2SectionCodecError] {
+  if template_payload.length() < 45 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.94 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[26].to_uint().reinterpret_as_int()
+  let required = 27 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.94 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 27 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 12,
+    ),
+    type_of_second_fixed_surface: template_payload[16]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 18,
+    ),
+    type_of_ensemble_forecast: template_payload[22]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[23].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_495(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate495, Grib2SectionCodecError] {
+  if template_payload.length() < 44 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.95 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[25].to_uint().reinterpret_as_int()
+  let required = 26 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.95 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 26 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[5]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[6]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 7,
+    ),
+    type_of_second_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 13,
+    ),
+    statistical_process_used_to_calculate_fields_for_local_time_processing: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_unit: template_payload[18]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_length: typed_read_u32_be_view(
+      template_payload, 19,
+    ),
+    number_of_statistically_processed_fields_in_local_time_composite: template_payload[23]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_496(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate496, Grib2SectionCodecError] {
+  if template_payload.length() < 47 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.96 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[28].to_uint().reinterpret_as_int()
+  let required = 29 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.96 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 29 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[4]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[5]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[6]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 7,
+    ),
+    type_of_second_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 13,
+    ),
+    type_of_ensemble_forecast: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[18].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[19]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_process_used_to_calculate_fields_for_local_time_processing: template_payload[20]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_unit: template_payload[21]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_length: typed_read_u32_be_view(
+      template_payload, 22,
+    ),
+    number_of_statistically_processed_fields_in_local_time_composite: template_payload[26]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[27]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_497(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate497, Grib2SectionCodecError] {
+  if template_payload.length() < 49 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.97 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[30].to_uint().reinterpret_as_int()
+  let required = 31 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.97 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 31 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 12,
+    ),
+    type_of_second_fixed_surface: template_payload[16]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 18,
+    ),
+    statistical_process_used_to_calculate_fields_for_local_time_processing: template_payload[22]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_unit: template_payload[23]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_length: typed_read_u32_be_view(
+      template_payload, 24,
+    ),
+    number_of_statistically_processed_fields_in_local_time_composite: template_payload[28]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[29]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_498(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate498, Grib2SectionCodecError] {
+  if template_payload.length() < 34 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.98 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[33].to_uint().reinterpret_as_int()
+  let required = 34 + n * 18
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.98 forecast payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let forecast_specs : Array[Grib2Template488AnalysisForecastSpec] = []
+  for i in 0..<n {
+    let offset = 34 + i * 18
+    forecast_specs.push({
+      year: typed_read_u16_be_view(template_payload, offset),
+      month: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+      day: template_payload[offset + 3].to_uint().reinterpret_as_int(),
+      hour: template_payload[offset + 4].to_uint().reinterpret_as_int(),
+      minute: template_payload[offset + 5].to_uint().reinterpret_as_int(),
+      second: template_payload[offset + 6].to_uint().reinterpret_as_int(),
+      forecast_time_unit: template_payload[offset + 7]
+      .to_uint()
+      .reinterpret_as_int(),
+      forecast_time: typed_read_u32_be_view(template_payload, offset + 8),
+      number_of_time_increments: template_payload[offset + 12]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_unit: template_payload[offset + 13]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_increment_length: typed_read_u32_be_view(
+        template_payload,
+        offset + 14,
+      ),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    input_process_identifier: typed_read_u16_be_view(template_payload, 2),
+    input_originating_centre: typed_read_u16_be_view(template_payload, 4),
+    type_of_post_processing: template_payload[6].to_uint().reinterpret_as_int(),
+    type_of_generating_process: template_payload[7]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[9]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_first_fixed_surface: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 12,
+    ),
+    type_of_second_fixed_surface: template_payload[16]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[17]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 18,
+    ),
+    type_of_ensemble_forecast: template_payload[22]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[23].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_process_used_to_calculate_fields_for_local_time_processing: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_unit: template_payload[26]
+    .to_uint()
+    .reinterpret_as_int(),
+    statistical_processing_time_range_length: typed_read_u32_be_view(
+      template_payload, 27,
+    ),
+    number_of_statistically_processed_fields_in_local_time_composite: template_payload[31]
+    .to_uint()
+    .reinterpret_as_int(),
+    method_used_to_derive_data_field_values_at_local_time: template_payload[32]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_used: n,
+    forecast_specs,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_499(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate499, Grib2SectionCodecError] {
+  if template_payload.length() < 22 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.99 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let nd = typed_read_u16_be_view(template_payload, 4)
+  let nf = typed_read_u16_be_view(template_payload, 8)
+  let required = 23 + nd * 4 + nf * 4
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.99 wave table payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let scaled_wave_directions : Array[Int] = []
+  for i in 0..<nd {
+    let offset = 22 + i * 4
+    scaled_wave_directions.push(
+      typed_read_u32_be_view(template_payload, offset),
+    )
+  }
+  let frequency_scale_factor_offset = 22 + nd * 4
+  let scaled_wave_frequencies : Array[Int] = []
+  for i in 0..<nf {
+    let offset = frequency_scale_factor_offset + 1 + i * 4
+    scaled_wave_frequencies.push(
+      typed_read_u32_be_view(template_payload, offset),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    wave_direction_number: typed_read_u16_be_view(template_payload, 2),
+    number_of_wave_directions: nd,
+    wave_frequency_number: typed_read_u16_be_view(template_payload, 6),
+    number_of_wave_frequencies: nf,
+    type_of_generating_process: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 13,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[16].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 17),
+    scale_factor_of_wave_directions: template_payload[21]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_wave_directions,
+    scale_factor_of_wave_frequencies: template_payload[frequency_scale_factor_offset]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_wave_frequencies,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4100(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4100, Grib2SectionCodecError] {
+  if template_payload.length() < 25 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.100 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let nd = typed_read_u16_be_view(template_payload, 4)
+  let nf = typed_read_u16_be_view(template_payload, 8)
+  let required = 26 + nd * 4 + nf * 4
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.100 wave table payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let scaled_wave_directions : Array[Int] = []
+  for i in 0..<nd {
+    let offset = 25 + i * 4
+    scaled_wave_directions.push(
+      typed_read_u32_be_view(template_payload, offset),
+    )
+  }
+  let frequency_scale_factor_offset = 25 + nd * 4
+  let scaled_wave_frequencies : Array[Int] = []
+  for i in 0..<nf {
+    let offset = frequency_scale_factor_offset + 1 + i * 4
+    scaled_wave_frequencies.push(
+      typed_read_u32_be_view(template_payload, offset),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    wave_direction_number: typed_read_u16_be_view(template_payload, 2),
+    number_of_wave_directions: nd,
+    wave_frequency_number: typed_read_u16_be_view(template_payload, 6),
+    number_of_wave_frequencies: nf,
+    type_of_generating_process: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 13,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[16].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 17),
+    type_of_ensemble_forecast: template_payload[21]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[22].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[23]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_wave_directions: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_wave_directions,
+    scale_factor_of_wave_frequencies: template_payload[frequency_scale_factor_offset]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_wave_frequencies,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4101(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4101, Grib2SectionCodecError] {
+  if template_payload.length() < 23 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.101 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let ndsp = template_payload[22].to_uint().reinterpret_as_int()
+  let direction_params_offset = 23
+  let post_direction_offset = direction_params_offset + ndsp * 5
+  if template_payload.length() < post_direction_offset + 2 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.101 sequence header too short: expected at least " +
+        (post_direction_offset + 2).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let nfsp = template_payload[post_direction_offset + 1]
+    .to_uint()
+    .reinterpret_as_int()
+  let required = post_direction_offset + 2 + nfsp * 5
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.101 sequence payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter] = []
+  for i in 0..<ndsp {
+    let offset = direction_params_offset + i * 5
+    wave_direction_sequence_parameters.push({
+      scale_factor: template_payload[offset].to_uint().reinterpret_as_int(),
+      scaled_value: typed_read_u32_be_view(template_payload, offset + 1),
+    })
+  }
+  let frequency_params_offset = post_direction_offset + 2
+  let wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter] = []
+  for i in 0..<nfsp {
+    let offset = frequency_params_offset + i * 5
+    wave_frequency_sequence_parameters.push({
+      scale_factor: template_payload[offset].to_uint().reinterpret_as_int(),
+      scaled_value: typed_read_u32_be_view(template_payload, offset + 1),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    wave_direction_number: typed_read_u16_be_view(template_payload, 2),
+    number_of_wave_directions: typed_read_u16_be_view(template_payload, 4),
+    wave_frequency_number: typed_read_u16_be_view(template_payload, 6),
+    number_of_wave_frequencies: typed_read_u16_be_view(template_payload, 8),
+    type_of_generating_process: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 13,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[16].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 17),
+    type_of_wave_direction_sequence: template_payload[21]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_wave_direction_sequence_parameters: ndsp,
+    wave_direction_sequence_parameters,
+    type_of_wave_frequency_sequence: template_payload[post_direction_offset]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_wave_frequency_sequence_parameters: nfsp,
+    wave_frequency_sequence_parameters,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4102(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4102, Grib2SectionCodecError] {
+  if template_payload.length() < 26 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.102 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let ndsp = template_payload[25].to_uint().reinterpret_as_int()
+  let direction_params_offset = 26
+  let post_direction_offset = direction_params_offset + ndsp * 5
+  if template_payload.length() < post_direction_offset + 2 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.102 sequence header too short: expected at least " +
+        (post_direction_offset + 2).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let nfsp = template_payload[post_direction_offset + 1]
+    .to_uint()
+    .reinterpret_as_int()
+  let required = post_direction_offset + 2 + nfsp * 5
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.102 sequence payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter] = []
+  for i in 0..<ndsp {
+    let offset = direction_params_offset + i * 5
+    wave_direction_sequence_parameters.push({
+      scale_factor: template_payload[offset].to_uint().reinterpret_as_int(),
+      scaled_value: typed_read_u32_be_view(template_payload, offset + 1),
+    })
+  }
+  let frequency_params_offset = post_direction_offset + 2
+  let wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter] = []
+  for i in 0..<nfsp {
+    let offset = frequency_params_offset + i * 5
+    wave_frequency_sequence_parameters.push({
+      scale_factor: template_payload[offset].to_uint().reinterpret_as_int(),
+      scaled_value: typed_read_u32_be_view(template_payload, offset + 1),
+    })
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    wave_direction_number: typed_read_u16_be_view(template_payload, 2),
+    number_of_wave_directions: typed_read_u16_be_view(template_payload, 4),
+    wave_frequency_number: typed_read_u16_be_view(template_payload, 6),
+    number_of_wave_frequencies: typed_read_u16_be_view(template_payload, 8),
+    type_of_generating_process: template_payload[10]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[11]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[12]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 13,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[16].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 17),
+    type_of_ensemble_forecast: template_payload[21]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[22].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[23]
+    .to_uint()
+    .reinterpret_as_int(),
+    type_of_wave_direction_sequence: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_wave_direction_sequence_parameters: ndsp,
+    wave_direction_sequence_parameters,
+    type_of_wave_frequency_sequence: template_payload[post_direction_offset]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_wave_frequency_sequence_parameters: nfsp,
+    wave_frequency_sequence_parameters,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4103(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4103, Grib2SectionCodecError] {
+  if template_payload.length() != 36 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.103 expected 36 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_wave_period_interval: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_lower_wave_period_limit: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_lower_wave_period_limit: typed_read_u32_be_view(
+      template_payload, 4,
+    ),
+    scale_factor_of_upper_wave_period_limit: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_upper_wave_period_limit: typed_read_u32_be_view(
+      template_payload, 9,
+    ),
+    type_of_generating_process: template_payload[13]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[14]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 16,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[18]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[19].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 20),
+    type_of_first_fixed_surface: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 26,
+    ),
+    type_of_second_fixed_surface: template_payload[30]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[31]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 32,
+    ),
+  })
+}
+
+///|
+fn typed_decode_template_4104(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4104, Grib2SectionCodecError] {
+  if template_payload.length() != 39 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.104 expected 39 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match typed_decode_template_4103(template_payload.sub(end=36)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    type_of_ensemble_forecast: template_payload[36]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[37].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[38]
+    .to_uint()
+    .reinterpret_as_int(),
+  })
+}
+
+///|
+fn typed_decode_reference_period_definition(
+  template_payload : BytesView,
+  start_offset : Int,
+  label : String,
+) -> Result[(Grib2ReferencePeriodDefinition, Int), Grib2SectionCodecError] {
+  if template_payload.length() < start_offset + 3 {
+    return Err(
+      InvalidSectionLength(
+        label +
+        " reference-period header too short: expected at least " +
+        (start_offset + 3).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let na = template_payload[start_offset + 2].to_uint().reinterpret_as_int()
+  let additional_offset = start_offset + 3
+  let post_additional_offset = additional_offset + na * 5
+  if template_payload.length() < post_additional_offset + 12 {
+    return Err(
+      InvalidSectionLength(
+        label +
+        " reference-period body too short: expected at least " +
+        (post_additional_offset + 12).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let additional_parameters : Array[Grib2ReferencePeriodAdditionalParameter] = []
+  for i in 0..<na {
+    let offset = additional_offset + i * 5
+    additional_parameters.push({
+      scale_factor: template_payload[offset].to_uint().reinterpret_as_int(),
+      scaled_value: typed_read_u32_be_view(template_payload, offset + 1),
+    })
+  }
+  let nr = template_payload[post_additional_offset + 11]
+    .to_uint()
+    .reinterpret_as_int()
+  let range_specs_offset = post_additional_offset + 12
+  let required = range_specs_offset + nr * 6
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        label +
+        " reference-period range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let reference_period_time_range_specs : Array[
+    Grib2ReferencePeriodTimeRangeSpec,
+  ] = []
+  for i in 0..<nr {
+    let offset = range_specs_offset + i * 6
+    reference_period_time_range_specs.push({
+      statistical_processing_type: template_payload[offset]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_range_unit: template_payload[offset + 1]
+      .to_uint()
+      .reinterpret_as_int(),
+      time_range_length: typed_read_u32_be_view(template_payload, offset + 2),
+    })
+  }
+  Ok(
+    (
+      {
+        type_of_reference_dataset: template_payload[start_offset]
+        .to_uint()
+        .reinterpret_as_int(),
+        type_of_relation_to_reference_dataset: template_payload[start_offset + 1]
+        .to_uint()
+        .reinterpret_as_int(),
+        number_of_additional_parameters: na,
+        additional_parameters,
+        start_year: typed_read_u16_be_view(
+          template_payload, post_additional_offset,
+        ),
+        start_month: template_payload[post_additional_offset + 2]
+        .to_uint()
+        .reinterpret_as_int(),
+        start_day: template_payload[post_additional_offset + 3]
+        .to_uint()
+        .reinterpret_as_int(),
+        start_hour: template_payload[post_additional_offset + 4]
+        .to_uint()
+        .reinterpret_as_int(),
+        start_minute: template_payload[post_additional_offset + 5]
+        .to_uint()
+        .reinterpret_as_int(),
+        start_second: template_payload[post_additional_offset + 6]
+        .to_uint()
+        .reinterpret_as_int(),
+        sample_size: typed_read_u32_be_view(
+          template_payload,
+          post_additional_offset + 7,
+        ),
+        number_of_reference_period_time_ranges: nr,
+        reference_period_time_range_specs,
+      },
+      required,
+    ),
+  )
+}
+
+///|
+fn typed_decode_template_4105(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4105, Grib2SectionCodecError] {
+  if template_payload.length() < 37 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.105 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[32].to_uint().reinterpret_as_int()
+  let time_required = 37 + n * 12
+  if template_payload.length() < time_required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.105 time-range payload too short: expected at least " +
+        time_required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match
+    typed_decode_template_48(template_payload.sub(end=time_required)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let (reference_period, required) = match
+    typed_decode_reference_period_definition(
+      template_payload, time_required, "template 4.105",
+    ) {
+    Ok(result) => result
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    reference_period,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4106(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4106, Grib2SectionCodecError] {
+  if template_payload.length() < 40 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.106 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[32].to_uint().reinterpret_as_int()
+  let time_required = 37 + n * 12
+  if template_payload.length() < time_required + 3 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.106 ensemble payload too short: expected at least " +
+        (time_required + 3).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match
+    typed_decode_template_48(template_payload.sub(end=time_required)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let (reference_period, required) = match
+    typed_decode_reference_period_definition(
+      template_payload,
+      time_required + 3,
+      "template 4.106",
+    ) {
+    Ok(result) => result
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    type_of_ensemble_forecast: template_payload[time_required]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[time_required + 1]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[time_required + 2]
+    .to_uint()
+    .reinterpret_as_int(),
+    reference_period,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4107(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4107, Grib2SectionCodecError] {
+  if template_payload.length() < 39 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.107 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[32].to_uint().reinterpret_as_int()
+  let time_required = 37 + n * 12
+  if template_payload.length() < time_required + 2 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.107 derived payload too short: expected at least " +
+        (time_required + 2).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match
+    typed_decode_template_48(template_payload.sub(end=time_required)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let (reference_period, required) = match
+    typed_decode_reference_period_definition(
+      template_payload,
+      time_required + 2,
+      "template 4.107",
+    ) {
+    Ok(result) => result
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    derived_forecast: template_payload[time_required]
+    .to_uint()
+    .reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[time_required + 1]
+    .to_uint()
+    .reinterpret_as_int(),
+    reference_period,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4108(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4108, Grib2SectionCodecError] {
+  if template_payload.length() != 36 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.108 expected 36 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    parameter_category: template_payload[0].to_uint().reinterpret_as_int(),
+    parameter_number: template_payload[1].to_uint().reinterpret_as_int(),
+    type_of_interval_for_wavelength: template_payload[2]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_wavelength: template_payload[3]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_wavelength: typed_read_u32_be_view(
+      template_payload, 4,
+    ),
+    scale_factor_of_second_wavelength: template_payload[8]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_wavelength: typed_read_u32_be_view(
+      template_payload, 9,
+    ),
+    type_of_generating_process: template_payload[13]
+    .to_uint()
+    .reinterpret_as_int(),
+    background_process_identifier: template_payload[14]
+    .to_uint()
+    .reinterpret_as_int(),
+    generating_process_identifier: template_payload[15]
+    .to_uint()
+    .reinterpret_as_int(),
+    hours_of_observational_data_cutoff: typed_read_u16_be_view(
+      template_payload, 16,
+    ),
+    minutes_of_observational_data_cutoff: template_payload[18]
+    .to_uint()
+    .reinterpret_as_int(),
+    time_range_unit: template_payload[19].to_uint().reinterpret_as_int(),
+    forecast_time: typed_read_u32_be_view(template_payload, 20),
+    type_of_first_fixed_surface: template_payload[24]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_first_fixed_surface: template_payload[25]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_first_fixed_surface: typed_read_u32_be_view(
+      template_payload, 26,
+    ),
+    type_of_second_fixed_surface: template_payload[30]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_second_fixed_surface: template_payload[31]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_second_fixed_surface: typed_read_u32_be_view(
+      template_payload, 32,
+    ),
+  })
+}
+
+///|
+fn typed_decode_template_4109(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4109, Grib2SectionCodecError] {
+  if template_payload.length() != 39 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.109 expected 39 octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match typed_decode_template_4108(template_payload.sub(end=36)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    type_of_ensemble_forecast: template_payload[36]
+    .to_uint()
+    .reinterpret_as_int(),
+    perturbation_number: template_payload[37].to_uint().reinterpret_as_int(),
+    number_of_forecasts_in_ensemble: template_payload[38]
+    .to_uint()
+    .reinterpret_as_int(),
+  })
+}
+
+///|
+fn typed_decode_template_4110(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4110, Grib2SectionCodecError] {
+  if template_payload.length() < 60 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.110 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match typed_decode_template_4108(template_payload.sub(end=36)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let n = template_payload[43].to_uint().reinterpret_as_int()
+  let required = 48 + n * 12
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.110 time-range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    base,
+    end_year: typed_read_u16_be_view(template_payload, 36),
+    end_month: template_payload[38].to_uint().reinterpret_as_int(),
+    end_day: template_payload[39].to_uint().reinterpret_as_int(),
+    end_hour: template_payload[40].to_uint().reinterpret_as_int(),
+    end_minute: template_payload[41].to_uint().reinterpret_as_int(),
+    end_second: template_payload[42].to_uint().reinterpret_as_int(),
+    number_of_time_ranges: n,
+    number_of_missing_values: typed_read_u32_be_view(template_payload, 44),
+    time_range_specs: typed_decode_time_range_specs(template_payload, 48, n),
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4111(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4111, Grib2SectionCodecError] {
+  if template_payload.length() < 63 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.111 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match typed_decode_template_4109(template_payload.sub(end=39)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let n = template_payload[46].to_uint().reinterpret_as_int()
+  let required = 51 + n * 12
+  if template_payload.length() < required {
+    return Err(
+      InvalidSectionLength(
+        "template 4.111 time-range payload too short: expected at least " +
+        required.to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok({
+    base,
+    end_year: typed_read_u16_be_view(template_payload, 39),
+    end_month: template_payload[41].to_uint().reinterpret_as_int(),
+    end_day: template_payload[42].to_uint().reinterpret_as_int(),
+    end_hour: template_payload[43].to_uint().reinterpret_as_int(),
+    end_minute: template_payload[44].to_uint().reinterpret_as_int(),
+    end_second: template_payload[45].to_uint().reinterpret_as_int(),
+    number_of_time_ranges: n,
+    number_of_missing_values: typed_read_u32_be_view(template_payload, 47),
+    time_range_specs: typed_decode_time_range_specs(template_payload, 51, n),
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
+fn typed_decode_template_4112(
+  template_payload : BytesView,
+) -> Result[Grib2ProductTemplate4112, Grib2SectionCodecError] {
+  if template_payload.length() < 37 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.112 too short: " + template_payload.length().to_string(),
+      ),
+    )
+  }
+  let n = template_payload[32].to_uint().reinterpret_as_int()
+  let time_required = 37 + n * 12
+  if template_payload.length() < time_required + 13 {
+    return Err(
+      InvalidSectionLength(
+        "template 4.112 probability payload too short: expected at least " +
+        (time_required + 13).to_string() +
+        ", got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  let base = match
+    typed_decode_template_48(template_payload.sub(end=time_required)) {
+    Ok(base) => base
+    Err(error) => return Err(error)
+  }
+  let probability_offset = time_required
+  let (reference_period, required) = match
+    typed_decode_reference_period_definition(
+      template_payload,
+      probability_offset + 13,
+      "template 4.112",
+    ) {
+    Ok(result) => result
+    Err(error) => return Err(error)
+  }
+  Ok({
+    base,
+    forecast_probability_number: template_payload[probability_offset]
+    .to_uint()
+    .reinterpret_as_int(),
+    total_number_of_forecast_probabilities: template_payload[probability_offset +
+    1]
+    .to_uint()
+    .reinterpret_as_int(),
+    probability_type: template_payload[probability_offset + 2]
+    .to_uint()
+    .reinterpret_as_int(),
+    scale_factor_of_lower_limit: template_payload[probability_offset + 3]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_lower_limit: typed_read_u32_be_view(
+      template_payload,
+      probability_offset + 4,
+    ),
+    scale_factor_of_upper_limit: template_payload[probability_offset + 8]
+    .to_uint()
+    .reinterpret_as_int(),
+    scaled_value_of_upper_limit: typed_read_u32_be_view(
+      template_payload,
+      probability_offset + 9,
+    ),
+    reference_period,
+    reserved_tail: template_payload.sub(start=required).to_bytes(),
+  })
+}
+
+///|
 fn typed_decode_template_420(
   template_payload : BytesView,
 ) -> Result[Grib2ProductTemplate420, Grib2SectionCodecError] {
@@ -11057,6 +13696,880 @@ fn typed_encode_template_485(template : Grib2ProductTemplate485) -> Bytes {
 }
 
 ///|
+fn typed_encode_template_486(template : Grib2ProductTemplate486) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  typed_push_u16_be(out, template.total_number_of_quantiles)
+  typed_push_u16_be(out, template.quantile_value)
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_487(template : Grib2ProductTemplate487) -> Bytes {
+  let out = typed_encode_template_486(template.base).to_array()
+  typed_push_u16_be(out, template.end_year)
+  out.push(template.end_month.to_byte())
+  out.push(template.end_day.to_byte())
+  out.push(template.end_hour.to_byte())
+  out.push(template.end_minute.to_byte())
+  out.push(template.end_second.to_byte())
+  out.push(template.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, template.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(template.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_488(template : Grib2ProductTemplate488) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_analyses_or_forecasts_used.to_byte())
+  for spec in template.analysis_or_forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_489(template : Grib2ProductTemplate489) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  typed_push_u16_be(out, template.total_number_of_quantiles)
+  typed_push_u16_be(out, template.quantile_value)
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_490(template : Grib2ProductTemplate490) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  typed_push_u16_be(out, template.total_number_of_quantiles)
+  typed_push_u16_be(out, template.quantile_value)
+  typed_push_u16_be(out, template.end_year)
+  out.push(template.end_month.to_byte())
+  out.push(template.end_day.to_byte())
+  out.push(template.end_hour.to_byte())
+  out.push(template.end_minute.to_byte())
+  out.push(template.end_second.to_byte())
+  out.push(template.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, template.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(template.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_491(template : Grib2ProductTemplate491) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(template.number_of_categories.to_byte())
+  for category in template.categories {
+    out.push(category.code_figure.to_byte())
+    out.push(category.type_of_interval_for_first_and_second_limit.to_byte())
+    out.push(category.scale_factor_of_first_limit.to_byte())
+    typed_push_u32_be(out, category.scaled_value_of_first_limit)
+    out.push(category.scale_factor_of_second_limit.to_byte())
+    typed_push_u32_be(out, category.scaled_value_of_second_limit)
+  }
+  typed_push_u16_be(out, template.end_year)
+  out.push(template.end_month.to_byte())
+  out.push(template.end_day.to_byte())
+  out.push(template.end_hour.to_byte())
+  out.push(template.end_minute.to_byte())
+  out.push(template.end_second.to_byte())
+  out.push(template.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, template.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(template.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_492(template : Grib2ProductTemplate492) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_493(template : Grib2ProductTemplate493) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_494(template : Grib2ProductTemplate494) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_495(template : Grib2ProductTemplate495) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(
+    template.statistical_process_used_to_calculate_fields_for_local_time_processing.to_byte(),
+  )
+  out.push(template.statistical_processing_time_range_unit.to_byte())
+  typed_push_u32_be(out, template.statistical_processing_time_range_length)
+  out.push(
+    template.number_of_statistically_processed_fields_in_local_time_composite.to_byte(),
+  )
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_496(template : Grib2ProductTemplate496) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(
+    template.statistical_process_used_to_calculate_fields_for_local_time_processing.to_byte(),
+  )
+  out.push(template.statistical_processing_time_range_unit.to_byte())
+  typed_push_u32_be(out, template.statistical_processing_time_range_length)
+  out.push(
+    template.number_of_statistically_processed_fields_in_local_time_composite.to_byte(),
+  )
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_497(template : Grib2ProductTemplate497) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(
+    template.statistical_process_used_to_calculate_fields_for_local_time_processing.to_byte(),
+  )
+  out.push(template.statistical_processing_time_range_unit.to_byte())
+  typed_push_u32_be(out, template.statistical_processing_time_range_length)
+  out.push(
+    template.number_of_statistically_processed_fields_in_local_time_composite.to_byte(),
+  )
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_498(template : Grib2ProductTemplate498) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.input_process_identifier)
+  typed_push_u16_be(out, template.input_originating_centre)
+  out.push(template.type_of_post_processing.to_byte())
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(
+    template.statistical_process_used_to_calculate_fields_for_local_time_processing.to_byte(),
+  )
+  out.push(template.statistical_processing_time_range_unit.to_byte())
+  typed_push_u32_be(out, template.statistical_processing_time_range_length)
+  out.push(
+    template.number_of_statistically_processed_fields_in_local_time_composite.to_byte(),
+  )
+  out.push(
+    template.method_used_to_derive_data_field_values_at_local_time.to_byte(),
+  )
+  out.push(template.number_of_forecasts_used.to_byte())
+  for spec in template.forecast_specs {
+    typed_push_u16_be(out, spec.year)
+    out.push(spec.month.to_byte())
+    out.push(spec.day.to_byte())
+    out.push(spec.hour.to_byte())
+    out.push(spec.minute.to_byte())
+    out.push(spec.second.to_byte())
+    out.push(spec.forecast_time_unit.to_byte())
+    typed_push_u32_be(out, spec.forecast_time)
+    out.push(spec.number_of_time_increments.to_byte())
+    out.push(spec.time_increment_unit.to_byte())
+    typed_push_u32_be(out, spec.time_increment_length)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_499(template : Grib2ProductTemplate499) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.wave_direction_number)
+  typed_push_u16_be(out, template.number_of_wave_directions)
+  typed_push_u16_be(out, template.wave_frequency_number)
+  typed_push_u16_be(out, template.number_of_wave_frequencies)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.scale_factor_of_wave_directions.to_byte())
+  for direction in template.scaled_wave_directions {
+    typed_push_u32_be(out, direction)
+  }
+  out.push(template.scale_factor_of_wave_frequencies.to_byte())
+  for frequency in template.scaled_wave_frequencies {
+    typed_push_u32_be(out, frequency)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4100(template : Grib2ProductTemplate4100) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.wave_direction_number)
+  typed_push_u16_be(out, template.number_of_wave_directions)
+  typed_push_u16_be(out, template.wave_frequency_number)
+  typed_push_u16_be(out, template.number_of_wave_frequencies)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(template.scale_factor_of_wave_directions.to_byte())
+  for direction in template.scaled_wave_directions {
+    typed_push_u32_be(out, direction)
+  }
+  out.push(template.scale_factor_of_wave_frequencies.to_byte())
+  for frequency in template.scaled_wave_frequencies {
+    typed_push_u32_be(out, frequency)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4101(template : Grib2ProductTemplate4101) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.wave_direction_number)
+  typed_push_u16_be(out, template.number_of_wave_directions)
+  typed_push_u16_be(out, template.wave_frequency_number)
+  typed_push_u16_be(out, template.number_of_wave_frequencies)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_wave_direction_sequence.to_byte())
+  out.push(template.number_of_wave_direction_sequence_parameters.to_byte())
+  for parameter in template.wave_direction_sequence_parameters {
+    out.push(parameter.scale_factor.to_byte())
+    typed_push_u32_be(out, parameter.scaled_value)
+  }
+  out.push(template.type_of_wave_frequency_sequence.to_byte())
+  out.push(template.number_of_wave_frequency_sequence_parameters.to_byte())
+  for parameter in template.wave_frequency_sequence_parameters {
+    out.push(parameter.scale_factor.to_byte())
+    typed_push_u32_be(out, parameter.scaled_value)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4102(template : Grib2ProductTemplate4102) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  typed_push_u16_be(out, template.wave_direction_number)
+  typed_push_u16_be(out, template.number_of_wave_directions)
+  typed_push_u16_be(out, template.wave_frequency_number)
+  typed_push_u16_be(out, template.number_of_wave_frequencies)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  out.push(template.type_of_wave_direction_sequence.to_byte())
+  out.push(template.number_of_wave_direction_sequence_parameters.to_byte())
+  for parameter in template.wave_direction_sequence_parameters {
+    out.push(parameter.scale_factor.to_byte())
+    typed_push_u32_be(out, parameter.scaled_value)
+  }
+  out.push(template.type_of_wave_frequency_sequence.to_byte())
+  out.push(template.number_of_wave_frequency_sequence_parameters.to_byte())
+  for parameter in template.wave_frequency_sequence_parameters {
+    out.push(parameter.scale_factor.to_byte())
+    typed_push_u32_be(out, parameter.scaled_value)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4103(template : Grib2ProductTemplate4103) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_wave_period_interval.to_byte())
+  out.push(template.scale_factor_of_lower_wave_period_limit.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_lower_wave_period_limit)
+  out.push(template.scale_factor_of_upper_wave_period_limit.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_upper_wave_period_limit)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4104(template : Grib2ProductTemplate4104) -> Bytes {
+  let out = typed_encode_template_4103(template.base).to_array()
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_reference_period_definition(
+  reference_period : Grib2ReferencePeriodDefinition,
+) -> Array[Byte] {
+  let out : Array[Byte] = []
+  out.push(reference_period.type_of_reference_dataset.to_byte())
+  out.push(reference_period.type_of_relation_to_reference_dataset.to_byte())
+  out.push(reference_period.number_of_additional_parameters.to_byte())
+  for parameter in reference_period.additional_parameters {
+    out.push(parameter.scale_factor.to_byte())
+    typed_push_u32_be(out, parameter.scaled_value)
+  }
+  typed_push_u16_be(out, reference_period.start_year)
+  out.push(reference_period.start_month.to_byte())
+  out.push(reference_period.start_day.to_byte())
+  out.push(reference_period.start_hour.to_byte())
+  out.push(reference_period.start_minute.to_byte())
+  out.push(reference_period.start_second.to_byte())
+  typed_push_u32_be(out, reference_period.sample_size)
+  out.push(reference_period.number_of_reference_period_time_ranges.to_byte())
+  for spec in reference_period.reference_period_time_range_specs {
+    out.push(spec.statistical_processing_type.to_byte())
+    out.push(spec.time_range_unit.to_byte())
+    typed_push_u32_be(out, spec.time_range_length)
+  }
+  out
+}
+
+///|
+fn typed_encode_template_48_core_without_tail(
+  base : Grib2ProductTemplate48,
+) -> Array[Byte] {
+  let out = typed_encode_template_40(base.base).to_array()
+  typed_push_u16_be(out, base.end_year)
+  out.push(base.end_month.to_byte())
+  out.push(base.end_day.to_byte())
+  out.push(base.end_hour.to_byte())
+  out.push(base.end_minute.to_byte())
+  out.push(base.end_second.to_byte())
+  out.push(base.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, base.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(base.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  out
+}
+
+///|
+fn typed_encode_template_4105(template : Grib2ProductTemplate4105) -> Bytes {
+  let out = typed_encode_template_48_core_without_tail(template.base)
+  let reference = typed_encode_reference_period_definition(
+    template.reference_period,
+  )
+  for b in reference {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4106(template : Grib2ProductTemplate4106) -> Bytes {
+  let out = typed_encode_template_48_core_without_tail(template.base)
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  let reference = typed_encode_reference_period_definition(
+    template.reference_period,
+  )
+  for b in reference {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4107(template : Grib2ProductTemplate4107) -> Bytes {
+  let out = typed_encode_template_48_core_without_tail(template.base)
+  out.push(template.derived_forecast.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  let reference = typed_encode_reference_period_definition(
+    template.reference_period,
+  )
+  for b in reference {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4108(template : Grib2ProductTemplate4108) -> Bytes {
+  let out : Array[Byte] = []
+  out.push(template.parameter_category.to_byte())
+  out.push(template.parameter_number.to_byte())
+  out.push(template.type_of_interval_for_wavelength.to_byte())
+  out.push(template.scale_factor_of_first_wavelength.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_wavelength)
+  out.push(template.scale_factor_of_second_wavelength.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_wavelength)
+  out.push(template.type_of_generating_process.to_byte())
+  out.push(template.background_process_identifier.to_byte())
+  out.push(template.generating_process_identifier.to_byte())
+  typed_push_u16_be(out, template.hours_of_observational_data_cutoff)
+  out.push(template.minutes_of_observational_data_cutoff.to_byte())
+  out.push(template.time_range_unit.to_byte())
+  typed_push_u32_be(out, template.forecast_time)
+  out.push(template.type_of_first_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_first_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_first_fixed_surface)
+  out.push(template.type_of_second_fixed_surface.to_byte())
+  out.push(template.scale_factor_of_second_fixed_surface.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4109(template : Grib2ProductTemplate4109) -> Bytes {
+  let out = typed_encode_template_4108(template.base).to_array()
+  out.push(template.type_of_ensemble_forecast.to_byte())
+  out.push(template.perturbation_number.to_byte())
+  out.push(template.number_of_forecasts_in_ensemble.to_byte())
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4110(template : Grib2ProductTemplate4110) -> Bytes {
+  let out = typed_encode_template_4108(template.base).to_array()
+  typed_push_u16_be(out, template.end_year)
+  out.push(template.end_month.to_byte())
+  out.push(template.end_day.to_byte())
+  out.push(template.end_hour.to_byte())
+  out.push(template.end_minute.to_byte())
+  out.push(template.end_second.to_byte())
+  out.push(template.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, template.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(template.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4111(template : Grib2ProductTemplate4111) -> Bytes {
+  let out = typed_encode_template_4109(template.base).to_array()
+  typed_push_u16_be(out, template.end_year)
+  out.push(template.end_month.to_byte())
+  out.push(template.end_day.to_byte())
+  out.push(template.end_hour.to_byte())
+  out.push(template.end_minute.to_byte())
+  out.push(template.end_second.to_byte())
+  out.push(template.number_of_time_ranges.to_byte())
+  typed_push_u32_be(out, template.number_of_missing_values)
+  let time_specs = typed_encode_time_range_specs(template.time_range_specs)
+  for b in time_specs {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+fn typed_encode_template_4112(template : Grib2ProductTemplate4112) -> Bytes {
+  let out = typed_encode_template_48_core_without_tail(template.base)
+  out.push(template.forecast_probability_number.to_byte())
+  out.push(template.total_number_of_forecast_probabilities.to_byte())
+  out.push(template.probability_type.to_byte())
+  out.push(template.scale_factor_of_lower_limit.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_lower_limit)
+  out.push(template.scale_factor_of_upper_limit.to_byte())
+  typed_push_u32_be(out, template.scaled_value_of_upper_limit)
+  let reference = typed_encode_reference_period_definition(
+    template.reference_period,
+  )
+  for b in reference {
+    out.push(b)
+  }
+  for b in template.reserved_tail {
+    out.push(b)
+  }
+  Bytes::from_array(out)
+}
+
+///|
 fn typed_encode_template_420(template : Grib2ProductTemplate420) -> Bytes {
   let out : Array[Byte] = []
   out.push(template.parameter_category.to_byte())
@@ -11423,6 +14936,141 @@ pub fn decode_section4_bytes(
       Ok(template_485) => ProductTemplate485(template_485)
       Err(error) => return Err(error)
     }
+  } else if template_number == 86 {
+    match typed_decode_template_486(template_payload) {
+      Ok(template_486) => ProductTemplate486(template_486)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 87 {
+    match typed_decode_template_487(template_payload) {
+      Ok(template_487) => ProductTemplate487(template_487)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 88 {
+    match typed_decode_template_488(template_payload) {
+      Ok(template_488) => ProductTemplate488(template_488)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 89 {
+    match typed_decode_template_489(template_payload) {
+      Ok(template_489) => ProductTemplate489(template_489)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 90 {
+    match typed_decode_template_490(template_payload) {
+      Ok(template_490) => ProductTemplate490(template_490)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 91 {
+    match typed_decode_template_491(template_payload) {
+      Ok(template_491) => ProductTemplate491(template_491)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 92 {
+    match typed_decode_template_492(template_payload) {
+      Ok(template_492) => ProductTemplate492(template_492)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 93 {
+    match typed_decode_template_493(template_payload) {
+      Ok(template_493) => ProductTemplate493(template_493)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 94 {
+    match typed_decode_template_494(template_payload) {
+      Ok(template_494) => ProductTemplate494(template_494)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 95 {
+    match typed_decode_template_495(template_payload) {
+      Ok(template_495) => ProductTemplate495(template_495)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 96 {
+    match typed_decode_template_496(template_payload) {
+      Ok(template_496) => ProductTemplate496(template_496)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 97 {
+    match typed_decode_template_497(template_payload) {
+      Ok(template_497) => ProductTemplate497(template_497)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 98 {
+    match typed_decode_template_498(template_payload) {
+      Ok(template_498) => ProductTemplate498(template_498)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 99 {
+    match typed_decode_template_499(template_payload) {
+      Ok(template_499) => ProductTemplate499(template_499)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 100 {
+    match typed_decode_template_4100(template_payload) {
+      Ok(template_4100) => ProductTemplate4100(template_4100)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 101 {
+    match typed_decode_template_4101(template_payload) {
+      Ok(template_4101) => ProductTemplate4101(template_4101)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 102 {
+    match typed_decode_template_4102(template_payload) {
+      Ok(template_4102) => ProductTemplate4102(template_4102)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 103 {
+    match typed_decode_template_4103(template_payload) {
+      Ok(template_4103) => ProductTemplate4103(template_4103)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 104 {
+    match typed_decode_template_4104(template_payload) {
+      Ok(template_4104) => ProductTemplate4104(template_4104)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 105 {
+    match typed_decode_template_4105(template_payload) {
+      Ok(template_4105) => ProductTemplate4105(template_4105)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 106 {
+    match typed_decode_template_4106(template_payload) {
+      Ok(template_4106) => ProductTemplate4106(template_4106)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 107 {
+    match typed_decode_template_4107(template_payload) {
+      Ok(template_4107) => ProductTemplate4107(template_4107)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 108 {
+    match typed_decode_template_4108(template_payload) {
+      Ok(template_4108) => ProductTemplate4108(template_4108)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 109 {
+    match typed_decode_template_4109(template_payload) {
+      Ok(template_4109) => ProductTemplate4109(template_4109)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 110 {
+    match typed_decode_template_4110(template_payload) {
+      Ok(template_4110) => ProductTemplate4110(template_4110)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 111 {
+    match typed_decode_template_4111(template_payload) {
+      Ok(template_4111) => ProductTemplate4111(template_4111)
+      Err(error) => return Err(error)
+    }
+  } else if template_number == 112 {
+    match typed_decode_template_4112(template_payload) {
+      Ok(template_4112) => ProductTemplate4112(template_4112)
+      Err(error) => return Err(error)
+    }
   } else {
     ProductTemplateUnknown(template_number, template_payload.to_bytes())
   }
@@ -11548,6 +15196,60 @@ pub fn encode_section4_bytes(section : Grib2Section4Decoded) -> Bytes {
       (84, typed_encode_template_484(template_484))
     ProductTemplate485(template_485) =>
       (85, typed_encode_template_485(template_485))
+    ProductTemplate486(template_486) =>
+      (86, typed_encode_template_486(template_486))
+    ProductTemplate487(template_487) =>
+      (87, typed_encode_template_487(template_487))
+    ProductTemplate488(template_488) =>
+      (88, typed_encode_template_488(template_488))
+    ProductTemplate489(template_489) =>
+      (89, typed_encode_template_489(template_489))
+    ProductTemplate490(template_490) =>
+      (90, typed_encode_template_490(template_490))
+    ProductTemplate491(template_491) =>
+      (91, typed_encode_template_491(template_491))
+    ProductTemplate492(template_492) =>
+      (92, typed_encode_template_492(template_492))
+    ProductTemplate493(template_493) =>
+      (93, typed_encode_template_493(template_493))
+    ProductTemplate494(template_494) =>
+      (94, typed_encode_template_494(template_494))
+    ProductTemplate495(template_495) =>
+      (95, typed_encode_template_495(template_495))
+    ProductTemplate496(template_496) =>
+      (96, typed_encode_template_496(template_496))
+    ProductTemplate497(template_497) =>
+      (97, typed_encode_template_497(template_497))
+    ProductTemplate498(template_498) =>
+      (98, typed_encode_template_498(template_498))
+    ProductTemplate499(template_499) =>
+      (99, typed_encode_template_499(template_499))
+    ProductTemplate4100(template_4100) =>
+      (100, typed_encode_template_4100(template_4100))
+    ProductTemplate4101(template_4101) =>
+      (101, typed_encode_template_4101(template_4101))
+    ProductTemplate4102(template_4102) =>
+      (102, typed_encode_template_4102(template_4102))
+    ProductTemplate4103(template_4103) =>
+      (103, typed_encode_template_4103(template_4103))
+    ProductTemplate4104(template_4104) =>
+      (104, typed_encode_template_4104(template_4104))
+    ProductTemplate4105(template_4105) =>
+      (105, typed_encode_template_4105(template_4105))
+    ProductTemplate4106(template_4106) =>
+      (106, typed_encode_template_4106(template_4106))
+    ProductTemplate4107(template_4107) =>
+      (107, typed_encode_template_4107(template_4107))
+    ProductTemplate4108(template_4108) =>
+      (108, typed_encode_template_4108(template_4108))
+    ProductTemplate4109(template_4109) =>
+      (109, typed_encode_template_4109(template_4109))
+    ProductTemplate4110(template_4110) =>
+      (110, typed_encode_template_4110(template_4110))
+    ProductTemplate4111(template_4111) =>
+      (111, typed_encode_template_4111(template_4111))
+    ProductTemplate4112(template_4112) =>
+      (112, typed_encode_template_4112(template_4112))
     ProductTemplateUnknown(template_number, raw) => (template_number, raw)
   }
   typed_push_u16_be(payload, template_number)
