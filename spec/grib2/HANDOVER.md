@@ -5,6 +5,19 @@ This file is the minimal context needed to continue work without drift.
 ## Current Point
 
 - Latest checkpoint commit: `b65ffeb`
+- Package split status:
+  - typed codec moved to `typed/` package
+  - typed package is now purpose-foldered:
+    - `typed/section1/` (Section1 + shared binary helpers)
+    - `typed/section3/` (Section3 model/decode/encode/dispatch)
+    - `typed/section4/` (Section4 model/decode/encode/dispatch)
+    - `typed/reexports.mbt` (facade re-export)
+  - root package keeps bridge wrappers in `grib2_typed_sections_bridge.mbt`
+  - typed tests moved to section files:
+    - `typed/section1/grib2_typed_sections_section1_test.mbt`
+    - `typed/section3/grib2_typed_sections_section3_test.mbt`
+    - `typed/section4/grib2_typed_sections_section4_test.mbt`
+  - Section 4 decode/encode/type files are split by template ranges (`*_040_463`, `*_467_499`, `*_4100_41101`)
 - Completed in Section 4 typed decode/encode:
   - Template 4.110
   - Template 4.111
@@ -66,7 +79,12 @@ This file is the minimal context needed to continue work without drift.
 - `spec/grib2/WORK_CHECKLIST.md`
 - `spec/grib2/IMPLEMENTATION_CHECKLIST.md`
 - `grib2_typed_sections.mbt`
-- `grib2_typed_sections_test.mbt`
+- `grib2_typed_sections_bridge.mbt`
+- `typed/section4/grib2_typed_sections_section4_dispatch.mbt`
+- `typed/section4/grib2_typed_sections_section4_decode_*.mbt`
+- `typed/section4/grib2_typed_sections_section4_encode_*.mbt`
+- `typed/section4/grib2_typed_sections_section4_types_*.mbt`
+- `typed/section4/grib2_typed_sections_section4_test.mbt`
 
 ## Implementation Rules
 
@@ -77,11 +95,11 @@ This file is the minimal context needed to continue work without drift.
 
 ## Per-Template Work Pattern (Section 4)
 
-1. Add typed struct(s) in `grib2_typed_sections.mbt`.
-2. Add decode function(s).
-3. Add encode function(s).
-4. Wire template number dispatch in Section 4 decode/encode.
-5. Add roundtrip tests in `grib2_typed_sections_test.mbt`.
+1. Add typed struct(s) in matching `typed/section4/grib2_typed_sections_section4_types_*.mbt`.
+2. Add decode function(s) in matching `typed/section4/grib2_typed_sections_section4_decode_*.mbt`.
+3. Add encode function(s) in matching `typed/section4/grib2_typed_sections_section4_encode_*.mbt`.
+4. Wire template number dispatch in `typed/section4/grib2_typed_sections_section4_dispatch.mbt`.
+5. Add roundtrip tests in `typed/section4/grib2_typed_sections_section4_test.mbt`.
 6. Update checklist progress.
 
 ## Multi-Agent Parallel Plan
@@ -109,8 +127,9 @@ This file is the minimal context needed to continue work without drift.
 Use focused tests first for speed:
 
 ```sh
-moon test grib2_typed_sections_test.mbt --target native --filter '*template411*'
-moon test grib2_typed_sections_test.mbt --target wasm --filter '*template411*'
+moon test typed/section4 --target native --filter '*template411*'
+moon test typed/section4 --target wasm --filter '*template411*'
+moon test typed/section3 --target native --filter '*unknown section3*'
 moon check --target native
 moon check --target wasm
 moon info --target native && moon fmt
@@ -125,8 +144,8 @@ Continue grib2_mbt from commit b65ffeb.
 Goal: keep implementing IMPLEMENTATION_CHECKLIST typed decode+encode from the first incomplete item.
 Section 4 is done through 4.1101, so start at 5.0.
 For each template:
-- add struct/decode/encode/dispatch in grib2_typed_sections.mbt
-- add roundtrip tests in grib2_typed_sections_test.mbt
+- add struct/decode/encode/dispatch in typed/section4/grib2_typed_sections_section4_*.mbt
+- add roundtrip tests in typed/section4/grib2_typed_sections_section4_test.mbt
 - update spec/grib2/WORK_CHECKLIST.md and IMPLEMENTATION_CHECKLIST.md
 Constraints:
 - no runtime/test dependency on wgrib2

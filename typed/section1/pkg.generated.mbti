@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/grib2_mbt/typed/section1"
+
+// Values
+pub fn decode_section1_bytes(Bytes) -> Result[Grib2Section1Decoded, Grib2SectionCodecError]
+
+pub fn encode_section1_bytes(Grib2Section1Decoded) -> Bytes
+
+pub fn typed_build_section(Int, Bytes) -> Bytes
+
+pub fn typed_push_u16_be(Array[Byte], Int) -> Unit
+
+pub fn typed_push_u24_be(Array[Byte], Int) -> Unit
+
+pub fn typed_push_u32_be(Array[Byte], Int) -> Unit
+
+pub fn typed_push_u64_be(Array[Byte], Grib2U64Be) -> Unit
+
+pub fn typed_read_u16_be(Bytes, Int) -> Int
+
+pub fn typed_read_u16_be_view(BytesView, Int) -> Int
+
+pub fn typed_read_u24_be_view(BytesView, Int) -> Int
+
+pub fn typed_read_u32_be(Bytes, Int) -> Int
+
+pub fn typed_read_u32_be_view(BytesView, Int) -> Int
+
+pub fn typed_read_u64_be_view(BytesView, Int) -> Grib2U64Be
+
+pub fn typed_validate_section_header(Bytes, Int) -> Result[Unit, Grib2SectionCodecError]
+
+// Errors
+pub(all) suberror Grib2SectionCodecError {
+  InvalidSectionLength(String)
+  InvalidSectionNumber(String)
+  UnsupportedTemplate(String)
+}
+pub impl Show for Grib2SectionCodecError
+
+// Types and methods
+pub(all) enum Grib2IdTemplate {
+  IdTemplateNone
+  IdTemplate10(Int)
+  IdTemplate11(Int)
+  IdTemplate12(Int, Int)
+  IdTemplateUnknown(Bytes)
+}
+pub impl Show for Grib2IdTemplate
+
+pub(all) struct Grib2Section1Decoded {
+  center : Int
+  subcenter : Int
+  master_table_version : Int
+  local_table_version : Int
+  significance_of_reference_time : Int
+  reference_year : Int
+  reference_month : Int
+  reference_day : Int
+  reference_hour : Int
+  reference_minute : Int
+  reference_second : Int
+  production_status : Int
+  processed_data_type : Int
+  identification_template : Grib2IdTemplate
+  reserved_octets_22_23 : Bytes
+  reserved_tail : Bytes
+}
+
+pub(all) struct Grib2U64Be {
+  high : Int
+  low : Int
+}
+pub impl Show for Grib2U64Be
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,686 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/grib2_mbt/typed/section3"
+
+import {
+  "trkbt10/grib2_mbt/typed/section1",
+}
+
+// Values
+pub fn decode_section3_bytes(Bytes) -> Result[Grib2Section3Decoded, @section1.Grib2SectionCodecError]
+
+pub fn encode_section3_bytes(Grib2Section3Decoded) -> Bytes
+
+// Errors
+
+// Types and methods
+pub(all) struct Grib2AzimuthRangeRadial {
+  starting_azimuth : Int
+  azimuthal_width : Int
+}
+pub impl Show for Grib2AzimuthRangeRadial
+
+pub(all) struct Grib2GridTemplate30 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  basic_angle : Int
+  subdivisions_of_basic_angle : Int
+  la1 : Int
+  lo1 : Int
+  resolution_and_component_flags : Int
+  la2 : Int
+  lo2 : Int
+  di : Int
+  dj : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate30
+
+pub(all) struct Grib2GridTemplate31 {
+  base : Grib2GridTemplate30
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+}
+pub impl Show for Grib2GridTemplate31
+
+pub(all) struct Grib2GridTemplate310 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  la1 : Int
+  lo1 : Int
+  resolution_and_component_flags : Int
+  lad : Int
+  la2 : Int
+  lo2 : Int
+  scanning_mode : Int
+  orientation_of_the_grid : Int
+  di : Int
+  dj : Int
+}
+pub impl Show for Grib2GridTemplate310
+
+pub(all) struct Grib2GridTemplate3100 {
+  n2 : Int
+  n3 : Int
+  ni : Int
+  nd : Int
+  latitude_of_the_pole_point : Int
+  longitude_of_the_pole_point : Int
+  longitude_of_the_centre_line_of_first_diamond : Int
+  grid_point_position : Int
+  numbering_order_of_diamonds : Int
+  scanning_mode_for_one_diamond : Int
+  nt : Int
+}
+pub impl Show for Grib2GridTemplate3100
+
+pub(all) struct Grib2GridTemplate31000 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  number_of_horizontal_points : Int
+  basic_angle : Int
+  subdivisions_of_basic_angle : Int
+  la1 : Int
+  lo1 : Int
+  scanning_mode : Int
+  la2 : Int
+  lo2 : Int
+  type_of_horizontal_line : Int
+  number_of_vertical_points : Int
+  physical_meaning_of_vertical_coordinate : Int
+  vertical_dimension_coordinate_values_definition : Int
+  nc : Int
+  vertical_coordinate_values_raw : Bytes
+}
+pub impl Show for Grib2GridTemplate31000
+
+pub(all) struct Grib2GridTemplate3101 {
+  shape_of_earth : Int
+  number_of_grid_used : Int
+  number_of_grid_in_reference : Int
+  uuid_of_horizontal_grid : Bytes
+}
+pub impl Show for Grib2GridTemplate3101
+
+pub(all) struct Grib2GridTemplate3110 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  nx : Int
+  ny : Int
+  latitude_of_tangency_point : Int
+  longitude_of_tangency_point : Int
+  resolution_and_component_flags : Int
+  dx : Int
+  dy : Int
+  projection_center_flag : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate3110
+
+pub(all) struct Grib2GridTemplate31100 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  number_of_horizontal_points : Int
+  basic_angle : Int
+  subdivisions_of_basic_angle : Int
+  la1 : Int
+  lo1 : Int
+  scanning_mode : Int
+  la2 : Int
+  lo2 : Int
+  type_of_horizontal_line : Int
+  nt : Int
+  unit_of_offset_from_reference_time : Int
+  offset_from_reference_of_first_time : Int
+  type_of_time_increment : Int
+  unit_of_time_increment : Int
+  time_increment : Int
+  last_year : Int
+  last_month : Int
+  last_day : Int
+  last_hour : Int
+  last_minute : Int
+  last_second : Int
+}
+pub impl Show for Grib2GridTemplate31100
+
+pub(all) struct Grib2GridTemplate312 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  lar : Int
+  lor : Int
+  resolution_and_component_flags : Int
+  m : Int
+  xr : Int
+  yr : Int
+  scanning_mode : Int
+  di : Int
+  dj : Int
+  x1 : Int
+  y1 : Int
+  x2 : Int
+  y2 : Int
+}
+pub impl Show for Grib2GridTemplate312
+
+pub(all) struct Grib2GridTemplate3120 {
+  nb : Int
+  nr : Int
+  la1 : Int
+  lo1 : Int
+  dx : Int
+  dstart : Int
+  scanning_mode : Int
+  radials : Array[Grib2AzimuthRangeRadial]
+}
+pub impl Show for Grib2GridTemplate3120
+
+pub(all) struct Grib2GridTemplate31200 {
+  nt : Int
+  unit_of_offset_from_reference_time : Int
+  offset_from_reference_of_first_time : Int
+  type_of_time_increment : Int
+  unit_of_time_increment : Int
+  time_increment : Int
+  last_year : Int
+  last_month : Int
+  last_day : Int
+  last_hour : Int
+  last_minute : Int
+  last_second : Int
+  number_of_vertical_points : Int
+  physical_meaning_of_vertical_coordinate : Int
+  vertical_dimension_coordinate_values_definition : Int
+  nc : Int
+  vertical_coordinate_values_raw : Bytes
+}
+pub impl Show for Grib2GridTemplate31200
+
+pub(all) struct Grib2GridTemplate313 {
+  base : Grib2GridTemplate310
+  nux : Int
+  ncx : Int
+  nuy : Int
+  ncy : Int
+}
+pub impl Show for Grib2GridTemplate313
+
+pub(all) struct Grib2GridTemplate3140 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  nx : Int
+  ny : Int
+  la1 : Int
+  lo1 : Int
+  standard_parallel : Int
+  central_longitude : Int
+  resolution_and_component_flags : Int
+  dx : Int
+  dy : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate3140
+
+pub(all) struct Grib2GridTemplate3150 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  resolution_and_component_flags : Int
+  nsides : Int
+  lo : Int
+  grid_point_position : Int
+  numbering_order : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate3150
+
+pub(all) struct Grib2GridTemplate32 {
+  base : Grib2GridTemplate30
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate32
+
+pub(all) struct Grib2GridTemplate320 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  nx : Int
+  ny : Int
+  la1 : Int
+  lo1 : Int
+  resolution_and_component_flags : Int
+  lad : Int
+  lov : Int
+  dx : Int
+  dy : Int
+  projection_center_flag : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate320
+
+pub(all) struct Grib2GridTemplate3204 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  reserved_octets_39_54 : Bytes
+  resolution_and_component_flags : Int
+  reserved_octets_56_71 : Bytes
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate3204
+
+pub(all) struct Grib2GridTemplate323 {
+  base : Grib2GridTemplate320
+  nux : Int
+  ncx : Int
+  nuy : Int
+  ncy : Int
+}
+pub impl Show for Grib2GridTemplate323
+
+pub(all) struct Grib2GridTemplate33 {
+  base : Grib2GridTemplate30
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate33
+
+pub(all) struct Grib2GridTemplate330 {
+  base : Grib2GridTemplate320
+  latin1 : Int
+  latin2 : Int
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+}
+pub impl Show for Grib2GridTemplate330
+
+pub(all) struct Grib2GridTemplate331 {
+  base : Grib2GridTemplate330
+}
+pub impl Show for Grib2GridTemplate331
+
+pub(all) struct Grib2GridTemplate332768 {
+  base : Grib2GridTemplate30
+}
+pub impl Show for Grib2GridTemplate332768
+
+pub(all) struct Grib2GridTemplate332769 {
+  base : Grib2GridTemplate30
+  latitude_of_grid_point_ni_nj : Int
+  longitude_of_grid_point_ni_nj : Int
+}
+pub impl Show for Grib2GridTemplate332769
+
+pub(all) struct Grib2GridTemplate333 {
+  base : Grib2GridTemplate330
+  nux : Int
+  ncx : Int
+  nuy : Int
+  ncy : Int
+}
+pub impl Show for Grib2GridTemplate333
+
+pub(all) struct Grib2GridTemplate34 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  basic_angle : Int
+  subdivisions_of_basic_angle : Int
+  resolution_and_component_flags : Int
+  scanning_mode : Int
+  longitude_list : Array[Int]
+  latitude_list : Array[Int]
+}
+pub impl Show for Grib2GridTemplate34
+
+pub(all) struct Grib2GridTemplate340 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  ni : Int
+  nj : Int
+  basic_angle : Int
+  subdivisions_of_basic_angle : Int
+  la1 : Int
+  lo1 : Int
+  resolution_and_component_flags : Int
+  la2 : Int
+  lo2 : Int
+  di : Int
+  n : Int
+  scanning_mode : Int
+}
+pub impl Show for Grib2GridTemplate340
+
+pub(all) struct Grib2GridTemplate341 {
+  base : Grib2GridTemplate340
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+}
+pub impl Show for Grib2GridTemplate341
+
+pub(all) struct Grib2GridTemplate342 {
+  base : Grib2GridTemplate340
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate342
+
+pub(all) struct Grib2GridTemplate343 {
+  base : Grib2GridTemplate340
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate343
+
+pub(all) struct Grib2GridTemplate35 {
+  base : Grib2GridTemplate34
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+}
+pub impl Show for Grib2GridTemplate35
+
+pub(all) struct Grib2GridTemplate350 {
+  j : Int
+  k : Int
+  m : Int
+  representation_type : Int
+  representation_mode : Int
+}
+pub impl Show for Grib2GridTemplate350
+
+pub(all) struct Grib2GridTemplate351 {
+  base : Grib2GridTemplate350
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+}
+pub impl Show for Grib2GridTemplate351
+
+pub(all) struct Grib2GridTemplate352 {
+  base : Grib2GridTemplate350
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate352
+
+pub(all) struct Grib2GridTemplate353 {
+  base : Grib2GridTemplate350
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+  latitude_of_stretching_pole : Int
+  longitude_of_stretching_pole : Int
+  stretching_factor : Int
+}
+pub impl Show for Grib2GridTemplate353
+
+pub(all) struct Grib2GridTemplate360 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  nx : Int
+  ny : Int
+  nc : Int
+  xshift : Int
+  yshift : Int
+  face_number : Int
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+  angle_of_rotation : Int
+  stretching_factor : Int
+  gnomonic_grid_spacing_parameter : Int
+  resolution_and_component_flags : Int
+  scanning_and_staggering_flags : Int
+}
+pub impl Show for Grib2GridTemplate360
+
+pub(all) struct Grib2GridTemplate361 {
+  spectral_representation_type : Int
+  n : Int
+  m : Int
+  bi_fourier_truncation_type : Int
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  la1 : Int
+  lo1 : Int
+  lad : Int
+  la2 : Int
+  lo2 : Int
+  orientation_of_the_grid : Int
+}
+pub impl Show for Grib2GridTemplate361
+
+pub(all) struct Grib2GridTemplate362 {
+  spectral_representation_type : Int
+  n : Int
+  m : Int
+  bi_fourier_truncation_type : Int
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  la1 : Int
+  lo1 : Int
+  resolution_and_component_flags : Int
+  lad : Int
+  lov : Int
+  projection_center_flag : Int
+}
+pub impl Show for Grib2GridTemplate362
+
+pub(all) struct Grib2GridTemplate363 {
+  spectral_representation_type : Int
+  n : Int
+  m : Int
+  bi_fourier_truncation_type : Int
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  la1 : Int
+  lo1 : Int
+  lad : Int
+  lov : Int
+  projection_center_flag : Int
+  latin1 : Int
+  latin2 : Int
+  latitude_of_southern_pole : Int
+  longitude_of_southern_pole : Int
+}
+pub impl Show for Grib2GridTemplate363
+
+pub(all) struct Grib2GridTemplate390 {
+  shape_of_earth : Int
+  scale_factor_radius : Int
+  scaled_value_radius : Int
+  scale_factor_major_axis : Int
+  scaled_value_major_axis : Int
+  scale_factor_minor_axis : Int
+  scaled_value_minor_axis : Int
+  nx : Int
+  ny : Int
+  latitude_of_sub_satellite_point : Int
+  longitude_of_sub_satellite_point : Int
+  resolution_and_component_flags : Int
+  dx : Int
+  dy : Int
+  xp : Int
+  yp : Int
+  scanning_mode : Int
+  orientation_of_the_grid : Int
+  nr : Int
+  xo : Int
+  yo : Int
+}
+pub impl Show for Grib2GridTemplate390
+
+pub(all) struct Grib2Section3Decoded {
+  source_of_grid_definition : Int
+  number_of_data_points : Int
+  optional_points_octet_count : Int
+  optional_points_interpretation : Int
+  template : Grib2Section3TemplateData
+  optional_points_raw : Bytes
+}
+
+pub(all) enum Grib2Section3TemplateData {
+  GridTemplate30(Grib2GridTemplate30)
+  GridTemplate31(Grib2GridTemplate31)
+  GridTemplate32(Grib2GridTemplate32)
+  GridTemplate33(Grib2GridTemplate33)
+  GridTemplate34(Grib2GridTemplate34)
+  GridTemplate35(Grib2GridTemplate35)
+  GridTemplate310(Grib2GridTemplate310)
+  GridTemplate312(Grib2GridTemplate312)
+  GridTemplate313(Grib2GridTemplate313)
+  GridTemplate320(Grib2GridTemplate320)
+  GridTemplate323(Grib2GridTemplate323)
+  GridTemplate330(Grib2GridTemplate330)
+  GridTemplate331(Grib2GridTemplate331)
+  GridTemplate333(Grib2GridTemplate333)
+  GridTemplate340(Grib2GridTemplate340)
+  GridTemplate341(Grib2GridTemplate341)
+  GridTemplate342(Grib2GridTemplate342)
+  GridTemplate343(Grib2GridTemplate343)
+  GridTemplate350(Grib2GridTemplate350)
+  GridTemplate351(Grib2GridTemplate351)
+  GridTemplate352(Grib2GridTemplate352)
+  GridTemplate353(Grib2GridTemplate353)
+  GridTemplate360(Grib2GridTemplate360)
+  GridTemplate361(Grib2GridTemplate361)
+  GridTemplate362(Grib2GridTemplate362)
+  GridTemplate363(Grib2GridTemplate363)
+  GridTemplate390(Grib2GridTemplate390)
+  GridTemplate3100(Grib2GridTemplate3100)
+  GridTemplate3101(Grib2GridTemplate3101)
+  GridTemplate3110(Grib2GridTemplate3110)
+  GridTemplate3120(Grib2GridTemplate3120)
+  GridTemplate3140(Grib2GridTemplate3140)
+  GridTemplate3150(Grib2GridTemplate3150)
+  GridTemplate3204(Grib2GridTemplate3204)
+  GridTemplate31000(Grib2GridTemplate31000)
+  GridTemplate31100(Grib2GridTemplate31100)
+  GridTemplate31200(Grib2GridTemplate31200)
+  GridTemplate332768(Grib2GridTemplate332768)
+  GridTemplate332769(Grib2GridTemplate332769)
+  GridTemplateUnknown(Int, Bytes)
+}
+pub impl Show for Grib2Section3TemplateData
+
+// Type aliases
+
+// Traits
+
