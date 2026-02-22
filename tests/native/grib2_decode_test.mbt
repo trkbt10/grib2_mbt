@@ -636,6 +636,102 @@ test "table lookup foundation: parameter and level known-unknown split" {
     content="parameter_number=disc=0,cat=16,param=-1",
   )
   inspect(
+    @lib.decode_parameter_number_name(0, 17, 1).display(),
+    content="LTPINX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 17, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 17, 192).display(),
+    content="LTNG",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 17, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 17, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 17, -1).display(),
+    content="parameter_number=disc=0,cat=17,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, 3).display(),
+    content="GDCES",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, 9).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, 25).display(),
+    content="GAMDOSER",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 18, -1).display(),
+    content="parameter_number=disc=0,cat=18,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 39).display(),
+    content="SEEINDEX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 60).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 219).display(),
+    content="TPFI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 228).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 250).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 19, -1).display(),
+    content="parameter_number=disc=0,cat=19,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 190, 0).display(),
+    content="ATEXT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 190, 50).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 190, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 190, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 190, -1).display(),
+    content="parameter_number=disc=0,cat=190,param=-1",
+  )
+  inspect(
     @lib.decode_parameter_number_name(0, 0, 193).display(),
     content="TTRAD",
   )
@@ -814,6 +910,54 @@ test "table lookup foundation: parameter and level known-unknown split" {
   inspect(
     @lib.decode_parameter_name(0, 16, -1).display(),
     content="disc=0,cat=16,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 17, 1).display(), content="LTPINX")
+  inspect(@lib.decode_parameter_name(0, 17, 100).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 17, 192).display(), content="LTNG")
+  inspect(
+    @lib.decode_parameter_name(0, 17, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 17, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 17, -1).display(),
+    content="disc=0,cat=17,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 18, 3).display(), content="GDCES")
+  inspect(@lib.decode_parameter_name(0, 18, 9).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 18, 25).display(), content="GAMDOSER")
+  inspect(
+    @lib.decode_parameter_name(0, 18, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 18, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 18, -1).display(),
+    content="disc=0,cat=18,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 19, 39).display(), content="SEEINDEX")
+  inspect(@lib.decode_parameter_name(0, 19, 60).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 19, 219).display(), content="TPFI")
+  inspect(@lib.decode_parameter_name(0, 19, 228).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(0, 19, 250).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 19, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 19, -1).display(),
+    content="disc=0,cat=19,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 190, 0).display(), content="ATEXT")
+  inspect(@lib.decode_parameter_name(0, 190, 50).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(0, 190, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 190, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 190, -1).display(),
+    content="disc=0,cat=190,param=-1",
   )
   inspect(
     @lib.decode_parameter_name(0, 99, 99).display(),

@@ -1908,6 +1908,198 @@ fn decode_parameter_number_4_2_0_16_name(parameter : Int) -> Grib2NameLookup {
 }
 
 ///|
+fn decode_parameter_number_4_2_0_17_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("LTNGSD")
+    1 => NameKnown("LTPINX")
+    2 => NameKnown("CDGDLTFD")
+    3 => NameKnown("CDCDLTFD")
+    4 => NameKnown("TLGTFD")
+    5 => NameKnown("SLNGPIDX")
+    192 => NameKnown("LTNG")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 6 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=17,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_18_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("ACCES")
+    1 => NameKnown("ACIOD")
+    2 => NameKnown("ACRADP")
+    3 => NameKnown("GDCES")
+    4 => NameKnown("GDIOD")
+    5 => NameKnown("GDRADP")
+    6 => NameKnown("TIACCP")
+    7 => NameKnown("TIACIP")
+    8 => NameKnown("TIACRP")
+    10 => NameKnown("AIRCON")
+    11 => NameKnown("WETDEP")
+    12 => NameKnown("DRYDEP")
+    13 => NameKnown("TOTLWD")
+    14 => NameKnown("SACON")
+    15 => NameKnown("MAXACON")
+    16 => NameKnown("HMXACON")
+    17 => NameKnown("CIAIRC")
+    18 => NameKnown("CAACL")
+    19 => NameKnown("DEPACTA")
+    20 => NameKnown("DEPACTE")
+    21 => NameKnown("CLDACTA")
+    22 => NameKnown("CLDACTE")
+    23 => NameKnown("EFFDOSER")
+    24 => NameKnown("THYDOSER")
+    25 => NameKnown("GAMDOSER")
+    26 => NameKnown("ACTEMM")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter == 9 || (parameter >= 27 && parameter <= 191) {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=18,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_19_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("VIS")
+    1 => NameKnown("ALBDO")
+    2 => NameKnown("TSTM")
+    3 => NameKnown("MIXHT")
+    4 => NameKnown("VOLASH")
+    5 => NameKnown("ICIT")
+    6 => NameKnown("ICIB")
+    7 => NameKnown("ICI")
+    8 => NameKnown("TURBT")
+    9 => NameKnown("TURBB")
+    10 => NameKnown("TURB")
+    11 => NameKnown("TKE")
+    12 => NameKnown("PBLREG")
+    13 => NameKnown("CONTI")
+    14 => NameKnown("CONTET")
+    15 => NameKnown("CONTT")
+    16 => NameKnown("CONTB")
+    17 => NameKnown("MXSALB")
+    18 => NameKnown("SNFALB")
+    19 => NameKnown("SALBD")
+    20 => NameKnown("ICIP")
+    21 => NameKnown("CTP")
+    22 => NameKnown("CAT")
+    23 => NameKnown("SLDP")
+    24 => NameKnown("CONTKE")
+    25 => NameKnown("WIWW")
+    26 => NameKnown("CONVO")
+    27 => NameKnown("ICESC")
+    28 => NameKnown("MWTURB")
+    29 => NameKnown("CATEDR")
+    30 => NameKnown("EDPARM")
+    31 => NameKnown("MXEDPRM")
+    32 => NameKnown("HIFREL")
+    33 => NameKnown("VISLFOG")
+    34 => NameKnown("VISIFOG")
+    35 => NameKnown("VISBSN")
+    36 => NameKnown("PSNOWS")
+    37 => NameKnown("ICESEV")
+    38 => NameKnown("SKYIDX")
+    39 => NameKnown("SEEINDEX")
+    40 => NameKnown("SNOWLVL")
+    41 => NameKnown("DBHEIGHT")
+    42 => NameKnown("TLBHEIGHT")
+    43 => NameKnown("TLTHEIGHT")
+    44 => NameKnown("MEANVGRTL")
+    45 => NameKnown("MINVGRTL")
+    46 => NameKnown("NETRADFLUX")
+    47 => NameKnown("GLIRRTS")
+    48 => NameKnown("PCONTT")
+    49 => NameKnown("PCONTB")
+    50 => NameKnown("CITEDR")
+    51 => NameKnown("VISPCP")
+    52 => NameKnown("HAILKEF")
+    192 => NameKnown("MXSALB")
+    193 => NameKnown("SNFALB")
+    194 => NameKnown("SRCONO")
+    195 => NameKnown("MRCONO")
+    196 => NameKnown("HRCONO")
+    197 => NameKnown("TORPROB")
+    198 => NameKnown("HAILPROB")
+    199 => NameKnown("WINDPROB")
+    200 => NameKnown("STORPROB")
+    201 => NameKnown("SHAILPRO")
+    202 => NameKnown("SWINDPRO")
+    203 => NameKnown("TSTMC")
+    204 => NameKnown("MIXLY")
+    205 => NameKnown("FLGHT")
+    206 => NameKnown("CICEL")
+    207 => NameKnown("CIVIS")
+    208 => NameKnown("CIFLT")
+    209 => NameKnown("LAVNI")
+    210 => NameKnown("HAVNI")
+    211 => NameKnown("SBSALB")
+    212 => NameKnown("SWSALB")
+    213 => NameKnown("NBSALB")
+    214 => NameKnown("NWSALB")
+    215 => NameKnown("PRSVR")
+    216 => NameKnown("PRSIGSVR")
+    217 => NameKnown("SIPD")
+    218 => NameKnown("EPSR")
+    219 => NameKnown("TPFI")
+    220 => NameKnown("SVRTS")
+    221 => NameKnown("PROCON")
+    222 => NameKnown("CONVP")
+    223 => NameKnown("CIGTOR")
+    224 => NameKnown("CIGHAIL")
+    225 => NameKnown("CIGWIND")
+    226 => NameKnown("CIGSVR")
+    232 => NameKnown("VAFTD")
+    233 => NameKnown("ICPRB")
+    234 => NameKnown("ICSEV")
+    235 => NameKnown("JFWPRB")
+    236 => NameKnown("SNOWLVL")
+    237 => NameKnown("DRYTPROB")
+    238 => NameKnown("ELLINX")
+    239 => NameKnown("CWASP")
+    240 => NameKnown("ICESEVCON")
+    255 => NameKnown("Missing")
+    _ =>
+      if (parameter >= 53 && parameter <= 191) ||
+        (parameter >= 227 && parameter <= 231) {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=19,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
+fn decode_parameter_number_4_2_0_190_name(parameter : Int) -> Grib2NameLookup {
+  match parameter {
+    0 => NameKnown("ATEXT")
+    255 => NameKnown("Missing")
+    _ =>
+      if parameter >= 1 && parameter <= 191 {
+        NameKnown("Reserved")
+      } else if parameter >= 192 && parameter <= 254 {
+        NameKnown("Reserved for Local Use")
+      } else {
+        NameUnknown("disc=0,cat=190,param=" + parameter.to_string())
+      }
+  }
+}
+
+///|
 pub fn decode_parameter_name(
   discipline : Int,
   category : Int,
@@ -1948,6 +2140,18 @@ pub fn decode_parameter_name(
   }
   if discipline == 0 && category == 16 {
     return decode_parameter_number_4_2_0_16_name(parameter)
+  }
+  if discipline == 0 && category == 17 {
+    return decode_parameter_number_4_2_0_17_name(parameter)
+  }
+  if discipline == 0 && category == 18 {
+    return decode_parameter_number_4_2_0_18_name(parameter)
+  }
+  if discipline == 0 && category == 19 {
+    return decode_parameter_number_4_2_0_19_name(parameter)
+  }
+  if discipline == 0 && category == 190 {
+    return decode_parameter_number_4_2_0_190_name(parameter)
   }
   match (discipline, category, parameter) {
     (2, 0, 196) => NameKnown("CNWAT")

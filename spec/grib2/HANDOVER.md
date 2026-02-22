@@ -139,7 +139,11 @@ This file is the minimal context needed to continue work without drift.
   - Table 4.2-0-14 trace gases parameter decoder (known/unknown split)
   - Table 4.2-0-15 radar parameter decoder (known/unknown split)
   - Table 4.2-0-16 forecast radar imagery parameter decoder (known/unknown split)
-- Next target: continue Code Tables from `grib2_table4-2-0-17`.
+  - Table 4.2-0-17 electrodynamics parameter decoder (known/unknown split)
+  - Table 4.2-0-18 nuclear/radiology parameter decoder (known/unknown split)
+  - Table 4.2-0-19 physical atmospheric properties parameter decoder (known/unknown split)
+  - Table 4.2-0-190 meteorological ASCII parameter decoder (known/unknown split)
+- Next target: continue Code Tables from `grib2_table4-2-0-191`.
 
 ## Read First
 
@@ -284,7 +288,11 @@ Code Table 4.2-0-13 is done.
 Code Table 4.2-0-14 is done.
 Code Table 4.2-0-15 is done.
 Code Table 4.2-0-16 is done.
-So continue from code tables, starting with `grib2_table4-2-0-17`.
+Code Table 4.2-0-17 is done.
+Code Table 4.2-0-18 is done.
+Code Table 4.2-0-19 is done.
+Code Table 4.2-0-190 is done.
+So continue from code tables, starting with `grib2_table4-2-0-191`.
 For code tables:
 - add known/unknown split decoders and display mappings
 - keep unknown code values roundtrip-safe and non-throwing
