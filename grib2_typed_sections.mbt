@@ -5,5 +5,7 @@
 // - typed/section1/* (Section1 model + shared binary helpers + Section1 tests)
 // - typed/section3/* (Section3 model/decode/encode/dispatch + tests)
 // - typed/section4/* (Section4 model/decode/encode/dispatch + tests)
+// - typed/section5/* (Section5 model/decode/encode/dispatch + tests)
+// - typed/section7/* (Section7 model/decode/encode/dispatch + tests)
 // Root package keeps context-bridge wrappers:
 // - grib2_typed_sections_bridge.mbt

@@ -1,0 +1,201 @@
+///|
+pub(all) struct Grib2DataRepresentationTemplate50 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate51 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  matrix_bit_maps_present : Int
+  number_of_data_values : Int
+  matrix_rows : Int
+  matrix_columns : Int
+  first_dimension_coordinate_definition : Int
+  number_of_first_dimension_values : Int
+  second_dimension_coordinate_definition : Int
+  number_of_second_dimension_values : Int
+  first_dimension_physical_significance : Int
+  second_dimension_physical_significance : Int
+  first_dimension_values_ieee : Array[Int]
+  second_dimension_values_ieee : Array[Int]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate52 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  group_splitting_method : Int
+  missing_value_management : Int
+  primary_missing_value_substitute : Int
+  secondary_missing_value_substitute : Int
+  number_of_groups : Int
+  reference_group_widths : Int
+  bits_used_for_group_widths : Int
+  reference_group_lengths : Int
+  length_increment_group_lengths : Int
+  true_length_last_group : Int
+  bits_used_for_scaled_group_lengths : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate53 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  group_splitting_method : Int
+  missing_value_management : Int
+  primary_missing_value_substitute : Int
+  secondary_missing_value_substitute : Int
+  number_of_groups : Int
+  reference_group_widths : Int
+  bits_used_for_group_widths : Int
+  reference_group_lengths : Int
+  length_increment_group_lengths : Int
+  true_length_last_group : Int
+  bits_used_for_scaled_group_lengths : Int
+  order_of_spatial_difference : Int
+  extra_descriptors_octet_count : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate54 {
+  precision : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate540 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  compression_type : Int
+  target_compression_ratio : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate541 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate542 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  original_field_value_type : Int
+  ccsds_compression_options_mask : Int
+  block_size : Int
+  reference_sample_interval : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate550 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  real_part_of_00_coefficient_ieee : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate551 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  laplacian_scaling_factor : Int
+  js : Int
+  ks : Int
+  ms : Int
+  ts : Int
+  unpacked_subset_precision : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate553 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  bi_fourier_sub_truncation_type : Int
+  packing_mode_for_axes : Int
+  laplacian_scaling_factor : Int
+  ns : Int
+  ms : Int
+  s : Int
+  unpacked_subset_precision : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate561 {
+  reference_value_ieee : Int
+  binary_scale_factor : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  pre_processing_parameter_ieee : Int
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) struct Grib2DataRepresentationTemplate5200 {
+  bits_per_value : Int
+  mv : Int
+  mvl : Int
+  decimal_scale_factor_of_representative_values : Int
+  representative_values_by_level : Array[Int]
+  reserved_tail : Bytes
+} derive(Show)
+
+///|
+pub(all) enum Grib2Section5TemplateData {
+  DataRepresentationTemplate50(Grib2DataRepresentationTemplate50)
+  DataRepresentationTemplate51(Grib2DataRepresentationTemplate51)
+  DataRepresentationTemplate52(Grib2DataRepresentationTemplate52)
+  DataRepresentationTemplate53(Grib2DataRepresentationTemplate53)
+  DataRepresentationTemplate54(Grib2DataRepresentationTemplate54)
+  DataRepresentationTemplate540(Grib2DataRepresentationTemplate540)
+  DataRepresentationTemplate541(Grib2DataRepresentationTemplate541)
+  DataRepresentationTemplate542(Grib2DataRepresentationTemplate542)
+  DataRepresentationTemplate550(Grib2DataRepresentationTemplate550)
+  DataRepresentationTemplate551(Grib2DataRepresentationTemplate551)
+  DataRepresentationTemplate553(Grib2DataRepresentationTemplate553)
+  DataRepresentationTemplate561(Grib2DataRepresentationTemplate561)
+  DataRepresentationTemplate5200(Grib2DataRepresentationTemplate5200)
+  DataRepresentationTemplateUnknown(Int, Bytes)
+} derive(Show)
+
+///|
+pub(all) struct Grib2Section5Decoded {
+  number_of_data_points : Int
+  template : Grib2Section5TemplateData
+}

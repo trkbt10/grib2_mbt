@@ -11,6 +11,8 @@ This file is the minimal context needed to continue work without drift.
     - `typed/section1/` (Section1 + shared binary helpers)
     - `typed/section3/` (Section3 model/decode/encode/dispatch)
     - `typed/section4/` (Section4 model/decode/encode/dispatch)
+    - `typed/section5/` (Section5 model/decode/encode/dispatch)
+    - `typed/section7/` (Section7 model/decode/encode/dispatch)
     - `typed/reexports.mbt` (facade re-export)
   - root package keeps bridge wrappers in `grib2_typed_sections_bridge.mbt`
   - typed tests moved to section files:
@@ -77,7 +79,33 @@ This file is the minimal context needed to continue work without drift.
   - Template 4.1002
   - Template 4.1100
   - Template 4.1101
-- Next target: start from Template 5.0 in checklist order.
+- Completed in Section 5 typed decode/encode:
+  - Template 5.0
+  - Template 5.1
+  - Template 5.2
+  - Template 5.3
+  - Template 5.4
+  - Template 5.40
+  - Template 5.41
+  - Template 5.42
+  - Template 5.50
+  - Template 5.51
+  - Template 5.53
+  - Template 5.61
+  - Template 5.200
+- Completed in Section 7 typed decode/encode:
+  - Template 7.0
+  - Template 7.1
+  - Template 7.2
+  - Template 7.3
+  - Template 7.4
+  - Template 7.40
+  - Template 7.41
+  - Template 7.42
+  - Template 7.50
+  - Template 7.51
+  - Template 7.53
+- Next target: start Section 6 typed decode/encode foundation.
 
 ## Read First
 
@@ -92,6 +120,16 @@ This file is the minimal context needed to continue work without drift.
 - `typed/section4/grib2_typed_sections_section4_types_*.mbt`
 - `typed/section4/grib2_typed_sections_section4_test_helpers.mbt`
 - `typed/section4/grib2_typed_sections_section4_test_*.mbt`
+- `typed/section5/grib2_typed_sections_section5_types.mbt`
+- `typed/section5/grib2_typed_sections_section5_decode.mbt`
+- `typed/section5/grib2_typed_sections_section5_encode.mbt`
+- `typed/section5/grib2_typed_sections_section5_dispatch.mbt`
+- `typed/section5/grib2_typed_sections_section5_test.mbt`
+- `typed/section7/grib2_typed_sections_section7_types.mbt`
+- `typed/section7/grib2_typed_sections_section7_decode.mbt`
+- `typed/section7/grib2_typed_sections_section7_encode.mbt`
+- `typed/section7/grib2_typed_sections_section7_dispatch.mbt`
+- `typed/section7/grib2_typed_sections_section7_test.mbt`
 
 ## Implementation Rules
 
@@ -113,9 +151,9 @@ This file is the minimal context needed to continue work without drift.
 
 - Use 1 coordinator + N workers.
 - Split by non-overlapping template ranges (example):
-  - Worker A: Section 5 templates (5.0-5.4)
-  - Worker B: Section 5 templates (5.40-5.53, 5.61, 5.200)
-  - Worker C: Section 7 typed templates
+  - Worker A: Section 6 typed foundation (indicator/raw model)
+  - Worker B: section7 regression/bridge cross-check
+  - Worker C: checklist/docs integration and cross-check
 - Each worker does full per-template flow for their range:
   - struct/decode/encode/dispatch/test
   - focused validation (`moon test ... --filter '*template4*'`, `moon check --target native`)
@@ -168,10 +206,12 @@ When a larger chunk is done, run broader tests.
 ```text
 Continue grib2_mbt from commit a073ab7.
 Goal: keep implementing IMPLEMENTATION_CHECKLIST typed decode+encode from the first incomplete item.
-Section 4 is done through 4.1101, so start at 5.0.
-For each template:
-- add struct/decode/encode/dispatch in typed/section4/grib2_typed_sections_section4_*.mbt
-- add roundtrip tests in matching typed/section4/grib2_typed_sections_section4_test_*.mbt (shared samples in ..._test_helpers.mbt)
+Section 4 is done through 4.1101, and Section 5.0-5.4, 5.40-5.42, 5.50-5.53, 5.61, 5.200 is done.
+Section 7 templates are fully done (7.0-7.4, 7.40-7.42, 7.50-7.53).
+So continue from Section 6 typed decode/encode foundation.
+For Section 6:
+- add struct/decode/encode/dispatch in typed/section6/grib2_typed_sections_section6_*.mbt
+- add roundtrip tests in typed/section6/grib2_typed_sections_section6_test.mbt
 - update spec/grib2/WORK_CHECKLIST.md and IMPLEMENTATION_CHECKLIST.md
 Constraints:
 - no runtime/test dependency on wgrib2
