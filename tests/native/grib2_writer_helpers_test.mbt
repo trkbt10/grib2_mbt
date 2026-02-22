@@ -49,6 +49,16 @@ fn with_u16_be(bytes : Bytes, offset : Int, value : Int) -> Bytes {
 }
 
 ///|
+fn with_u32_be(bytes : Bytes, offset : Int, value : Int) -> Bytes {
+  let copy = bytes.to_array()
+  copy[offset] = ((value >> 24) & 0xff).to_byte()
+  copy[offset + 1] = ((value >> 16) & 0xff).to_byte()
+  copy[offset + 2] = ((value >> 8) & 0xff).to_byte()
+  copy[offset + 3] = (value & 0xff).to_byte()
+  Bytes::from_array(copy)
+}
+
+///|
 fn fixture_paths_for_roundtrip() -> Array[String] {
   [
     "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin", "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",

@@ -3,22 +3,64 @@ package "trkbt10/grib2_mbt"
 
 import {
   "trkbt10/grib2_mbt/typed/section1",
+  "trkbt10/grib2_mbt/typed/section2",
   "trkbt10/grib2_mbt/typed/section3",
   "trkbt10/grib2_mbt/typed/section4",
   "trkbt10/grib2_mbt/typed/section5",
+  "trkbt10/grib2_mbt/typed/section6",
   "trkbt10/grib2_mbt/typed/section7",
 }
 
 // Values
+pub fn decode_calendar_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_diamond_numbering_order_name(Int) -> Grib2NameLookup
+
+pub fn decode_diamond_scanning_mode_name(Int) -> Grib2NameLookup
+
+pub fn decode_discipline_name(Int) -> Grib2NameLookup
+
+pub fn decode_grid_definition_source_name(Int) -> Grib2NameLookup
+
+pub fn decode_grid_definition_template_number_name(Int) -> Grib2NameLookup
+
+pub fn decode_grid_point_position_name(Int) -> Grib2NameLookup
+
+pub fn decode_identification_template_number_name(Int) -> Grib2NameLookup
+
 pub fn decode_level_name(Int, Int, Int, Int, Int, Int) -> Grib2NameLookup
+
+pub fn decode_local_table_version_name(Int) -> Grib2NameLookup
+
+pub fn decode_master_table_version_name(Int) -> Grib2NameLookup
 
 pub fn decode_message_section1(Grib2MessageContext) -> Result[@section1.Grib2Section1Decoded, @section1.Grib2SectionCodecError]
 
+pub fn decode_parameter_category_name(Int, Int) -> Grib2NameLookup
+
 pub fn decode_parameter_name(Int, Int, Int) -> Grib2NameLookup
+
+pub fn decode_parameter_number_name(Int, Int, Int) -> Grib2NameLookup
+
+pub fn decode_processed_data_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_product_definition_template_number_name(Int) -> Grib2NameLookup
+
+pub fn decode_production_status_name(Int) -> Grib2NameLookup
+
+pub fn decode_projection_center_name(Int) -> Grib2NameLookup
 
 pub fn decode_records(Grib2FileContext) -> Array[Grib2RecordMeta]
 
+pub fn decode_resolution_and_component_flags_name(Int) -> Grib2NameLookup
+
+pub fn decode_scanning_mode_name(Int) -> Grib2NameLookup
+
 pub fn decode_section1_bytes(Bytes) -> Result[@section1.Grib2Section1Decoded, @section1.Grib2SectionCodecError]
+
+pub fn decode_section2_bytes(Bytes) -> Result[@section2.Grib2Section2Decoded, @section1.Grib2SectionCodecError]
+
+pub fn decode_section3_appended_list_interpretation_name(Int) -> Grib2NameLookup
 
 pub fn decode_section3_bytes(Bytes) -> Result[@section3.Grib2Section3Decoded, @section1.Grib2SectionCodecError]
 
@@ -26,7 +68,19 @@ pub fn decode_section4_bytes(Bytes) -> Result[@section4.Grib2Section4Decoded, @s
 
 pub fn decode_section5_bytes(Bytes) -> Result[@section5.Grib2Section5Decoded, @section1.Grib2SectionCodecError]
 
+pub fn decode_section6_bytes(Bytes) -> Result[@section6.Grib2Section6Decoded, @section1.Grib2SectionCodecError]
+
 pub fn decode_section7_bytes(Bytes, Int) -> Result[@section7.Grib2Section7Decoded, @section1.Grib2SectionCodecError]
+
+pub fn decode_shape_of_reference_system_name(Int) -> Grib2NameLookup
+
+pub fn decode_significance_of_reference_time_name(Int) -> Grib2NameLookup
+
+pub fn decode_spectral_data_representation_mode_name(Int) -> Grib2NameLookup
+
+pub fn decode_spectral_data_representation_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_submessage_section2(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section2.Grib2Section2Decoded?, @section1.Grib2SectionCodecError]
 
 pub fn decode_submessage_section3(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section3.Grib2Section3Decoded, @section1.Grib2SectionCodecError]
 
@@ -34,15 +88,21 @@ pub fn decode_submessage_section4(Grib2MessageContext, Grib2SubmessageFrame) -> 
 
 pub fn decode_submessage_section5(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section5.Grib2Section5Decoded, @section1.Grib2SectionCodecError]
 
+pub fn decode_submessage_section6(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section6.Grib2Section6Decoded, @section1.Grib2SectionCodecError]
+
 pub fn decode_submessage_section7(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section7.Grib2Section7Decoded, @section1.Grib2SectionCodecError]
 
 pub fn encode_section1_bytes(@section1.Grib2Section1Decoded) -> Bytes
+
+pub fn encode_section2_bytes(@section2.Grib2Section2Decoded) -> Bytes
 
 pub fn encode_section3_bytes(@section3.Grib2Section3Decoded) -> Bytes
 
 pub fn encode_section4_bytes(@section4.Grib2Section4Decoded) -> Bytes
 
 pub fn encode_section5_bytes(@section5.Grib2Section5Decoded) -> Bytes
+
+pub fn encode_section6_bytes(@section6.Grib2Section6Decoded) -> Bytes
 
 pub fn encode_section7_bytes(@section7.Grib2Section7Decoded) -> Bytes
 
@@ -221,11 +281,15 @@ pub(all) struct Grib2SubmessageFrame {
 // Type aliases
 pub using @section1 {type Grib2Section1Decoded}
 
+pub using @section2 {type Grib2Section2Decoded}
+
 pub using @section3 {type Grib2Section3Decoded}
 
 pub using @section4 {type Grib2Section4Decoded}
 
 pub using @section5 {type Grib2Section5Decoded}
+
+pub using @section6 {type Grib2Section6Decoded}
 
 pub using @section7 {type Grib2Section7Decoded}
 

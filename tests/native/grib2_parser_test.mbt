@@ -146,6 +146,28 @@ fn verify_fixture_against_wgrib2_snapshots(
 }
 
 ///|
+fn parser_with_u8(bytes : Bytes, offset : Int, value : Int) -> Bytes {
+  let copy = bytes.to_array()
+  copy[offset] = value.to_byte()
+  Bytes::from_array(copy)
+}
+
+///|
+fn parser_with_u32_be(bytes : Bytes, offset : Int, value : Int) -> Bytes {
+  let copy = bytes.to_array()
+  copy[offset] = ((value >> 24) & 0xff).to_byte()
+  copy[offset + 1] = ((value >> 16) & 0xff).to_byte()
+  copy[offset + 2] = ((value >> 8) & 0xff).to_byte()
+  copy[offset + 3] = (value & 0xff).to_byte()
+  Bytes::from_array(copy)
+}
+
+///|
+fn minimal_grib2_message_bytes() -> Bytes {
+  b"GRIB\x00\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x32\x00\x00\x00\x05\x01\x00\x00\x00\x05\x03\x00\x00\x00\x05\x04\x00\x00\x00\x05\x05\x00\x00\x00\x05\x06\x00\x00\x00\x05\x077777"
+}
+
+///|
 test "parse JMA GSM fixture and raw roundtrip" {
   let path = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
   let bytes = match read_fixture(path) {
@@ -225,4 +247,37 @@ test "wgrib2 compatibility snapshots: NOAA wave" {
     Ok(_) => ()
     Err(error) => fail(error)
   }
+}
+
+///|
+test "section0 and section8 minimal message parse and rebuild" {
+  let bytes = minimal_grib2_message_bytes()
+  let parsed = match @lib.parse_grib2_file(bytes) {
+    Ok(context) => context
+    Err(error) => fail(error.to_string())
+  }
+  inspect(parsed.message_count(), content="1")
+  inspect(parsed.record_count(), content="1")
+  inspect(parsed.messages[0].total_length, content="50")
+  inspect(@lib.rebuild_raw(parsed) == bytes, content="true")
+}
+
+///|
+test "parser rejects broken section8 magic" {
+  let broken = parser_with_u8(minimal_grib2_message_bytes(), 49, 56)
+  let rejected = match @lib.parse_grib2_file(broken) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
+}
+
+///|
+test "parser rejects section0 high length in strict 32-bit range" {
+  let broken = parser_with_u32_be(minimal_grib2_message_bytes(), 8, 1)
+  let rejected = match @lib.parse_grib2_file(broken) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
 }
