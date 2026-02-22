@@ -18,7 +18,15 @@
       "native",
       "llvm"
     ],
-    "grib2_writer_test.mbt": [
+    "grib2_writer_fast_test.mbt": [
+      "native",
+      "llvm"
+    ],
+    "grib2_writer_helpers_test.mbt": [
+      "native",
+      "llvm"
+    ],
+    "grib2_writer_roundtrip_test.mbt": [
       "native",
       "llvm"
     ],

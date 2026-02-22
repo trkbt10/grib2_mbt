@@ -135,6 +135,25 @@ moon check --target wasm
 moon info --target native && moon fmt
 ```
 
+Native regression tests are now split by purpose:
+
+- `tests/native/grib2_writer_fast_test.mbt`: normal development loop
+- `tests/native/grib2_writer_roundtrip_test.mbt`: slow full-fixture roundtrip
+  - run this at final verification only
+- `tests/native/grib2_parser_test.mbt`, `tests/native/grib2_decode_test.mbt`, `tests/native/grib2_io_adapter_test.mbt`
+  - run per file as needed (sectioned execution)
+
+Recommended native validation order:
+
+```sh
+moon test tests/native/grib2_parser_test.mbt --target native
+moon test tests/native/grib2_decode_test.mbt --target native
+moon test tests/native/grib2_writer_fast_test.mbt --target native
+moon test tests/native/grib2_io_adapter_test.mbt --target native
+# final only
+moon test tests/native/grib2_writer_roundtrip_test.mbt --target native
+```
+
 When a larger chunk is done, run broader tests.
 
 ## Ready-To-Use Resume Prompt
