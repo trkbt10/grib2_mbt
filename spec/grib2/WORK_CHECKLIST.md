@@ -41,6 +41,25 @@ This checklist is the execution control board for the GRIB2 parser/reader/writer
 - [x] Section 4 template dispatch foundation
 - [x] Section 5 template dispatch foundation
 - [x] Table lookup foundation (known/unknown split)
+- [x] Code Table 0.0 discipline decode (known/unknown split)
+- [x] Code Table 1.0 master table version decode (known/unknown split)
+- [x] Code Tables 1.1-1.6 Section1 decode helpers (known/unknown split)
+- [x] Code Table 3.0 grid definition source decode (known/unknown split)
+- [x] Code Table 3.1 grid definition template decode (known/unknown split)
+- [x] Code Table 3.2 reference system shape decode (known/unknown split)
+- [x] Code Tables 3.3-3.4 flag decoding helpers (resolution/scanning mode)
+- [x] Code Tables 3.5-3.11 Section3 helpers (projection/spectral/diamond/list)
+- [x] Code Table 4.0 product definition template decode (known/unknown split)
+- [x] Code Table 4.1 parameter category by discipline decode (known/unknown split)
+- [x] Code Table 4.2 parameter number decode foundation (known/unknown split)
+- [x] Table 4.2-0-0 temperature parameter decode (known/unknown split)
+- [x] Table 4.2-0-1 moisture parameter decode (known/unknown split)
+- [x] Table 4.2-0-2 momentum parameter decode (known/unknown split)
+- [x] Table 4.2-0-3 mass parameter decode (known/unknown split)
+- [x] Table 4.2-0-4 shortwave radiation parameter decode (known/unknown split)
+- [x] Table 4.2-0-5 longwave radiation parameter decode (known/unknown split)
+- [x] Table 4.2-0-6 cloud parameter decode (known/unknown split)
+- [x] Table 4.2-0-7 thermodynamic stability parameter decode (known/unknown split)
 - [x] Context fields for var/lev/time extraction
 - [x] CLI output parity improvements for all baseline options
 
@@ -65,7 +84,10 @@ This checklist is the execution control board for the GRIB2 parser/reader/writer
 - [x] Section 4 typed decode/encode foundation (Template 4.0 + unknown raw)
 - [x] Expand typed templates from checklist order (3.x / 4.x / 5.x)
 - [x] Start Section 7 typed decode/encode foundation (Template 7.0 + unknown raw)
+- [x] Start Section 6 typed decode/encode foundation (bitmap indicator + raw bitmap)
+- [x] Start Section 2 typed decode/encode foundation (Template 2.1 + unknown raw)
 - [x] Bridge typed section codec into strict writer path
+- [x] Add explicit Section0/Section8 invariant coverage in parser + strict writer tests
 
 ## Current Focus
 

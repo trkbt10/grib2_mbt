@@ -9,14 +9,17 @@ This file is the minimal context needed to continue work without drift.
   - typed codec moved to `typed/` package
   - typed package is now purpose-foldered:
     - `typed/section1/` (Section1 + shared binary helpers)
+    - `typed/section2/` (Section2 model/decode/encode/dispatch)
     - `typed/section3/` (Section3 model/decode/encode/dispatch)
     - `typed/section4/` (Section4 model/decode/encode/dispatch)
     - `typed/section5/` (Section5 model/decode/encode/dispatch)
+    - `typed/section6/` (Section6 model/decode/encode/dispatch)
     - `typed/section7/` (Section7 model/decode/encode/dispatch)
     - `typed/reexports.mbt` (facade re-export)
   - root package keeps bridge wrappers in `grib2_typed_sections_bridge.mbt`
   - typed tests moved to section files:
     - `typed/section1/grib2_typed_sections_section1_test.mbt`
+    - `typed/section2/grib2_typed_sections_section2_test.mbt`
     - `typed/section3/grib2_typed_sections_section3_test.mbt`
     - `typed/section4/grib2_typed_sections_section4_test_helpers.mbt`
     - `typed/section4/grib2_typed_sections_section4_test_*.mbt`
@@ -105,7 +108,34 @@ This file is the minimal context needed to continue work without drift.
   - Template 7.50
   - Template 7.51
   - Template 7.53
-- Next target: start Section 6 typed decode/encode foundation.
+- Completed in Section 6 typed decode/encode foundation:
+  - bitmap indicator + raw bitmap roundtrip
+- Completed in Section 2 typed decode/encode foundation:
+  - Template 2.1
+- Completed in Core Sections validation:
+  - Section 0 parse/rebuild + strict invariant coverage
+  - Section 8 magic/tail + strict invariant coverage
+- Completed in Code Tables:
+  - Table 0.0 discipline decoder (known/unknown split)
+  - Table 1.0 master table version decoder (known/unknown split)
+  - Tables 1.1-1.6 Section1 decoders (known/unknown split)
+  - Table 3.0 grid definition source decoder (known/unknown split)
+  - Table 3.1 grid definition template decoder (known/unknown split)
+  - Table 3.2 shape of reference system decoder (known/unknown split)
+  - Tables 3.3-3.4 flag decoders (resolution/scanning mode)
+  - Tables 3.5-3.11 decoders (projection/spectral/diamond/list)
+  - Table 4.0 product definition template decoder (known/unknown split)
+  - Table 4.1 parameter category-by-discipline decoder (known/unknown split)
+  - Table 4.2 parameter-number decoder foundation (known/unknown split)
+  - Table 4.2-0-0 temperature parameter decoder (known/unknown split)
+  - Table 4.2-0-1 moisture parameter decoder (known/unknown split)
+  - Table 4.2-0-2 momentum parameter decoder (known/unknown split)
+  - Table 4.2-0-3 mass parameter decoder (known/unknown split)
+  - Table 4.2-0-4 shortwave radiation parameter decoder (known/unknown split)
+  - Table 4.2-0-5 longwave radiation parameter decoder (known/unknown split)
+  - Table 4.2-0-6 cloud parameter decoder (known/unknown split)
+  - Table 4.2-0-7 thermodynamic stability parameter decoder (known/unknown split)
+- Next target: continue Code Tables from `grib2_table4-2-0-13`.
 
 ## Read First
 
@@ -114,6 +144,15 @@ This file is the minimal context needed to continue work without drift.
 - `spec/grib2/IMPLEMENTATION_CHECKLIST.md`
 - `grib2_typed_sections.mbt`
 - `grib2_typed_sections_bridge.mbt`
+- `typed/section2/grib2_typed_sections_section2_types.mbt`
+- `typed/section2/grib2_typed_sections_section2_decode.mbt`
+- `typed/section2/grib2_typed_sections_section2_encode.mbt`
+- `typed/section2/grib2_typed_sections_section2_dispatch.mbt`
+- `typed/section2/grib2_typed_sections_section2_test.mbt`
+- `grib2_decode.mbt`
+- `tests/native/grib2_decode_test.mbt`
+- `tests/native/grib2_parser_test.mbt`
+- `tests/native/grib2_writer_fast_test.mbt`
 - `typed/section4/grib2_typed_sections_section4_dispatch.mbt`
 - `typed/section4/grib2_typed_sections_section4_decode_*.mbt`
 - `typed/section4/grib2_typed_sections_section4_encode_*.mbt`
@@ -125,6 +164,11 @@ This file is the minimal context needed to continue work without drift.
 - `typed/section5/grib2_typed_sections_section5_encode.mbt`
 - `typed/section5/grib2_typed_sections_section5_dispatch.mbt`
 - `typed/section5/grib2_typed_sections_section5_test.mbt`
+- `typed/section6/grib2_typed_sections_section6_types.mbt`
+- `typed/section6/grib2_typed_sections_section6_decode.mbt`
+- `typed/section6/grib2_typed_sections_section6_encode.mbt`
+- `typed/section6/grib2_typed_sections_section6_dispatch.mbt`
+- `typed/section6/grib2_typed_sections_section6_test.mbt`
 - `typed/section7/grib2_typed_sections_section7_types.mbt`
 - `typed/section7/grib2_typed_sections_section7_decode.mbt`
 - `typed/section7/grib2_typed_sections_section7_encode.mbt`
@@ -151,8 +195,8 @@ This file is the minimal context needed to continue work without drift.
 
 - Use 1 coordinator + N workers.
 - Split by non-overlapping template ranges (example):
-  - Worker A: Section 6 typed foundation (indicator/raw model)
-  - Worker B: section7 regression/bridge cross-check
+  - Worker A: Section4 sub-tables (`grib2_table4-2-0-0` and onward)
+  - Worker B: section6/section7 regression + bridge cross-check
   - Worker C: checklist/docs integration and cross-check
 - Each worker does full per-template flow for their range:
   - struct/decode/encode/dispatch/test
@@ -175,6 +219,8 @@ Use focused tests first for speed:
 moon test typed/section4 --target native --filter '*template411*'
 moon test typed/section4 --target wasm --filter '*template411*'
 moon test typed/section3 --target native --filter '*unknown section3*'
+moon test typed/section2 --target native
+moon test typed/section2 --target wasm
 moon check --target native
 moon check --target wasm
 moon info --target native && moon fmt
@@ -205,13 +251,35 @@ When a larger chunk is done, run broader tests.
 
 ```text
 Continue grib2_mbt from commit a073ab7.
-Goal: keep implementing IMPLEMENTATION_CHECKLIST typed decode+encode from the first incomplete item.
+Goal: keep implementing IMPLEMENTATION_CHECKLIST from the first incomplete item.
 Section 4 is done through 4.1101, and Section 5.0-5.4, 5.40-5.42, 5.50-5.53, 5.61, 5.200 is done.
 Section 7 templates are fully done (7.0-7.4, 7.40-7.42, 7.50-7.53).
-So continue from Section 6 typed decode/encode foundation.
-For Section 6:
-- add struct/decode/encode/dispatch in typed/section6/grib2_typed_sections_section6_*.mbt
-- add roundtrip tests in typed/section6/grib2_typed_sections_section6_test.mbt
+Section 6 typed foundation is done.
+Section 2 typed foundation (Template 2.1) is done.
+Core sections (`grib2_sect0`, `grib2_sect8`) are done with parser/strict-writer invariants tests.
+Code Table 0.0 is done.
+Code Table 1.0 is done.
+Code Tables 1.1-1.6 are done.
+Code Table 3.0 is done.
+Code Table 3.1 is done.
+Code Table 3.2 is done.
+Code Tables 3.3-3.4 are done.
+Code Tables 3.5-3.11 are done.
+Code Table 4.0 is done.
+Code Table 4.1 is done.
+Code Table 4.2 foundation is done.
+Code Table 4.2-0-0 is done.
+Code Table 4.2-0-1 is done.
+Code Table 4.2-0-2 is done.
+Code Table 4.2-0-3 is done.
+Code Table 4.2-0-4 is done.
+Code Table 4.2-0-5 is done.
+Code Table 4.2-0-6 is done.
+Code Table 4.2-0-7 is done.
+So continue from code tables, starting with `grib2_table4-2-0-13`.
+For code tables:
+- add known/unknown split decoders and display mappings
+- keep unknown code values roundtrip-safe and non-throwing
 - update spec/grib2/WORK_CHECKLIST.md and IMPLEMENTATION_CHECKLIST.md
 Constraints:
 - no runtime/test dependency on wgrib2

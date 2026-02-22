@@ -101,3 +101,121 @@ test "unknown template id is preserved through parse and rebuild" {
   }
   inspect(strict_bytes == mutated_bytes, content="true")
 }
+
+///|
+fn fast_with_u8(bytes : Bytes, offset : Int, value : Int) -> Bytes {
+  let copy = bytes.to_array()
+  copy[offset] = value.to_byte()
+  Bytes::from_array(copy)
+}
+
+///|
+fn fast_message_with_raw(
+  message : @lib.Grib2MessageContext,
+  raw : Bytes,
+) -> @lib.Grib2MessageContext {
+  {
+    offset: message.offset,
+    total_length: message.total_length,
+    discipline: message.discipline,
+    edition: message.edition,
+    section1: message.section1,
+    section8_offset: message.section8_offset,
+    sections: message.sections,
+    submessages: message.submessages,
+    raw,
+  }
+}
+
+///|
+fn fast_message_with_section8_offset(
+  message : @lib.Grib2MessageContext,
+  section8_offset : Int,
+) -> @lib.Grib2MessageContext {
+  {
+    offset: message.offset,
+    total_length: message.total_length,
+    discipline: message.discipline,
+    edition: message.edition,
+    section1: message.section1,
+    section8_offset,
+    sections: message.sections,
+    submessages: message.submessages,
+    raw: message.raw,
+  }
+}
+
+///|
+fn fast_replace_message0(
+  context : @lib.Grib2FileContext,
+  message0 : @lib.Grib2MessageContext,
+) -> @lib.Grib2FileContext {
+  let messages = [..context.messages]
+  messages[0] = message0
+  { messages, }
+}
+
+///|
+test "strict writer rejects section0 length header mismatch" {
+  let context = match
+    parse_fixture_for_writer(
+      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let message0 = context.messages[0]
+  let broken_raw = with_u32_be(message0.raw, 12, message0.total_length - 1)
+  let broken = fast_replace_message0(
+    context,
+    fast_message_with_raw(message0, broken_raw),
+  )
+  let rejected = match @lib.rebuild_strict(broken) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
+}
+
+///|
+test "strict writer rejects broken section8 magic in raw message" {
+  let context = match
+    parse_fixture_for_writer(
+      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let message0 = context.messages[0]
+  let broken_raw = fast_with_u8(message0.raw, message0.raw.length() - 1, 56)
+  let broken = fast_replace_message0(
+    context,
+    fast_message_with_raw(message0, broken_raw),
+  )
+  let rejected = match @lib.rebuild_strict(broken) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
+}
+
+///|
+test "strict writer rejects section8 offset mismatch" {
+  let context = match
+    parse_fixture_for_writer(
+      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let message0 = context.messages[0]
+  let broken = fast_replace_message0(
+    context,
+    fast_message_with_section8_offset(message0, message0.section8_offset + 1),
+  )
+  let rejected = match @lib.rebuild_strict(broken) {
+    Ok(_) => false
+    Err(_) => true
+  }
+  inspect(rejected, content="true")
+}

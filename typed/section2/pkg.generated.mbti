@@ -1,0 +1,40 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/grib2_mbt/typed/section2"
+
+import {
+  "trkbt10/grib2_mbt/typed/section1",
+}
+
+// Values
+pub fn decode_section2_bytes(Bytes) -> Result[Grib2Section2Decoded, @section1.Grib2SectionCodecError]
+
+pub fn encode_section2_bytes(Grib2Section2Decoded) -> Bytes
+
+// Errors
+
+// Types and methods
+pub(all) struct Grib2MdlTemplate21 {
+  total_number_of_data_groups : Int
+  number_of_values_in_first_group : Int
+  reference_value_of_first_group_ieee : Int
+  decimal_scale_factor : Int
+  bits_per_value : Int
+  first_group_data_type : Int
+  first_group_packed_values_raw : Bytes
+}
+pub impl Show for Grib2MdlTemplate21
+
+pub(all) struct Grib2Section2Decoded {
+  template : Grib2Section2TemplateData
+}
+
+pub(all) enum Grib2Section2TemplateData {
+  MdlTemplate21(Grib2MdlTemplate21)
+  LocalUseTemplateUnknown(Int, Bytes)
+}
+pub impl Show for Grib2Section2TemplateData
+
+// Type aliases
+
+// Traits
+

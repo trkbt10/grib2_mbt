@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/grib2_mbt/typed/section6"
+
+import {
+  "trkbt10/grib2_mbt/typed/section1",
+}
+
+// Values
+pub fn decode_section6_bytes(Bytes) -> Result[Grib2Section6Decoded, @section1.Grib2SectionCodecError]
+
+pub fn encode_section6_bytes(Grib2Section6Decoded) -> Bytes
+
+// Errors
+
+// Types and methods
+pub(all) struct Grib2Section6Decoded {
+  bitmap_indicator : Int
+  bitmap_raw : Bytes
+}
+pub impl Show for Grib2Section6Decoded
+
+// Type aliases
+
+// Traits
+
