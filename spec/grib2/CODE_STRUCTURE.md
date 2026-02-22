@@ -21,15 +21,19 @@ Keep typed codec code maintainable while Section 3/4/5/7 templates continue to g
 - `typed/section4/grib2_typed_sections_section4_types_040_463.mbt`
 - `typed/section4/grib2_typed_sections_section4_types_467_499.mbt`
 - `typed/section4/grib2_typed_sections_section4_types_4100_41101.mbt`
-- `typed/section4/grib2_typed_sections_section4_decode_040_463.mbt`
-- `typed/section4/grib2_typed_sections_section4_decode_467_499.mbt`
-- `typed/section4/grib2_typed_sections_section4_decode_4100_41101.mbt`
+- `typed/section4/grib2_typed_sections_section4_decode_*.mbt`
+  - decode split by template bands:
+  - `*_040_420`, `*_430_448`, `*_449_463`
+  - `*_467_479`, `*_480_489`, `*_490_499`
+  - `*_4100_4129`, `*_4130_4149`, `*_4150_41101`
 - `typed/section4/grib2_typed_sections_section4_encode_040_463.mbt`
 - `typed/section4/grib2_typed_sections_section4_encode_467_499.mbt`
 - `typed/section4/grib2_typed_sections_section4_encode_4100_41101.mbt`
 - `typed/section4/grib2_typed_sections_section4_dispatch.mbt`
 - `typed/section4/grib2_typed_sections_section4_time_range_helpers.mbt`
-- `typed/section4/grib2_typed_sections_section4_test.mbt`
+- `typed/section4/grib2_typed_sections_section4_test_helpers.mbt`
+- `typed/section4/grib2_typed_sections_section4_test_*.mbt`
+  - tests split by template bands aligned to decode files
   - Section 4 model/decode/encode/dispatch split by template ranges
 - `grib2_typed_sections_bridge.mbt`
   - root-package bridge from `Grib2MessageContext` to typed byte codecs
@@ -43,6 +47,7 @@ Keep typed codec code maintainable while Section 3/4/5/7 templates continue to g
   - add decode logic in matching `typed/section4/grib2_typed_sections_section4_decode_*.mbt`
   - add encode logic in matching `typed/section4/grib2_typed_sections_section4_encode_*.mbt`
   - wire template number in `typed/section4/grib2_typed_sections_section4_dispatch.mbt`
-  - add tests in `typed/section4/grib2_typed_sections_section4_test.mbt`
+  - add shared sample/helper code in `typed/section4/grib2_typed_sections_section4_test_helpers.mbt`
+  - add tests in matching `typed/section4/grib2_typed_sections_section4_test_*.mbt`
 - If repeated binary-field patterns appear 2+ times across Section3/4, promote helper functions to `typed/section1/grib2_typed_section1_core.mbt`.
 - Keep `decode -> encode` roundtrip invariant and `reserved_tail` preservation.
