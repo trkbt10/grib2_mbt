@@ -823,6 +823,172 @@ pub(all) struct Grib2ProductTemplate410 {
 }
 pub impl Show for Grib2ProductTemplate410
 
+pub(all) struct Grib2ProductTemplate4100 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  scale_factor_of_wave_directions : Int
+  scaled_wave_directions : Array[Int]
+  scale_factor_of_wave_frequencies : Int
+  scaled_wave_frequencies : Array[Int]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4100
+
+pub(all) struct Grib2ProductTemplate4101 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_wave_direction_sequence : Int
+  number_of_wave_direction_sequence_parameters : Int
+  wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  type_of_wave_frequency_sequence : Int
+  number_of_wave_frequency_sequence_parameters : Int
+  wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4101
+
+pub(all) struct Grib2ProductTemplate4102 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  type_of_wave_direction_sequence : Int
+  number_of_wave_direction_sequence_parameters : Int
+  wave_direction_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  type_of_wave_frequency_sequence : Int
+  number_of_wave_frequency_sequence_parameters : Int
+  wave_frequency_sequence_parameters : Array[Grib2WaveSequenceParameter]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4102
+
+pub(all) struct Grib2ProductTemplate4103 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_wave_period_interval : Int
+  scale_factor_of_lower_wave_period_limit : Int
+  scaled_value_of_lower_wave_period_limit : Int
+  scale_factor_of_upper_wave_period_limit : Int
+  scaled_value_of_upper_wave_period_limit : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+}
+pub impl Show for Grib2ProductTemplate4103
+
+pub(all) struct Grib2ProductTemplate4104 {
+  base : Grib2ProductTemplate4103
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+}
+pub impl Show for Grib2ProductTemplate4104
+
+pub(all) struct Grib2ProductTemplate4105 {
+  base : Grib2ProductTemplate48
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4105
+
+pub(all) struct Grib2ProductTemplate4106 {
+  base : Grib2ProductTemplate48
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4106
+
+pub(all) struct Grib2ProductTemplate4107 {
+  base : Grib2ProductTemplate48
+  derived_forecast : Int
+  number_of_forecasts_in_ensemble : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4107
+
+pub(all) struct Grib2ProductTemplate4108 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_interval_for_wavelength : Int
+  scale_factor_of_first_wavelength : Int
+  scaled_value_of_first_wavelength : Int
+  scale_factor_of_second_wavelength : Int
+  scaled_value_of_second_wavelength : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+}
+pub impl Show for Grib2ProductTemplate4108
+
+pub(all) struct Grib2ProductTemplate4109 {
+  base : Grib2ProductTemplate4108
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+}
+pub impl Show for Grib2ProductTemplate4109
+
 pub(all) struct Grib2ProductTemplate411 {
   base : Grib2ProductTemplate41
   end_year : Int
@@ -837,6 +1003,50 @@ pub(all) struct Grib2ProductTemplate411 {
   reserved_tail : Bytes
 }
 pub impl Show for Grib2ProductTemplate411
+
+pub(all) struct Grib2ProductTemplate4110 {
+  base : Grib2ProductTemplate4108
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4110
+
+pub(all) struct Grib2ProductTemplate4111 {
+  base : Grib2ProductTemplate4109
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4111
+
+pub(all) struct Grib2ProductTemplate4112 {
+  base : Grib2ProductTemplate48
+  forecast_probability_number : Int
+  total_number_of_forecast_probabilities : Int
+  probability_type : Int
+  scale_factor_of_lower_limit : Int
+  scaled_value_of_lower_limit : Int
+  scale_factor_of_upper_limit : Int
+  scaled_value_of_upper_limit : Int
+  reference_period : Grib2ReferencePeriodDefinition
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate4112
 
 pub(all) struct Grib2ProductTemplate412 {
   base : Grib2ProductTemplate42
@@ -2179,6 +2389,85 @@ pub(all) struct Grib2ProductTemplate485 {
 }
 pub impl Show for Grib2ProductTemplate485
 
+pub(all) struct Grib2ProductTemplate486 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  total_number_of_quantiles : Int
+  quantile_value : Int
+}
+pub impl Show for Grib2ProductTemplate486
+
+pub(all) struct Grib2ProductTemplate487 {
+  base : Grib2ProductTemplate486
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate487
+
+pub(all) struct Grib2ProductTemplate488 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_analyses_or_forecasts_used : Int
+  analysis_or_forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate488
+
+pub(all) struct Grib2ProductTemplate489 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  total_number_of_quantiles : Int
+  quantile_value : Int
+}
+pub impl Show for Grib2ProductTemplate489
+
 pub(all) struct Grib2ProductTemplate49 {
   base : Grib2ProductTemplate45
   end_year : Int
@@ -2193,6 +2482,266 @@ pub(all) struct Grib2ProductTemplate49 {
   reserved_tail : Bytes
 }
 pub impl Show for Grib2ProductTemplate49
+
+pub(all) struct Grib2ProductTemplate490 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  total_number_of_quantiles : Int
+  quantile_value : Int
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate490
+
+pub(all) struct Grib2ProductTemplate491 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  number_of_categories : Int
+  categories : Array[Grib2CategoryForecastSpec]
+  end_year : Int
+  end_month : Int
+  end_day : Int
+  end_hour : Int
+  end_minute : Int
+  end_second : Int
+  number_of_time_ranges : Int
+  number_of_missing_values : Int
+  time_range_specs : Array[Grib2TimeRangeSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate491
+
+pub(all) struct Grib2ProductTemplate492 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate492
+
+pub(all) struct Grib2ProductTemplate493 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate493
+
+pub(all) struct Grib2ProductTemplate494 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate494
+
+pub(all) struct Grib2ProductTemplate495 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate495
+
+pub(all) struct Grib2ProductTemplate496 {
+  parameter_category : Int
+  parameter_number : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate496
+
+pub(all) struct Grib2ProductTemplate497 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate497
+
+pub(all) struct Grib2ProductTemplate498 {
+  parameter_category : Int
+  parameter_number : Int
+  input_process_identifier : Int
+  input_originating_centre : Int
+  type_of_post_processing : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  type_of_first_fixed_surface : Int
+  scale_factor_of_first_fixed_surface : Int
+  scaled_value_of_first_fixed_surface : Int
+  type_of_second_fixed_surface : Int
+  scale_factor_of_second_fixed_surface : Int
+  scaled_value_of_second_fixed_surface : Int
+  type_of_ensemble_forecast : Int
+  perturbation_number : Int
+  number_of_forecasts_in_ensemble : Int
+  statistical_process_used_to_calculate_fields_for_local_time_processing : Int
+  statistical_processing_time_range_unit : Int
+  statistical_processing_time_range_length : Int
+  number_of_statistically_processed_fields_in_local_time_composite : Int
+  method_used_to_derive_data_field_values_at_local_time : Int
+  number_of_forecasts_used : Int
+  forecast_specs : Array[Grib2Template488AnalysisForecastSpec]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate498
+
+pub(all) struct Grib2ProductTemplate499 {
+  parameter_category : Int
+  parameter_number : Int
+  wave_direction_number : Int
+  number_of_wave_directions : Int
+  wave_frequency_number : Int
+  number_of_wave_frequencies : Int
+  type_of_generating_process : Int
+  background_process_identifier : Int
+  generating_process_identifier : Int
+  hours_of_observational_data_cutoff : Int
+  minutes_of_observational_data_cutoff : Int
+  time_range_unit : Int
+  forecast_time : Int
+  scale_factor_of_wave_directions : Int
+  scaled_wave_directions : Array[Int]
+  scale_factor_of_wave_frequencies : Int
+  scaled_wave_frequencies : Array[Int]
+  reserved_tail : Bytes
+}
+pub impl Show for Grib2ProductTemplate499
 
 pub(all) struct Grib2RecordMeta {
   record_index : Int
@@ -2216,6 +2765,36 @@ pub(all) struct Grib2RecordMeta {
   section4_num_coord : Int
   section5_length : Int
 }
+
+pub(all) struct Grib2ReferencePeriodAdditionalParameter {
+  scale_factor : Int
+  scaled_value : Int
+}
+pub impl Show for Grib2ReferencePeriodAdditionalParameter
+
+pub(all) struct Grib2ReferencePeriodDefinition {
+  type_of_reference_dataset : Int
+  type_of_relation_to_reference_dataset : Int
+  number_of_additional_parameters : Int
+  additional_parameters : Array[Grib2ReferencePeriodAdditionalParameter]
+  start_year : Int
+  start_month : Int
+  start_day : Int
+  start_hour : Int
+  start_minute : Int
+  start_second : Int
+  sample_size : Int
+  number_of_reference_period_time_ranges : Int
+  reference_period_time_range_specs : Array[Grib2ReferencePeriodTimeRangeSpec]
+}
+pub impl Show for Grib2ReferencePeriodDefinition
+
+pub(all) struct Grib2ReferencePeriodTimeRangeSpec {
+  statistical_processing_type : Int
+  time_range_unit : Int
+  time_range_length : Int
+}
+pub impl Show for Grib2ReferencePeriodTimeRangeSpec
 
 pub(all) struct Grib2SatelliteBandSpec {
   satellite_series : Int
@@ -2383,6 +2962,33 @@ pub(all) enum Grib2Section4TemplateData {
   ProductTemplate483(Grib2ProductTemplate483)
   ProductTemplate484(Grib2ProductTemplate484)
   ProductTemplate485(Grib2ProductTemplate485)
+  ProductTemplate486(Grib2ProductTemplate486)
+  ProductTemplate487(Grib2ProductTemplate487)
+  ProductTemplate488(Grib2ProductTemplate488)
+  ProductTemplate489(Grib2ProductTemplate489)
+  ProductTemplate490(Grib2ProductTemplate490)
+  ProductTemplate491(Grib2ProductTemplate491)
+  ProductTemplate492(Grib2ProductTemplate492)
+  ProductTemplate493(Grib2ProductTemplate493)
+  ProductTemplate494(Grib2ProductTemplate494)
+  ProductTemplate495(Grib2ProductTemplate495)
+  ProductTemplate496(Grib2ProductTemplate496)
+  ProductTemplate497(Grib2ProductTemplate497)
+  ProductTemplate498(Grib2ProductTemplate498)
+  ProductTemplate499(Grib2ProductTemplate499)
+  ProductTemplate4100(Grib2ProductTemplate4100)
+  ProductTemplate4101(Grib2ProductTemplate4101)
+  ProductTemplate4102(Grib2ProductTemplate4102)
+  ProductTemplate4103(Grib2ProductTemplate4103)
+  ProductTemplate4104(Grib2ProductTemplate4104)
+  ProductTemplate4105(Grib2ProductTemplate4105)
+  ProductTemplate4106(Grib2ProductTemplate4106)
+  ProductTemplate4107(Grib2ProductTemplate4107)
+  ProductTemplate4108(Grib2ProductTemplate4108)
+  ProductTemplate4109(Grib2ProductTemplate4109)
+  ProductTemplate4110(Grib2ProductTemplate4110)
+  ProductTemplate4111(Grib2ProductTemplate4111)
+  ProductTemplate4112(Grib2ProductTemplate4112)
   ProductTemplateUnknown(Int, Bytes)
 }
 pub impl Show for Grib2Section4TemplateData
@@ -2411,6 +3017,21 @@ pub(all) struct Grib2SubmessageFrame {
   section7 : Grib2SectionFrame
 }
 
+pub(all) struct Grib2Template488AnalysisForecastSpec {
+  year : Int
+  month : Int
+  day : Int
+  hour : Int
+  minute : Int
+  second : Int
+  forecast_time_unit : Int
+  forecast_time : Int
+  number_of_time_increments : Int
+  time_increment_unit : Int
+  time_increment_length : Int
+}
+pub impl Show for Grib2Template488AnalysisForecastSpec
+
 pub(all) struct Grib2TimeRangeSpec {
   statistical_process : Int
   type_of_time_increment : Int
@@ -2426,6 +3047,12 @@ pub(all) struct Grib2U64Be {
   low : Int
 }
 pub impl Show for Grib2U64Be
+
+pub(all) struct Grib2WaveSequenceParameter {
+  scale_factor : Int
+  scaled_value : Int
+}
+pub impl Show for Grib2WaveSequenceParameter
 
 // Type aliases
 

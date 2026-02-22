@@ -5412,6 +5412,2077 @@ test "section4 template485 typed decode and encode roundtrip" {
 }
 
 ///|
+test "section4 template486 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate486({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      total_number_of_quantiles: 100,
+      quantile_value: 95,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate486(template486) => {
+      inspect(template486.type_of_generating_process, content="4")
+      inspect(template486.forecast_time, content="6")
+      inspect(template486.total_number_of_quantiles, content="100")
+      inspect(template486.quantile_value, content="95")
+    }
+    _ => fail("template4.86 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template487 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate487({
+      base: {
+        parameter_category: 0,
+        parameter_number: 1,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+        total_number_of_quantiles: 100,
+        quantile_value: 95,
+      },
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xbd",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate487(template487) => {
+      inspect(template487.base.total_number_of_quantiles, content="100")
+      inspect(template487.base.quantile_value, content="95")
+      inspect(template487.end_year, content="2024")
+      inspect(template487.number_of_time_ranges, content="2")
+      inspect(template487.time_range_specs.length(), content="2")
+      inspect(template487.number_of_missing_values, content="1")
+      inspect(template487.reserved_tail == b"\xbd", content="true")
+    }
+    _ => fail("template4.87 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template488 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate488({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      method_used_to_derive_data_field_values_at_local_time: 1,
+      number_of_analyses_or_forecasts_used: 2,
+      analysis_or_forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xbe",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate488(template488) => {
+      inspect(
+        template488.method_used_to_derive_data_field_values_at_local_time,
+        content="1",
+      )
+      inspect(template488.number_of_analyses_or_forecasts_used, content="2")
+      inspect(template488.analysis_or_forecast_specs.length(), content="2")
+      inspect(template488.analysis_or_forecast_specs[0].year, content="2024")
+      inspect(
+        template488.analysis_or_forecast_specs[1].forecast_time,
+        content="12",
+      )
+      inspect(template488.reserved_tail == b"\xbe", content="true")
+    }
+    _ => fail("template4.88 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template489 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate489({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      total_number_of_quantiles: 100,
+      quantile_value: 95,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate489(template489) => {
+      inspect(template489.input_process_identifier, content="321")
+      inspect(template489.input_originating_centre, content="34")
+      inspect(template489.type_of_post_processing, content="2")
+      inspect(template489.total_number_of_quantiles, content="100")
+      inspect(template489.quantile_value, content="95")
+    }
+    _ => fail("template4.89 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template490 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate490({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      total_number_of_quantiles: 100,
+      quantile_value: 95,
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xbf",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate490(template490) => {
+      inspect(template490.input_process_identifier, content="321")
+      inspect(template490.input_originating_centre, content="34")
+      inspect(template490.total_number_of_quantiles, content="100")
+      inspect(template490.quantile_value, content="95")
+      inspect(template490.end_year, content="2024")
+      inspect(template490.number_of_time_ranges, content="2")
+      inspect(template490.time_range_specs.length(), content="2")
+      inspect(template490.number_of_missing_values, content="1")
+      inspect(template490.reserved_tail == b"\xbf", content="true")
+    }
+    _ => fail("template4.90 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template491 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate491({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      number_of_categories: 2,
+      categories: [
+        {
+          code_figure: 1,
+          type_of_interval_for_first_and_second_limit: 1,
+          scale_factor_of_first_limit: 0,
+          scaled_value_of_first_limit: 10,
+          scale_factor_of_second_limit: 0,
+          scaled_value_of_second_limit: 20,
+        },
+        {
+          code_figure: 2,
+          type_of_interval_for_first_and_second_limit: 2,
+          scale_factor_of_first_limit: 0,
+          scaled_value_of_first_limit: 30,
+          scale_factor_of_second_limit: 0,
+          scaled_value_of_second_limit: 40,
+        },
+      ],
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 2,
+      number_of_missing_values: 1,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+        {
+          statistical_process: 2,
+          type_of_time_increment: 1,
+          time_range_unit: 1,
+          time_range_length: 12,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc0",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate491(template491) => {
+      inspect(template491.number_of_categories, content="2")
+      inspect(template491.categories.length(), content="2")
+      inspect(template491.categories[0].code_figure, content="1")
+      inspect(
+        template491.categories[1].scaled_value_of_second_limit,
+        content="40",
+      )
+      inspect(template491.end_year, content="2024")
+      inspect(template491.number_of_time_ranges, content="2")
+      inspect(template491.time_range_specs.length(), content="2")
+      inspect(template491.number_of_missing_values, content="1")
+      inspect(template491.reserved_tail == b"\xc0", content="true")
+    }
+    _ => fail("template4.91 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template492 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate492({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      method_used_to_derive_data_field_values_at_local_time: 1,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc1",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate492(template492) => {
+      inspect(template492.type_of_ensemble_forecast, content="2")
+      inspect(template492.perturbation_number, content="3")
+      inspect(template492.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template492.method_used_to_derive_data_field_values_at_local_time,
+        content="1",
+      )
+      inspect(template492.number_of_forecasts_used, content="2")
+      inspect(template492.forecast_specs.length(), content="2")
+      inspect(template492.forecast_specs[1].forecast_time, content="12")
+      inspect(template492.reserved_tail == b"\xc1", content="true")
+    }
+    _ => fail("template4.92 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template493 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate493({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      method_used_to_derive_data_field_values_at_local_time: 1,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc2",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate493(template493) => {
+      inspect(template493.input_process_identifier, content="321")
+      inspect(template493.input_originating_centre, content="34")
+      inspect(template493.type_of_post_processing, content="2")
+      inspect(
+        template493.method_used_to_derive_data_field_values_at_local_time,
+        content="1",
+      )
+      inspect(template493.number_of_forecasts_used, content="2")
+      inspect(template493.forecast_specs.length(), content="2")
+      inspect(template493.forecast_specs[1].forecast_time, content="12")
+      inspect(template493.reserved_tail == b"\xc2", content="true")
+    }
+    _ => fail("template4.93 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template494 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate494({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      method_used_to_derive_data_field_values_at_local_time: 1,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc3",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate494(template494) => {
+      inspect(template494.input_process_identifier, content="321")
+      inspect(template494.input_originating_centre, content="34")
+      inspect(template494.type_of_post_processing, content="2")
+      inspect(template494.type_of_ensemble_forecast, content="2")
+      inspect(template494.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template494.method_used_to_derive_data_field_values_at_local_time,
+        content="1",
+      )
+      inspect(template494.number_of_forecasts_used, content="2")
+      inspect(template494.forecast_specs.length(), content="2")
+      inspect(template494.forecast_specs[1].forecast_time, content="12")
+      inspect(template494.reserved_tail == b"\xc3", content="true")
+    }
+    _ => fail("template4.94 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template495 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate495({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      statistical_process_used_to_calculate_fields_for_local_time_processing: 1,
+      statistical_processing_time_range_unit: 1,
+      statistical_processing_time_range_length: 24,
+      number_of_statistically_processed_fields_in_local_time_composite: 8,
+      method_used_to_derive_data_field_values_at_local_time: 2,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc4",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate495(template495) => {
+      inspect(
+        template495.statistical_process_used_to_calculate_fields_for_local_time_processing,
+        content="1",
+      )
+      inspect(template495.statistical_processing_time_range_unit, content="1")
+      inspect(
+        template495.statistical_processing_time_range_length,
+        content="24",
+      )
+      inspect(
+        template495.number_of_statistically_processed_fields_in_local_time_composite,
+        content="8",
+      )
+      inspect(
+        template495.method_used_to_derive_data_field_values_at_local_time,
+        content="2",
+      )
+      inspect(template495.number_of_forecasts_used, content="2")
+      inspect(template495.forecast_specs.length(), content="2")
+      inspect(template495.forecast_specs[1].forecast_time, content="12")
+      inspect(template495.reserved_tail == b"\xc4", content="true")
+    }
+    _ => fail("template4.95 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template496 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate496({
+      parameter_category: 0,
+      parameter_number: 1,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      statistical_process_used_to_calculate_fields_for_local_time_processing: 1,
+      statistical_processing_time_range_unit: 1,
+      statistical_processing_time_range_length: 24,
+      number_of_statistically_processed_fields_in_local_time_composite: 8,
+      method_used_to_derive_data_field_values_at_local_time: 2,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc5",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate496(template496) => {
+      inspect(template496.type_of_ensemble_forecast, content="2")
+      inspect(template496.perturbation_number, content="3")
+      inspect(template496.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template496.statistical_process_used_to_calculate_fields_for_local_time_processing,
+        content="1",
+      )
+      inspect(
+        template496.statistical_processing_time_range_length,
+        content="24",
+      )
+      inspect(
+        template496.number_of_statistically_processed_fields_in_local_time_composite,
+        content="8",
+      )
+      inspect(
+        template496.method_used_to_derive_data_field_values_at_local_time,
+        content="2",
+      )
+      inspect(template496.number_of_forecasts_used, content="2")
+      inspect(template496.forecast_specs.length(), content="2")
+      inspect(template496.forecast_specs[1].forecast_time, content="12")
+      inspect(template496.reserved_tail == b"\xc5", content="true")
+    }
+    _ => fail("template4.96 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template497 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate497({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      statistical_process_used_to_calculate_fields_for_local_time_processing: 1,
+      statistical_processing_time_range_unit: 1,
+      statistical_processing_time_range_length: 24,
+      number_of_statistically_processed_fields_in_local_time_composite: 8,
+      method_used_to_derive_data_field_values_at_local_time: 2,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc6",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate497(template497) => {
+      inspect(template497.input_process_identifier, content="321")
+      inspect(template497.input_originating_centre, content="34")
+      inspect(template497.type_of_post_processing, content="2")
+      inspect(
+        template497.statistical_process_used_to_calculate_fields_for_local_time_processing,
+        content="1",
+      )
+      inspect(
+        template497.statistical_processing_time_range_length,
+        content="24",
+      )
+      inspect(
+        template497.number_of_statistically_processed_fields_in_local_time_composite,
+        content="8",
+      )
+      inspect(
+        template497.method_used_to_derive_data_field_values_at_local_time,
+        content="2",
+      )
+      inspect(template497.number_of_forecasts_used, content="2")
+      inspect(template497.forecast_specs.length(), content="2")
+      inspect(template497.forecast_specs[1].forecast_time, content="12")
+      inspect(template497.reserved_tail == b"\xc6", content="true")
+    }
+    _ => fail("template4.97 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template498 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate498({
+      parameter_category: 0,
+      parameter_number: 1,
+      input_process_identifier: 321,
+      input_originating_centre: 34,
+      type_of_post_processing: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      statistical_process_used_to_calculate_fields_for_local_time_processing: 1,
+      statistical_processing_time_range_unit: 1,
+      statistical_processing_time_range_length: 24,
+      number_of_statistically_processed_fields_in_local_time_composite: 8,
+      method_used_to_derive_data_field_values_at_local_time: 2,
+      number_of_forecasts_used: 2,
+      forecast_specs: [
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 12,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 6,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+        {
+          year: 2024,
+          month: 5,
+          day: 1,
+          hour: 18,
+          minute: 0,
+          second: 0,
+          forecast_time_unit: 1,
+          forecast_time: 12,
+          number_of_time_increments: 1,
+          time_increment_unit: 1,
+          time_increment_length: 3,
+        },
+      ],
+      reserved_tail: b"\xc7",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate498(template498) => {
+      inspect(template498.input_process_identifier, content="321")
+      inspect(template498.input_originating_centre, content="34")
+      inspect(template498.type_of_post_processing, content="2")
+      inspect(template498.type_of_ensemble_forecast, content="2")
+      inspect(template498.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template498.statistical_process_used_to_calculate_fields_for_local_time_processing,
+        content="1",
+      )
+      inspect(
+        template498.statistical_processing_time_range_length,
+        content="24",
+      )
+      inspect(
+        template498.number_of_statistically_processed_fields_in_local_time_composite,
+        content="8",
+      )
+      inspect(
+        template498.method_used_to_derive_data_field_values_at_local_time,
+        content="2",
+      )
+      inspect(template498.number_of_forecasts_used, content="2")
+      inspect(template498.forecast_specs.length(), content="2")
+      inspect(template498.forecast_specs[1].forecast_time, content="12")
+      inspect(template498.reserved_tail == b"\xc7", content="true")
+    }
+    _ => fail("template4.98 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template499 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate499({
+      parameter_category: 10,
+      parameter_number: 20,
+      wave_direction_number: 2,
+      number_of_wave_directions: 3,
+      wave_frequency_number: 4,
+      number_of_wave_frequencies: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      scale_factor_of_wave_directions: 1,
+      scaled_wave_directions: [450, 900, 1350],
+      scale_factor_of_wave_frequencies: 3,
+      scaled_wave_frequencies: [125, 250],
+      reserved_tail: b"\xc8",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate499(template499) => {
+      inspect(template499.wave_direction_number, content="2")
+      inspect(template499.number_of_wave_directions, content="3")
+      inspect(template499.wave_frequency_number, content="4")
+      inspect(template499.number_of_wave_frequencies, content="2")
+      inspect(template499.scaled_wave_directions.length(), content="3")
+      inspect(template499.scaled_wave_directions[1], content="900")
+      inspect(template499.scale_factor_of_wave_frequencies, content="3")
+      inspect(template499.scaled_wave_frequencies.length(), content="2")
+      inspect(template499.scaled_wave_frequencies[1], content="250")
+      inspect(template499.reserved_tail == b"\xc8", content="true")
+    }
+    _ => fail("template4.99 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4100 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4100({
+      parameter_category: 10,
+      parameter_number: 20,
+      wave_direction_number: 2,
+      number_of_wave_directions: 3,
+      wave_frequency_number: 4,
+      number_of_wave_frequencies: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      scale_factor_of_wave_directions: 1,
+      scaled_wave_directions: [450, 900, 1350],
+      scale_factor_of_wave_frequencies: 3,
+      scaled_wave_frequencies: [125, 250],
+      reserved_tail: b"\xc9",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4100(template4100) => {
+      inspect(template4100.type_of_ensemble_forecast, content="2")
+      inspect(template4100.perturbation_number, content="3")
+      inspect(template4100.number_of_forecasts_in_ensemble, content="20")
+      inspect(template4100.number_of_wave_directions, content="3")
+      inspect(template4100.scaled_wave_directions.length(), content="3")
+      inspect(template4100.scaled_wave_directions[1], content="900")
+      inspect(template4100.scale_factor_of_wave_frequencies, content="3")
+      inspect(template4100.scaled_wave_frequencies.length(), content="2")
+      inspect(template4100.scaled_wave_frequencies[1], content="250")
+      inspect(template4100.reserved_tail == b"\xc9", content="true")
+    }
+    _ => fail("template4.100 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4101 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4101({
+      parameter_category: 10,
+      parameter_number: 20,
+      wave_direction_number: 2,
+      number_of_wave_directions: 3,
+      wave_frequency_number: 4,
+      number_of_wave_frequencies: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_wave_direction_sequence: 1,
+      number_of_wave_direction_sequence_parameters: 2,
+      wave_direction_sequence_parameters: [
+        { scale_factor: 0, scaled_value: 10 },
+        { scale_factor: 1, scaled_value: 20 },
+      ],
+      type_of_wave_frequency_sequence: 2,
+      number_of_wave_frequency_sequence_parameters: 2,
+      wave_frequency_sequence_parameters: [
+        { scale_factor: 0, scaled_value: 30 },
+        { scale_factor: 1, scaled_value: 40 },
+      ],
+      reserved_tail: b"\xca",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4101(template4101) => {
+      inspect(template4101.type_of_wave_direction_sequence, content="1")
+      inspect(
+        template4101.number_of_wave_direction_sequence_parameters,
+        content="2",
+      )
+      inspect(
+        template4101.wave_direction_sequence_parameters.length(),
+        content="2",
+      )
+      inspect(
+        template4101.wave_direction_sequence_parameters[1].scaled_value,
+        content="20",
+      )
+      inspect(template4101.type_of_wave_frequency_sequence, content="2")
+      inspect(
+        template4101.number_of_wave_frequency_sequence_parameters,
+        content="2",
+      )
+      inspect(
+        template4101.wave_frequency_sequence_parameters.length(),
+        content="2",
+      )
+      inspect(
+        template4101.wave_frequency_sequence_parameters[1].scaled_value,
+        content="40",
+      )
+      inspect(template4101.reserved_tail == b"\xca", content="true")
+    }
+    _ => fail("template4.101 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4102 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4102({
+      parameter_category: 10,
+      parameter_number: 20,
+      wave_direction_number: 2,
+      number_of_wave_directions: 3,
+      wave_frequency_number: 4,
+      number_of_wave_frequencies: 2,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      type_of_wave_direction_sequence: 1,
+      number_of_wave_direction_sequence_parameters: 2,
+      wave_direction_sequence_parameters: [
+        { scale_factor: 0, scaled_value: 10 },
+        { scale_factor: 1, scaled_value: 20 },
+      ],
+      type_of_wave_frequency_sequence: 2,
+      number_of_wave_frequency_sequence_parameters: 2,
+      wave_frequency_sequence_parameters: [
+        { scale_factor: 0, scaled_value: 30 },
+        { scale_factor: 1, scaled_value: 40 },
+      ],
+      reserved_tail: b"\xcb",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4102(template4102) => {
+      inspect(template4102.type_of_ensemble_forecast, content="2")
+      inspect(template4102.perturbation_number, content="3")
+      inspect(template4102.number_of_forecasts_in_ensemble, content="20")
+      inspect(template4102.type_of_wave_direction_sequence, content="1")
+      inspect(
+        template4102.number_of_wave_direction_sequence_parameters,
+        content="2",
+      )
+      inspect(
+        template4102.wave_direction_sequence_parameters.length(),
+        content="2",
+      )
+      inspect(
+        template4102.wave_direction_sequence_parameters[1].scaled_value,
+        content="20",
+      )
+      inspect(template4102.type_of_wave_frequency_sequence, content="2")
+      inspect(
+        template4102.number_of_wave_frequency_sequence_parameters,
+        content="2",
+      )
+      inspect(
+        template4102.wave_frequency_sequence_parameters.length(),
+        content="2",
+      )
+      inspect(
+        template4102.wave_frequency_sequence_parameters[1].scaled_value,
+        content="40",
+      )
+      inspect(template4102.reserved_tail == b"\xcb", content="true")
+    }
+    _ => fail("template4.102 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4103 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4103({
+      parameter_category: 10,
+      parameter_number: 20,
+      type_of_wave_period_interval: 2,
+      scale_factor_of_lower_wave_period_limit: 0,
+      scaled_value_of_lower_wave_period_limit: 5,
+      scale_factor_of_upper_wave_period_limit: 0,
+      scaled_value_of_upper_wave_period_limit: 20,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4103(template4103) => {
+      inspect(template4103.type_of_wave_period_interval, content="2")
+      inspect(template4103.scaled_value_of_lower_wave_period_limit, content="5")
+      inspect(
+        template4103.scaled_value_of_upper_wave_period_limit,
+        content="20",
+      )
+      inspect(template4103.forecast_time, content="6")
+      inspect(template4103.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.103 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4104 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4104({
+      base: {
+        parameter_category: 10,
+        parameter_number: 20,
+        type_of_wave_period_interval: 2,
+        scale_factor_of_lower_wave_period_limit: 0,
+        scaled_value_of_lower_wave_period_limit: 5,
+        scale_factor_of_upper_wave_period_limit: 0,
+        scaled_value_of_upper_wave_period_limit: 20,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4104(template4104) => {
+      inspect(template4104.base.type_of_wave_period_interval, content="2")
+      inspect(
+        template4104.base.scaled_value_of_upper_wave_period_limit,
+        content="20",
+      )
+      inspect(template4104.type_of_ensemble_forecast, content="2")
+      inspect(template4104.perturbation_number, content="3")
+      inspect(template4104.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.104 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4105 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4105({
+      base: {
+        base: {
+          parameter_category: 10,
+          parameter_number: 20,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        end_year: 2024,
+        end_month: 5,
+        end_day: 2,
+        end_hour: 0,
+        end_minute: 0,
+        end_second: 0,
+        number_of_time_ranges: 1,
+        number_of_missing_values: 0,
+        time_range_specs: [
+          {
+            statistical_process: 1,
+            type_of_time_increment: 2,
+            time_range_unit: 1,
+            time_range_length: 6,
+            time_increment_unit: 1,
+            time_increment_length: 1,
+          },
+        ],
+        reserved_tail: b"",
+      },
+      reference_period: {
+        type_of_reference_dataset: 1,
+        type_of_relation_to_reference_dataset: 2,
+        number_of_additional_parameters: 1,
+        additional_parameters: [{ scale_factor: 0, scaled_value: 12 }],
+        start_year: 1991,
+        start_month: 1,
+        start_day: 1,
+        start_hour: 0,
+        start_minute: 0,
+        start_second: 0,
+        sample_size: 30,
+        number_of_reference_period_time_ranges: 1,
+        reference_period_time_range_specs: [
+          {
+            statistical_processing_type: 1,
+            time_range_unit: 1,
+            time_range_length: 24,
+          },
+        ],
+      },
+      reserved_tail: b"\xcc",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4105(template4105) => {
+      inspect(template4105.base.number_of_time_ranges, content="1")
+      inspect(template4105.base.time_range_specs.length(), content="1")
+      inspect(
+        template4105.reference_period.type_of_reference_dataset,
+        content="1",
+      )
+      inspect(
+        template4105.reference_period.number_of_additional_parameters,
+        content="1",
+      )
+      inspect(
+        template4105.reference_period.additional_parameters.length(),
+        content="1",
+      )
+      inspect(
+        template4105.reference_period.additional_parameters[0].scaled_value,
+        content="12",
+      )
+      inspect(template4105.reference_period.start_year, content="1991")
+      inspect(
+        template4105.reference_period.number_of_reference_period_time_ranges,
+        content="1",
+      )
+      inspect(
+        template4105.reference_period.reference_period_time_range_specs[0].time_range_length,
+        content="24",
+      )
+      inspect(template4105.reserved_tail == b"\xcc", content="true")
+    }
+    _ => fail("template4.105 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4106 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4106({
+      base: {
+        base: {
+          parameter_category: 10,
+          parameter_number: 20,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        end_year: 2024,
+        end_month: 5,
+        end_day: 2,
+        end_hour: 0,
+        end_minute: 0,
+        end_second: 0,
+        number_of_time_ranges: 1,
+        number_of_missing_values: 0,
+        time_range_specs: [
+          {
+            statistical_process: 1,
+            type_of_time_increment: 2,
+            time_range_unit: 1,
+            time_range_length: 6,
+            time_increment_unit: 1,
+            time_increment_length: 1,
+          },
+        ],
+        reserved_tail: b"",
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+      reference_period: {
+        type_of_reference_dataset: 1,
+        type_of_relation_to_reference_dataset: 2,
+        number_of_additional_parameters: 1,
+        additional_parameters: [{ scale_factor: 0, scaled_value: 12 }],
+        start_year: 1991,
+        start_month: 1,
+        start_day: 1,
+        start_hour: 0,
+        start_minute: 0,
+        start_second: 0,
+        sample_size: 30,
+        number_of_reference_period_time_ranges: 1,
+        reference_period_time_range_specs: [
+          {
+            statistical_processing_type: 1,
+            time_range_unit: 1,
+            time_range_length: 24,
+          },
+        ],
+      },
+      reserved_tail: b"\xcd",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4106(template4106) => {
+      inspect(template4106.type_of_ensemble_forecast, content="2")
+      inspect(template4106.perturbation_number, content="3")
+      inspect(template4106.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template4106.reference_period.type_of_reference_dataset,
+        content="1",
+      )
+      inspect(
+        template4106.reference_period.additional_parameters.length(),
+        content="1",
+      )
+      inspect(
+        template4106.reference_period.reference_period_time_range_specs[0].time_range_length,
+        content="24",
+      )
+      inspect(template4106.reserved_tail == b"\xcd", content="true")
+    }
+    _ => fail("template4.106 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4107 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4107({
+      base: {
+        base: {
+          parameter_category: 10,
+          parameter_number: 20,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        end_year: 2024,
+        end_month: 5,
+        end_day: 2,
+        end_hour: 0,
+        end_minute: 0,
+        end_second: 0,
+        number_of_time_ranges: 1,
+        number_of_missing_values: 0,
+        time_range_specs: [
+          {
+            statistical_process: 1,
+            type_of_time_increment: 2,
+            time_range_unit: 1,
+            time_range_length: 6,
+            time_increment_unit: 1,
+            time_increment_length: 1,
+          },
+        ],
+        reserved_tail: b"",
+      },
+      derived_forecast: 4,
+      number_of_forecasts_in_ensemble: 20,
+      reference_period: {
+        type_of_reference_dataset: 1,
+        type_of_relation_to_reference_dataset: 2,
+        number_of_additional_parameters: 1,
+        additional_parameters: [{ scale_factor: 0, scaled_value: 12 }],
+        start_year: 1991,
+        start_month: 1,
+        start_day: 1,
+        start_hour: 0,
+        start_minute: 0,
+        start_second: 0,
+        sample_size: 30,
+        number_of_reference_period_time_ranges: 1,
+        reference_period_time_range_specs: [
+          {
+            statistical_processing_type: 1,
+            time_range_unit: 1,
+            time_range_length: 24,
+          },
+        ],
+      },
+      reserved_tail: b"\xce",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4107(template4107) => {
+      inspect(template4107.derived_forecast, content="4")
+      inspect(template4107.number_of_forecasts_in_ensemble, content="20")
+      inspect(
+        template4107.reference_period.type_of_reference_dataset,
+        content="1",
+      )
+      inspect(
+        template4107.reference_period.additional_parameters.length(),
+        content="1",
+      )
+      inspect(
+        template4107.reference_period.reference_period_time_range_specs[0].time_range_length,
+        content="24",
+      )
+      inspect(template4107.reserved_tail == b"\xce", content="true")
+    }
+    _ => fail("template4.107 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4108 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4108({
+      parameter_category: 10,
+      parameter_number: 20,
+      type_of_interval_for_wavelength: 2,
+      scale_factor_of_first_wavelength: 0,
+      scaled_value_of_first_wavelength: 550,
+      scale_factor_of_second_wavelength: 0,
+      scaled_value_of_second_wavelength: 700,
+      type_of_generating_process: 4,
+      background_process_identifier: 1,
+      generating_process_identifier: 10,
+      hours_of_observational_data_cutoff: 2,
+      minutes_of_observational_data_cutoff: 30,
+      time_range_unit: 1,
+      forecast_time: 6,
+      type_of_first_fixed_surface: 100,
+      scale_factor_of_first_fixed_surface: 0,
+      scaled_value_of_first_fixed_surface: 50000,
+      type_of_second_fixed_surface: 255,
+      scale_factor_of_second_fixed_surface: 0,
+      scaled_value_of_second_fixed_surface: 0,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4108(template4108) => {
+      inspect(template4108.type_of_interval_for_wavelength, content="2")
+      inspect(template4108.scaled_value_of_first_wavelength, content="550")
+      inspect(template4108.scaled_value_of_second_wavelength, content="700")
+      inspect(template4108.forecast_time, content="6")
+      inspect(template4108.type_of_first_fixed_surface, content="100")
+    }
+    _ => fail("template4.108 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4109 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4109({
+      base: {
+        parameter_category: 10,
+        parameter_number: 20,
+        type_of_interval_for_wavelength: 2,
+        scale_factor_of_first_wavelength: 0,
+        scaled_value_of_first_wavelength: 550,
+        scale_factor_of_second_wavelength: 0,
+        scaled_value_of_second_wavelength: 700,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      type_of_ensemble_forecast: 2,
+      perturbation_number: 3,
+      number_of_forecasts_in_ensemble: 20,
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4109(template4109) => {
+      inspect(template4109.base.type_of_interval_for_wavelength, content="2")
+      inspect(template4109.base.scaled_value_of_first_wavelength, content="550")
+      inspect(
+        template4109.base.scaled_value_of_second_wavelength,
+        content="700",
+      )
+      inspect(template4109.type_of_ensemble_forecast, content="2")
+      inspect(template4109.perturbation_number, content="3")
+      inspect(template4109.number_of_forecasts_in_ensemble, content="20")
+    }
+    _ => fail("template4.109 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4110 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4110({
+      base: {
+        parameter_category: 10,
+        parameter_number: 20,
+        type_of_interval_for_wavelength: 2,
+        scale_factor_of_first_wavelength: 0,
+        scaled_value_of_first_wavelength: 550,
+        scale_factor_of_second_wavelength: 0,
+        scaled_value_of_second_wavelength: 700,
+        type_of_generating_process: 4,
+        background_process_identifier: 1,
+        generating_process_identifier: 10,
+        hours_of_observational_data_cutoff: 2,
+        minutes_of_observational_data_cutoff: 30,
+        time_range_unit: 1,
+        forecast_time: 6,
+        type_of_first_fixed_surface: 100,
+        scale_factor_of_first_fixed_surface: 0,
+        scaled_value_of_first_fixed_surface: 50000,
+        type_of_second_fixed_surface: 255,
+        scale_factor_of_second_fixed_surface: 0,
+        scaled_value_of_second_fixed_surface: 0,
+      },
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 1,
+      number_of_missing_values: 0,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+      ],
+      reserved_tail: b"\xcf",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4110(template4110) => {
+      inspect(template4110.base.type_of_interval_for_wavelength, content="2")
+      inspect(template4110.base.scaled_value_of_first_wavelength, content="550")
+      inspect(
+        template4110.base.scaled_value_of_second_wavelength,
+        content="700",
+      )
+      inspect(template4110.number_of_time_ranges, content="1")
+      inspect(template4110.time_range_specs.length(), content="1")
+      inspect(template4110.time_range_specs[0].time_range_length, content="6")
+      inspect(template4110.reserved_tail == b"\xcf", content="true")
+    }
+    _ => fail("template4.110 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4111 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4111({
+      base: {
+        base: {
+          parameter_category: 10,
+          parameter_number: 20,
+          type_of_interval_for_wavelength: 2,
+          scale_factor_of_first_wavelength: 0,
+          scaled_value_of_first_wavelength: 550,
+          scale_factor_of_second_wavelength: 0,
+          scaled_value_of_second_wavelength: 700,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        type_of_ensemble_forecast: 2,
+        perturbation_number: 3,
+        number_of_forecasts_in_ensemble: 20,
+      },
+      end_year: 2024,
+      end_month: 5,
+      end_day: 2,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      number_of_time_ranges: 1,
+      number_of_missing_values: 0,
+      time_range_specs: [
+        {
+          statistical_process: 1,
+          type_of_time_increment: 2,
+          time_range_unit: 1,
+          time_range_length: 6,
+          time_increment_unit: 1,
+          time_increment_length: 1,
+        },
+      ],
+      reserved_tail: b"\xd0",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4111(template4111) => {
+      inspect(
+        template4111.base.base.type_of_interval_for_wavelength,
+        content="2",
+      )
+      inspect(
+        template4111.base.base.scaled_value_of_first_wavelength,
+        content="550",
+      )
+      inspect(template4111.base.type_of_ensemble_forecast, content="2")
+      inspect(template4111.base.perturbation_number, content="3")
+      inspect(template4111.base.number_of_forecasts_in_ensemble, content="20")
+      inspect(template4111.number_of_time_ranges, content="1")
+      inspect(template4111.time_range_specs.length(), content="1")
+      inspect(template4111.time_range_specs[0].time_range_length, content="6")
+      inspect(template4111.reserved_tail == b"\xd0", content="true")
+    }
+    _ => fail("template4.111 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
+test "section4 template4112 typed decode and encode roundtrip" {
+  let section4 : Grib2Section4Decoded = {
+    number_of_coordinate_values: 0,
+    template: ProductTemplate4112({
+      base: {
+        base: {
+          parameter_category: 10,
+          parameter_number: 20,
+          type_of_generating_process: 4,
+          background_process_identifier: 1,
+          generating_process_identifier: 10,
+          hours_of_observational_data_cutoff: 2,
+          minutes_of_observational_data_cutoff: 30,
+          time_range_unit: 1,
+          forecast_time: 6,
+          type_of_first_fixed_surface: 100,
+          scale_factor_of_first_fixed_surface: 0,
+          scaled_value_of_first_fixed_surface: 50000,
+          type_of_second_fixed_surface: 255,
+          scale_factor_of_second_fixed_surface: 0,
+          scaled_value_of_second_fixed_surface: 0,
+        },
+        end_year: 2024,
+        end_month: 5,
+        end_day: 2,
+        end_hour: 0,
+        end_minute: 0,
+        end_second: 0,
+        number_of_time_ranges: 1,
+        number_of_missing_values: 0,
+        time_range_specs: [
+          {
+            statistical_process: 1,
+            type_of_time_increment: 2,
+            time_range_unit: 1,
+            time_range_length: 6,
+            time_increment_unit: 1,
+            time_increment_length: 1,
+          },
+        ],
+        reserved_tail: b"",
+      },
+      forecast_probability_number: 2,
+      total_number_of_forecast_probabilities: 10,
+      probability_type: 1,
+      scale_factor_of_lower_limit: 0,
+      scaled_value_of_lower_limit: 100,
+      scale_factor_of_upper_limit: 0,
+      scaled_value_of_upper_limit: 200,
+      reference_period: {
+        type_of_reference_dataset: 1,
+        type_of_relation_to_reference_dataset: 2,
+        number_of_additional_parameters: 1,
+        additional_parameters: [{ scale_factor: 0, scaled_value: 12 }],
+        start_year: 1991,
+        start_month: 1,
+        start_day: 1,
+        start_hour: 0,
+        start_minute: 0,
+        start_second: 0,
+        sample_size: 30,
+        number_of_reference_period_time_ranges: 1,
+        reference_period_time_range_specs: [
+          {
+            statistical_processing_type: 1,
+            time_range_unit: 1,
+            time_range_length: 24,
+          },
+        ],
+      },
+      reserved_tail: b"\xd1",
+    }),
+    coordinate_values_raw: b"",
+  }
+  let encoded = encode_section4_bytes(section4)
+  let decoded = match decode_section4_bytes(encoded) {
+    Ok(decoded) => decoded
+    Err(error) => fail(error.to_string())
+  }
+  match decoded.template {
+    ProductTemplate4112(template4112) => {
+      inspect(template4112.base.number_of_time_ranges, content="1")
+      inspect(template4112.base.time_range_specs.length(), content="1")
+      inspect(template4112.forecast_probability_number, content="2")
+      inspect(template4112.total_number_of_forecast_probabilities, content="10")
+      inspect(template4112.probability_type, content="1")
+      inspect(template4112.scaled_value_of_lower_limit, content="100")
+      inspect(template4112.scaled_value_of_upper_limit, content="200")
+      inspect(
+        template4112.reference_period.type_of_reference_dataset,
+        content="1",
+      )
+      inspect(
+        template4112.reference_period.additional_parameters.length(),
+        content="1",
+      )
+      inspect(
+        template4112.reference_period.reference_period_time_range_specs[0].time_range_length,
+        content="24",
+      )
+      inspect(template4112.reserved_tail == b"\xd1", content="true")
+    }
+    _ => fail("template4.112 was not decoded")
+  }
+  let reencoded = encode_section4_bytes(decoded)
+  inspect(reencoded == encoded, content="true")
+}
+
+///|
 test "unknown section3 and section4 templates keep raw payloads" {
   let section3 : Grib2Section3Decoded = {
     source_of_grid_definition: 0,
