@@ -278,11 +278,19 @@ pub fn sec0_lines(Grib2FileContext) -> Array[String]
 
 pub fn sum(data~ : Array[Int], start? : Int, length? : Int) -> Int
 
+pub fn unpack_ieee(Bytes, @section5.Grib2DataRepresentationTemplate54, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
+pub fn unpack_jpeg2000(Bytes, @section5.Grib2DataRepresentationTemplate540, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
+pub fn unpack_png(Bytes, @section5.Grib2DataRepresentationTemplate541, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
 pub fn unpack_simple(Bytes, Int, Int, Int, Int, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
 
 pub fn unpack_submessage_data(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
 
 pub fn validate_context_invariants(Grib2FileContext) -> Result[Unit, Grib2WriteError]
+
+pub fn wasm_decode_record_grid_json(Int, Int) -> String
 
 pub fn wasm_decode_records_json(Int) -> String
 

@@ -34,3 +34,16 @@ test "wasm smoke: io adapter works with callback reader" {
   inspect(lines.length(), content="1")
   inspect(lines[0].contains("d=0000000000"), content="true")
 }
+
+///|
+test "wasm_decode_record_grid_json invalid handle returns error json" {
+  let json = wasm_decode_record_grid_json(-1, 1)
+  inspect(json.contains("\"error\""), content="true")
+}
+
+///|
+test "wasm_decode_record_grid_json out of range record returns error json" {
+  let handle = wasm_parse_grib2(minimal_grib2_message_bytes())
+  let json = wasm_decode_record_grid_json(handle, 2)
+  inspect(json.contains("\"error\""), content="true")
+}

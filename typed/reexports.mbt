@@ -57,8 +57,10 @@ pub using @section7 {
   type UnpackedGridData,
   type UnpackError,
   ieee754_single_to_double,
+  u16_to_i16,
+  unpack_ieee,
   unpack_simple,
-  // JPEG2000/PNG stubs
+  // JPEG2000/PNG unpackers
   unpack_jpeg2000,
   unpack_jpeg2000_differencing,
   get_jpeg2000_raw_bytes,

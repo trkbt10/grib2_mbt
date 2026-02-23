@@ -9,7 +9,8 @@
         "wasm_get_message_count:getMessageCount",
         "wasm_get_record_count:getRecordCount",
         "wasm_decode_records_json:decodeRecordsJson",
-        "wasm_render_inventory:renderInventory"
+        "wasm_render_inventory:renderInventory",
+        "wasm_decode_record_grid_json:decodeRecordGridJson"
       ],
       "use-js-builtin-string": true
     }
