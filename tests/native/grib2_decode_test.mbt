@@ -16,6 +16,20 @@ fn parse_fixture_for_decode(
 }
 
 ///|
+fn all_records_have_section5_template(
+  records : Array[@lib.Grib2RecordMeta],
+  expected_id : Int,
+) -> Bool {
+  let mut ok = true
+  for record in records {
+    if record.section5_template.id() != expected_id {
+      ok = false
+    }
+  }
+  ok
+}
+
+///|
 test "decode records exposes context fields" {
   let context = match
     parse_fixture_for_decode(
@@ -47,6 +61,67 @@ test "template dispatch foundation: fixture templates" {
   inspect(records[0].section3_template.is_known(), content="true")
   inspect(records[0].section4_template.is_known(), content="true")
   inspect(records[0].section5_template.is_known(), content="true")
+}
+
+///|
+test "template dispatch foundation: eccodes jpeg2000 fixtures" {
+  let context1 = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
+  )
+  let records1 = match context1 {
+    Ok(context) => @lib.decode_records(context)
+    Err(error) => fail(error)
+  }
+  inspect(records1.length() > 0, content="true")
+  inspect(records1[0].section5_template.id(), content="40")
+  inspect(records1[0].section5_template.is_known(), content="true")
+  let context2 = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
+  )
+  let records2 = match context2 {
+    Ok(context) => @lib.decode_records(context)
+    Err(error) => fail(error)
+  }
+  inspect(records2.length() > 0, content="true")
+  inspect(records2[0].section5_template.id(), content="40")
+  inspect(records2[0].section5_template.is_known(), content="true")
+}
+
+///|
+test "template dispatch foundation: eccodes jpeg2000 all records are template40" {
+  let context1 = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
+  )
+  let records1 = match context1 {
+    Ok(context) => @lib.decode_records(context)
+    Err(error) => fail(error)
+  }
+  inspect(all_records_have_section5_template(records1, 40), content="true")
+  let context2 = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
+  )
+  let records2 = match context2 {
+    Ok(context) => @lib.decode_records(context)
+    Err(error) => fail(error)
+  }
+  inspect(all_records_have_section5_template(records2, 40), content="true")
+}
+
+///|
+test "jpeg2000 fixture unpack path currently returns error" {
+  let context = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
+  )
+  let parsed = match context {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  let message = parsed.messages[0]
+  let submessage = message.submessages[0]
+  match @lib.unpack_submessage_data(message, submessage) {
+    Ok(_) => fail("unexpected success")
+    Err(_) => inspect(true, content="true")
+  }
 }
 
 ///|
