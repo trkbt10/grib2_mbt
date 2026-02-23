@@ -208,7 +208,53 @@ pub fn BitReader::read_bits(self : BitReader, count : Int) -> UInt {
 
 ---
 
-## 5. JMA MSM/GSM グリッド仕様
+## 5. 予報時間 (Forecast Time) の取得
+
+### Section 4 からの取得
+
+予報時間は Section 4 (Product Definition) に格納されている：
+
+| オクテット | 内容 |
+|-----------|------|
+| 18 | time_unit (Table 4.4) |
+| 19-22 | forecast_time (unsigned 32-bit) |
+
+time_unit の主な値:
+- `1`: Hour
+- `2`: Day
+
+### forecastTail フィールド
+
+WASM エクスポートでは、予報時間を人間可読な文字列として `forecastTail` フィールドに出力：
+
+- `"anl"`: 解析時刻 (forecast_time = 0)
+- `"3 hour fcst"`: 3時間予報
+- `"1 day fcst"`: 1日予報
+
+### TypeScript での取得
+
+```typescript
+interface RecordMeta {
+  // ... other fields
+  forecastTail: string;  // e.g., "3 hour fcst", "anl"
+}
+
+function extractForecastHour(forecastTail: string): number {
+  if (forecastTail === 'anl') return 0;
+
+  const hourMatch = forecastTail.match(/^(\d+)\s*hour\s*fcst/i);
+  if (hourMatch) return parseInt(hourMatch[1], 10);
+
+  const dayMatch = forecastTail.match(/^(\d+)\s*day\s*fcst/i);
+  if (dayMatch) return parseInt(dayMatch[1], 10) * 24;
+
+  return 0;
+}
+```
+
+---
+
+## 6. JMA MSM/GSM グリッド仕様
 
 ### MSM (メソスケールモデル)
 
