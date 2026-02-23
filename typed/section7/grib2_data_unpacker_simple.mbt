@@ -92,13 +92,18 @@ fn pow2(n : Int) -> Double {
 }
 
 ///|
-/// Convert unsigned 16-bit value to signed 16-bit integer.
+/// Convert GRIB2 scale factor to signed integer.
+/// GRIB2 uses sign-magnitude encoding (NOT two's complement):
+/// - Bit 15 is sign: 0=positive, 1=negative
+/// - Bits 0-14 are the magnitude
 pub fn u16_to_i16(raw : Int) -> Int {
   let v = raw & 0xFFFF
-  if v >= 0x8000 {
-    v - 0x10000
+  let sign_bit = v & 0x8000
+  let magnitude = v & 0x7FFF
+  if sign_bit != 0 {
+    -magnitude
   } else {
-    v
+    magnitude
   }
 }
 
