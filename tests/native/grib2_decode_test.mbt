@@ -346,6 +346,1497 @@ test "table lookup foundation: parameter and level known-unknown split" {
     content="Missing",
   )
   inspect(
+    @lib.decode_type_of_generating_process_name(0).display(),
+    content="Analysis",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(23).display(),
+    content="Anomaly",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(192).display(),
+    content="Forecast Confidence Indicator",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(198).display(),
+    content="Post-Processed Deterministic-Expert-Weighted Forecast",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_generating_process_name(-1).display(),
+    content="type_of_generating_process=-1",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(0).display(),
+    content="Minute",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(13).display(),
+    content="Second",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(8).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_indicator_of_unit_of_time_range_name(-1).display(),
+    content="indicator_of_unit_of_time_range=-1",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(1).display(),
+    content="Ground or Water Surface",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(109).display(),
+    content="Potential Vorticity Surface",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(150).display(),
+    content="Generalized Vertical Height Coordinate",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(191).display(),
+    content="Abstract Level with no Vertical Localization",
+  )
+  inspect(@lib.decode_fixed_surface_type_name(0).display(), content="Reserved")
+  inspect(@lib.decode_fixed_surface_type_name(28).display(), content="Reserved")
+  inspect(
+    @lib.decode_fixed_surface_type_name(200).display(),
+    content="Entire atmosphere (considered as a single layer)",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(235).display(),
+    content="Ocean Isotherm Level (1/10 C)",
+  )
+  inspect(
+    @lib.decode_fixed_surface_type_name(250).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_fixed_surface_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_fixed_surface_type_name(-1).display(),
+    content="fixed_surface_type=-1",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(0).display(),
+    content="Unperturbed High-Resolution Control Forecast",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(9).display(),
+    content="Initial Conditions and Model Physics Perturbations",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(192).display(),
+    content="Perturbed Ensemble Member",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_ensemble_forecast_name(-1).display(),
+    content="type_of_ensemble_forecast=-1",
+  )
+  inspect(
+    @lib.decode_derived_forecast_name(0).display(),
+    content="Unweighted Mean of All Members",
+  )
+  inspect(
+    @lib.decode_derived_forecast_name(10).display(),
+    content="Variance of all ensemble members",
+  )
+  inspect(@lib.decode_derived_forecast_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_derived_forecast_name(192).display(),
+    content="Unweighted Mode of All Members",
+  )
+  inspect(
+    @lib.decode_derived_forecast_name(204).display(),
+    content="Percentile value (95%) of All Members",
+  )
+  inspect(
+    @lib.decode_derived_forecast_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_derived_forecast_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_derived_forecast_name(-1).display(),
+    content="derived_forecast=-1",
+  )
+  inspect(
+    @lib.decode_clustering_method_name(0).display(),
+    content="Anomoly Correlation",
+  )
+  inspect(
+    @lib.decode_clustering_method_name(1).display(),
+    content="Root Mean Square",
+  )
+  inspect(@lib.decode_clustering_method_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_clustering_method_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_clustering_method_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_clustering_method_name(-1).display(),
+    content="clustering_method=-1",
+  )
+  inspect(
+    @lib.decode_probability_type_name(0).display(),
+    content="Probability of event below lower limit",
+  )
+  inspect(
+    @lib.decode_probability_type_name(10).display(),
+    content="Probability of event within the quantile of the probability distribution function",
+  )
+  inspect(@lib.decode_probability_type_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_probability_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_probability_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_probability_type_name(-1).display(),
+    content="probability_type=-1",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(0).display(),
+    content="Average",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(13).display(),
+    content="Median",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(50).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(100).display(),
+    content="Severity",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(192).display(),
+    content="Climatological Mean Value",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(209).display(),
+    content="Coefficient",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_statistical_processing_name(-1).display(),
+    content="type_of_statistical_processing=-1",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(1).display(),
+    content="Successive times processed have same forecast time, start time of forecast is incremented",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(5).display(),
+    content="Floating subinterval of time between forecast time and end of overall time interval",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_time_intervals_name(-1).display(),
+    content="type_of_time_intervals=-1",
+  )
+  inspect(
+    @lib.decode_operating_mode_name(0).display(),
+    content="Maintenance Mode",
+  )
+  inspect(@lib.decode_operating_mode_name(2).display(), content="Precipitation")
+  inspect(@lib.decode_operating_mode_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_operating_mode_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_operating_mode_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_operating_mode_name(-1).display(),
+    content="operating_mode=-1",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(0).display(),
+    content="No Quality Control Applied",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(1).display(),
+    content="Quality Control Applied",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_quality_control_indicator_name(-1).display(),
+    content="quality_control_indicator=-1",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(0).display(),
+    content="No Clutter Filter Used",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(1).display(),
+    content="Clutter Filter Used",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_clutter_filter_indicator_name(-1).display(),
+    content="clutter_filter_indicator=-1",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(0).display(),
+    content="Data is calculated directly from the source grid with no interpolation",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(6).display(),
+    content="Neighbor-budget interpolation using the 4 source grid-point values surrounding the nominal grid-point",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_spatial_processing_name(-1).display(),
+    content="type_of_spatial_processing=-1",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(0).display(),
+    content="Confidence index",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(5).display(),
+    content="Probability",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_quality_value_associated_with_parameter_name(-1).display(),
+    content="quality_value_associated_with_parameter=-1",
+  )
+  inspect(
+    @lib.decode_type_of_interval_name(0).display(),
+    content="Smaller than first limit",
+  )
+  inspect(
+    @lib.decode_type_of_interval_name(11).display(),
+    content="Equal to first limit",
+  )
+  inspect(@lib.decode_type_of_interval_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_type_of_interval_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_type_of_interval_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_type_of_interval_name(-1).display(),
+    content="type_of_interval=-1",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(0).display(),
+    content="Analysis",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(5).display(),
+    content="Gridded observations",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_name(-1).display(),
+    content="type_of_reference_dataset=-1",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(0).display(),
+    content="Anomaly",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(24).display(),
+    content="Crossing Point Forecast (CPF)",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(10).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_relationship_to_reference_dataset_name(-1).display(),
+    content="type_of_relationship_to_reference_dataset=-1",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(0).display(),
+    content="Average",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(31).display(),
+    content="Index based on empirical distribution",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(10).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_statistical_processing_of_reference_period_name(-1).display(),
+    content="statistical_processing_of_reference_period=-1",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(0).display(),
+    content="Circle [m]",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(4).display(),
+    content="Span of grid boxes centered around grid box i,j [x,y]",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_spatial_vicinity_type_name(-1).display(),
+    content="spatial_vicinity_type=-1",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(0).display(),
+    content="Average",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(190).display(),
+    content="Quantile",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_processing_name(-1).display(),
+    content="spatial_and_temporal_vicinity_processing=-1",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(0).display(),
+    content="Ignore missing data",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(1).display(),
+    content="No data",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_spatial_and_temporal_vicinity_missing_data_name(-1).display(),
+    content="spatial_and_temporal_vicinity_missing_data=-1",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(0).display(),
+    content="Normal operating data",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(12).display(),
+    content="Ships/aircrafts",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_radar_data_quality_flags_name(-1).display(),
+    content="radar_data_quality_flags=-1",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(0).display(),
+    content="Mean Error",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(105).display(),
+    content="Contingency Table (Probabilistic) - Forecast-by-n-members and not observed",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(50).display(),
+    content="Reserved for Future Use",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(500).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(64000).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(65535).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_verification_scores_name(-1).display(),
+    content="verification_scores=-1",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(0).display(),
+    content="Analysis Interpolated on Forecast Grid",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(4).display(),
+    content="Gridded Observation wih Forecast Interpolated on Observation Grid",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_reference_dataset_for_verification_name(-1).display(),
+    content="type_of_reference_dataset_for_verification=-1",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(0).display(),
+    content="Fixed Threshold Value",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(2).display(),
+    content="Threshold Specified as a Multiple of the Standard Deviation",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_additional_arguments_for_verification_score_name(-1).display(),
+    content="type_of_additional_arguments_for_verification_score=-1",
+  )
+  inspect(@lib.decode_precipitation_type_name(1).display(), content="Rain")
+  inspect(
+    @lib.decode_precipitation_type_name(14).display(),
+    content="Hail (≥ 5 mm)",
+  )
+  inspect(@lib.decode_precipitation_type_name(0).display(), content="Reserved")
+  inspect(
+    @lib.decode_precipitation_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_precipitation_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_precipitation_type_name(-1).display(),
+    content="precipitation_type=-1",
+  )
+  inspect(
+    @lib.decode_precipitable_water_category_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_precipitable_water_category_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_precipitable_water_category_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_precipitable_water_category_name(-1).display(),
+    content="precipitable_water_category=-1",
+  )
+  inspect(@lib.decode_cloud_type_name(0).display(), content="Clear")
+  inspect(@lib.decode_cloud_type_name(191).display(), content="Unknown")
+  inspect(@lib.decode_cloud_type_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_cloud_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_cloud_type_name(255).display(), content="Missing")
+  inspect(@lib.decode_cloud_type_name(-1).display(), content="cloud_type=-1")
+  inspect(@lib.decode_thunderstorm_coverage_name(0).display(), content="None")
+  inspect(
+    @lib.decode_thunderstorm_coverage_name(4).display(),
+    content="Numerous (>45%)",
+  )
+  inspect(
+    @lib.decode_thunderstorm_coverage_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_thunderstorm_coverage_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_thunderstorm_coverage_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_thunderstorm_coverage_name(-1).display(),
+    content="thunderstorm_coverage=-1",
+  )
+  inspect(
+    @lib.decode_presence_of_aerosol_name(1).display(),
+    content="Aerosol present",
+  )
+  inspect(
+    @lib.decode_presence_of_aerosol_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_presence_of_aerosol_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_presence_of_aerosol_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_presence_of_aerosol_name(-1).display(),
+    content="presence_of_aerosol=-1",
+  )
+  inspect(@lib.decode_volcanic_ash_name(1).display(), content="Present")
+  inspect(@lib.decode_volcanic_ash_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_volcanic_ash_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_volcanic_ash_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_volcanic_ash_name(-1).display(),
+    content="volcanic_ash=-1",
+  )
+  inspect(@lib.decode_icing_name(5).display(), content="Heavy")
+  inspect(@lib.decode_icing_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_icing_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_icing_name(255).display(), content="Missing")
+  inspect(@lib.decode_icing_name(-1).display(), content="icing=-1")
+  inspect(@lib.decode_turbulence_name(4).display(), content="Extreme")
+  inspect(@lib.decode_turbulence_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_turbulence_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_turbulence_name(255).display(), content="Missing")
+  inspect(@lib.decode_turbulence_name(-1).display(), content="turbulence=-1")
+  inspect(
+    @lib.decode_planetary_boundary_layer_regime_name(1).display(),
+    content="Stable",
+  )
+  inspect(
+    @lib.decode_planetary_boundary_layer_regime_name(0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_planetary_boundary_layer_regime_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_planetary_boundary_layer_regime_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_planetary_boundary_layer_regime_name(-1).display(),
+    content="planetary_boundary_layer_regime=-1",
+  )
+  inspect(
+    @lib.decode_contrail_intensity_name(1).display(),
+    content="Contrail Present",
+  )
+  inspect(
+    @lib.decode_contrail_intensity_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_contrail_intensity_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_contrail_intensity_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_contrail_intensity_name(-1).display(),
+    content="contrail_intensity=-1",
+  )
+  inspect(
+    @lib.decode_contrail_engine_type_name(2).display(),
+    content="Non-Bypass",
+  )
+  inspect(
+    @lib.decode_contrail_engine_type_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_contrail_engine_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_contrail_engine_type_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_contrail_engine_type_name(-1).display(),
+    content="contrail_engine_type=-1",
+  )
+  inspect(@lib.decode_land_use_name(1).display(), content="Urban Land")
+  inspect(@lib.decode_land_use_name(13).display(), content="Savannah")
+  inspect(@lib.decode_land_use_name(0).display(), content="Reserved")
+  inspect(
+    @lib.decode_land_use_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_land_use_name(255).display(), content="Missing")
+  inspect(@lib.decode_land_use_name(-1).display(), content="land_use=-1")
+  inspect(@lib.decode_soil_type_name(1).display(), content="Sand")
+  inspect(@lib.decode_soil_type_name(11).display(), content="Clay")
+  inspect(@lib.decode_soil_type_name(0).display(), content="Reserved")
+  inspect(
+    @lib.decode_soil_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_soil_type_name(255).display(), content="Missing")
+  inspect(@lib.decode_soil_type_name(-1).display(), content="soil_type=-1")
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(0).display(),
+    content="Worst",
+  )
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(191).display(),
+    content="Unknown",
+  )
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_environmental_factor_qualifier_name(-1).display(),
+    content="environmental_factor_qualifier=-1",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(50).display(),
+    content="No-Snow/No-Cloud",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(250).display(),
+    content="Snow",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(10).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(252).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_remotely_sensed_snow_coverage_name(-1).display(),
+    content="remotely_sensed_snow_coverage=-1",
+  )
+  inspect(
+    @lib.decode_elevation_of_snow_covered_terrain_name(10).display(),
+    content="Elevation in increments of 100 m",
+  )
+  inspect(
+    @lib.decode_elevation_of_snow_covered_terrain_name(200).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_elevation_of_snow_covered_terrain_name(254).display(),
+    content="Clouds",
+  )
+  inspect(
+    @lib.decode_elevation_of_snow_covered_terrain_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_elevation_of_snow_covered_terrain_name(-1).display(),
+    content="elevation_of_snow_covered_terrain=-1",
+  )
+  inspect(
+    @lib.decode_cloud_mask_type_name(0).display(),
+    content="Clear over water",
+  )
+  inspect(@lib.decode_cloud_mask_type_name(3).display(), content="No data")
+  inspect(@lib.decode_cloud_mask_type_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_cloud_mask_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_cloud_mask_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_cloud_mask_type_name(-1).display(),
+    content="cloud_mask_type=-1",
+  )
+  inspect(
+    @lib.decode_pixel_scene_type_name(0).display(),
+    content="No Scene Identified",
+  )
+  inspect(
+    @lib.decode_pixel_scene_type_name(112).display(),
+    content="Single Layer Ice Cloud",
+  )
+  inspect(@lib.decode_pixel_scene_type_name(50).display(), content="Reserved")
+  inspect(
+    @lib.decode_pixel_scene_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_pixel_scene_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_pixel_scene_type_name(-1).display(),
+    content="pixel_scene_type=-1",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(0).display(),
+    content="Nominal Cloud Top Height Quality",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(3).display(),
+    content="Fog In Segment and Poor Quality Height Estimation",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_cloud_top_height_quality_indicator_name(-1).display(),
+    content="cloud_top_height_quality_indicator=-1",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(0).display(),
+    content="Latitude",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(1).display(),
+    content="Longitude",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_horizontal_dimension_processed_name(-1).display(),
+    content="horizontal_dimension_processed=-1",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(0).display(),
+    content="Not Included",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(1).display(),
+    content="Extrapolated",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_treatment_of_missing_data_name(-1).display(),
+    content="treatment_of_missing_data=-1",
+  )
+  inspect(@lib.decode_categorical_result_name(0).display(), content="No")
+  inspect(@lib.decode_categorical_result_name(1).display(), content="Yes")
+  inspect(
+    @lib.decode_categorical_result_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_categorical_result_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_categorical_result_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_categorical_result_name(-1).display(),
+    content="categorical_result=-1",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(2).display(),
+    content="Probable Fire Detected",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(3).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_fire_detection_indicator_name(-1).display(),
+    content="fire_detection_indicator=-1",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(0).display(),
+    content="No Risk Area",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(18).display(),
+    content="Extreamly Critical Risk Area",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(10).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_categorical_outlook_name(-1).display(),
+    content="categorical_outlook=-1",
+  )
+  inspect(
+    @lib.decode_weather_name(0).display(),
+    content="Cloud development not observed or not observable",
+  )
+  inspect(
+    @lib.decode_weather_name(65).display(),
+    content="Rain, not freezing, continuous",
+  )
+  inspect(
+    @lib.decode_weather_name(293).display(),
+    content="Shower(s) or thunderstorm over mountains",
+  )
+  inspect(@lib.decode_weather_name(300).display(), content="Reserved")
+  inspect(@lib.decode_weather_name(511).display(), content="Missing value")
+  inspect(@lib.decode_weather_name(-1).display(), content="weather=-1")
+  inspect(@lib.decode_icing_scenario_name(1).display(), content="General")
+  inspect(@lib.decode_icing_scenario_name(4).display(), content="Freezing")
+  inspect(@lib.decode_icing_scenario_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_icing_scenario_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_icing_scenario_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_icing_scenario_name(-1).display(),
+    content="icing_scenario=-1",
+  )
+  inspect(@lib.decode_icing_severity_name(0).display(), content="None")
+  inspect(@lib.decode_icing_severity_name(4).display(), content="Severe")
+  inspect(@lib.decode_icing_severity_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_icing_severity_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_icing_severity_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_icing_severity_name(-1).display(),
+    content="icing_severity=-1",
+  )
+  inspect(@lib.decode_aerosol_type_name(0).display(), content="Ozone")
+  inspect(
+    @lib.decode_aerosol_type_name(62036).display(),
+    content="Brown Carbon Dry",
+  )
+  inspect(@lib.decode_aerosol_type_name(10003).display(), content="Reserved")
+  inspect(@lib.decode_aerosol_type_name(65535).display(), content="Missing")
+  inspect(
+    @lib.decode_aerosol_type_name(-1).display(),
+    content="aerosol_type=-1",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(0).display(),
+    content="Ozone",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(20010).display(),
+    content="HCFC-142b",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(62300).display(),
+    content="Poaceae (Grass Family) Pollen",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(10003).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(63000).display(),
+    content="For Experimental Use at Local Level",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(65535).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_atmospheric_chemical_or_physical_constituent_type_name(-1).display(),
+    content="constituent_type=-1",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(1).display(),
+    content="Crops, mixed farming",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(20).display(),
+    content="Water and land mixtures",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_canopy_cover_fraction_name(-1).display(),
+    content="canopy_cover_fraction=-1",
+  )
+  inspect(@lib.decode_soil_texture_fraction_name(1).display(), content="Coarse")
+  inspect(
+    @lib.decode_soil_texture_fraction_name(7).display(),
+    content="Tropical-organic",
+  )
+  inspect(
+    @lib.decode_soil_texture_fraction_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_soil_texture_fraction_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_soil_texture_fraction_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_soil_texture_fraction_name(-1).display(),
+    content="soil_texture_fraction=-1",
+  )
+  inspect(@lib.decode_source_or_sink_name(1).display(), content="Aviation")
+  inspect(
+    @lib.decode_source_or_sink_name(43).display(),
+    content="Deforestation",
+  )
+  inspect(@lib.decode_source_or_sink_name(0).display(), content="Reserved")
+  inspect(@lib.decode_source_or_sink_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_source_or_sink_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_source_or_sink_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_source_or_sink_name(-1).display(),
+    content="source_or_sink=-1",
+  )
+  inspect(@lib.decode_wetland_type_name(1).display(), content="Bog")
+  inspect(@lib.decode_wetland_type_name(12).display(), content="Wet Tundra")
+  inspect(@lib.decode_wetland_type_name(0).display(), content="Reserved")
+  inspect(@lib.decode_wetland_type_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_wetland_type_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_wetland_type_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_wetland_type_name(-1).display(),
+    content="wetland_type=-1",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(0).display(),
+    content="No specific distribution function given",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(8).display(),
+    content="No distribution function. The encoded variable is derived from variables characterized by type of distribution function No. 7",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(60000).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(65535).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_type_of_distribution_function_name(-1).display(),
+    content="type_of_distribution_function=-1",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(0).display(),
+    content="Undefined",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(7).display(),
+    content="Aggregated",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_coverage_attributes_name(-1).display(),
+    content="coverage_attributes=-1",
+  )
+  inspect(
+    @lib.decode_tile_classification_name(1).display(),
+    content="Land use classes according to ESA-GLOBCOVER GCV2009",
+  )
+  inspect(@lib.decode_tile_classification_name(0).display(), content="Reserved")
+  inspect(
+    @lib.decode_tile_classification_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_tile_classification_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_tile_classification_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_tile_classification_name(-1).display(),
+    content="tile_classification=-1",
+  )
+  inspect(
+    @lib.decode_tile_class_name(1).display(),
+    content="Evergreen broadleaved forest",
+  )
+  inspect(@lib.decode_tile_class_name(39).display(), content="Undefined")
+  inspect(@lib.decode_tile_class_name(0).display(), content="Reserved")
+  inspect(@lib.decode_tile_class_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_tile_class_name(40000).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_tile_class_name(-1).display(), content="tile_class=-1")
+  inspect(
+    @lib.decode_quality_indicator_name(0).display(),
+    content="No Quality Information Available",
+  )
+  inspect(@lib.decode_quality_indicator_name(2).display(), content="Passed")
+  inspect(@lib.decode_quality_indicator_name(100).display(), content="Reserved")
+  inspect(
+    @lib.decode_quality_indicator_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_quality_indicator_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_quality_indicator_name(-1).display(),
+    content="quality_indicator=-1",
+  )
+  inspect(
+    @lib.decode_thunderstorm_intensity_index_name(3).display(),
+    content="Severe thunderstorm",
+  )
+  inspect(
+    @lib.decode_thunderstorm_intensity_index_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_thunderstorm_intensity_index_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_thunderstorm_intensity_index_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_thunderstorm_intensity_index_name(-1).display(),
+    content="thunderstorm_intensity_index=-1",
+  )
+  inspect(
+    @lib.decode_precipitation_intensity_name(3).display(),
+    content="Heavy precipitation",
+  )
+  inspect(
+    @lib.decode_precipitation_intensity_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_precipitation_intensity_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_precipitation_intensity_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_precipitation_intensity_name(-1).display(),
+    content="precipitation_intensity=-1",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(0).display(),
+    content="Nearest forecast or analysis time to specified local time",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(1).display(),
+    content="Interpolated to be valid at the specified local time",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_method_used_to_derive_data_value_for_local_time_name(-1).display(),
+    content="method_used_to_derive_data_value_for_local_time=-1",
+  )
+  inspect(
+    @lib.decode_character_of_precipitation_name(3).display(),
+    content="Continuous",
+  )
+  inspect(
+    @lib.decode_character_of_precipitation_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_character_of_precipitation_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_character_of_precipitation_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_character_of_precipitation_name(-1).display(),
+    content="character_of_precipitation=-1",
+  )
+  inspect(@lib.decode_drainage_direction_name(1).display(), content="Southwest")
+  inspect(@lib.decode_drainage_direction_name(0).display(), content="Reserved")
+  inspect(
+    @lib.decode_drainage_direction_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_drainage_direction_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_drainage_direction_name(255).display(), content="Missing")
+  inspect(
+    @lib.decode_drainage_direction_name(-1).display(),
+    content="drainage_direction=-1",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(1).display(),
+    content="Geometric Sequence",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(2).display(),
+    content="Arithmetic Sequence",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_wave_direction_and_frequency_formulae_name(-1).display(),
+    content="wave_direction_and_frequency_formulae=-1",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(1).display(),
+    content="Seas and Oceans",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(3501).display(),
+    content="Grouping Using the Dominant Tiles Approach (Dominant Tile Varies per Gridbox)",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(1041).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(40000).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(65535).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_tile_classes_and_groupings_name(-1).display(),
+    content="tile_classes_and_groupings=-1",
+  )
+  inspect(@lib.decode_hazard_index_name(0).display(), content="Undefined")
+  inspect(@lib.decode_hazard_index_name(10).display(), content="Reserved")
+  inspect(@lib.decode_hazard_index_name(65535).display(), content="Missing")
+  inspect(
+    @lib.decode_hazard_index_name(-1).display(),
+    content="hazard_index=-1",
+  )
+  inspect(
+    @lib.decode_transport_dispersion_model_name(1).display(),
+    content="DERMA (Danish Emergency Response Model of the Atmosphere)",
+  )
+  inspect(
+    @lib.decode_transport_dispersion_model_name(0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_transport_dispersion_model_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_transport_dispersion_model_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_transport_dispersion_model_name(-1).display(),
+    content="transport_dispersion_model=-1",
+  )
+  inspect(
+    @lib.decode_emission_scenario_origin_name(1).display(),
+    content="ARGOS (Accident Reporting and Guiding Operational System)",
+  )
+  inspect(
+    @lib.decode_emission_scenario_origin_name(0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_emission_scenario_origin_name(100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_emission_scenario_origin_name(255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_emission_scenario_origin_name(-1).display(),
+    content="emission_scenario_origin=-1",
+  )
+  inspect(
+    @lib.decode_nwp_model_name(1).display(),
+    content="AROME (Meso scale NWP, Meteo-France)",
+  )
+  inspect(@lib.decode_nwp_model_name(0).display(), content="Reserved")
+  inspect(@lib.decode_nwp_model_name(100).display(), content="Reserved")
+  inspect(@lib.decode_nwp_model_name(255).display(), content="Missing")
+  inspect(@lib.decode_nwp_model_name(-1).display(), content="nwp_model=-1")
+  inspect(
     @lib.decode_parameter_category_name(0, 0).display(),
     content="Temperature",
   )
@@ -732,6 +2223,1035 @@ test "table lookup foundation: parameter and level known-unknown split" {
     content="parameter_number=disc=0,cat=190,param=-1",
   )
   inspect(
+    @lib.decode_parameter_number_name(0, 191, 0).display(),
+    content="TSEC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, 7).display(),
+    content="TDTSV",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, 80).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, 194).display(),
+    content="RTSEC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 191, -1).display(),
+    content="parameter_number=disc=0,cat=191,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, 1).display(),
+    content="COVMZ",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, 13).display(),
+    content="COVVVVV",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, 0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(0, 192, -1).display(),
+    content="parameter_number=disc=0,cat=192,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(1, 0, 0).display(), content="FFLDG")
+  inspect(
+    @lib.decode_parameter_number_name(1, 0, 24).display(),
+    content="DARVERVEL",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 0, 100).display(),
+    content="Reserved",
+  )
+  inspect(@lib.decode_parameter_number_name(1, 0, 196).display(), content="AHD")
+  inspect(
+    @lib.decode_parameter_number_name(1, 0, 195).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 0, -1).display(),
+    content="parameter_number=disc=1,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(1, 1, 2).display(), content="POP")
+  inspect(
+    @lib.decode_parameter_number_name(1, 1, 3).display(),
+    content="Reserved",
+  )
+  inspect(@lib.decode_parameter_number_name(1, 1, 195).display(), content="CWR")
+  inspect(
+    @lib.decode_parameter_number_name(1, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 1, -1).display(),
+    content="parameter_number=disc=1,cat=1,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, 0).display(),
+    content="WDPTHIL",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, 23).display(),
+    content="ARCRF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, 24).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(1, 2, -1).display(),
+    content="parameter_number=disc=1,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(2, 0, 0).display(), content="LAND")
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, 63).display(),
+    content="CANTMP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, 205).display(),
+    content="RCSOL",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, 250).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 0, -1).display(),
+    content="parameter_number=disc=2,cat=0,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 1, 192).display(),
+    content="CANL",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 1, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 1, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 1, -1).display(),
+    content="parameter_number=disc=2,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(2, 3, 0).display(), content="SOTYP")
+  inspect(@lib.decode_parameter_number_name(2, 3, 30).display(), content="SWET")
+  inspect(
+    @lib.decode_parameter_number_name(2, 3, 60).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 3, 203).display(),
+    content="FLDCP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 3, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 3, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 3, -1).display(),
+    content="parameter_number=disc=2,cat=3,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, 0).display(),
+    content="FIREOLK",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, 44).display(),
+    content="IGNLTNG",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, 70).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 4, -1).display(),
+    content="parameter_number=disc=2,cat=4,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, 0).display(),
+    content="GLACCOV",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, 1).display(),
+    content="GLACTMP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 5, -1).display(),
+    content="parameter_number=disc=2,cat=5,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, 0).display(),
+    content="URBCOVER",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, 8).display(),
+    content="DDROAD",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, 50).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, 192).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 6, -1).display(),
+    content="parameter_number=disc=2,cat=6,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, 0).display(),
+    content="HNETFLUX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, 2).display(),
+    content="SHTFLUX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, 20).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(2, 7, -1).display(),
+    content="parameter_number=disc=2,cat=7,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(3, 0, 0).display(), content="SRAD")
+  inspect(
+    @lib.decode_parameter_number_name(3, 0, 9).display(),
+    content="FIREDI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 0, 150).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 0, -1).display(),
+    content="parameter_number=disc=3,cat=0,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, 27).display(),
+    content="BRFLF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, 193).display(),
+    content="VSCT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, 50).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 1, -1).display(),
+    content="parameter_number=disc=3,cat=1,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, 0).display(),
+    content="CSKPROB",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, 30).display(),
+    content="MEACST",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, 15).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 2, -1).display(),
+    content="parameter_number=disc=3,cat=2,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, 0).display(),
+    content="PBMVFRC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, 2).display(),
+    content="PBINFRC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, 50).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, 210).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 3, -1).display(),
+    content="parameter_number=disc=3,cat=3,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, 0).display(),
+    content="VOLAPROB",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, 8).display(),
+    content="VOLAPER",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 4, -1).display(),
+    content="parameter_number=disc=3,cat=4,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, 0).display(),
+    content="ISSTMP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, 5).display(),
+    content="EBSDSSTS",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 5, -1).display(),
+    content="parameter_number=disc=3,cat=5,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, 0).display(),
+    content="GSOLIRR",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, 3).display(),
+    content="DIRSOLEX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 6, -1).display(),
+    content="parameter_number=disc=3,cat=6,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, 0).display(),
+    content="SBT122",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, 87).display(),
+    content="SSMS1713",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, 120).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(3, 192, -1).display(),
+    content="parameter_number=disc=3,cat=192,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, 0).display(),
+    content="TMPSWP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, 5).display(),
+    content="PRPTMP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 0, -1).display(),
+    content="parameter_number=disc=4,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(4, 1, 0).display(), content="SPEED")
+  inspect(@lib.decode_parameter_number_name(4, 1, 3).display(), content="VEL3")
+  inspect(
+    @lib.decode_parameter_number_name(4, 1, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 1, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 1, -1).display(),
+    content="parameter_number=disc=4,cat=1,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, 0).display(),
+    content="PLSMDEN",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, 13).display(),
+    content="EQSLABT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 2, -1).display(),
+    content="parameter_number=disc=4,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(4, 3, 0).display(), content="BTOT")
+  inspect(@lib.decode_parameter_number_name(4, 3, 7).display(), content="EVEC3")
+  inspect(
+    @lib.decode_parameter_number_name(4, 3, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 3, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 3, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 3, -1).display(),
+    content="parameter_number=disc=4,cat=3,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, 0).display(),
+    content="DIFPFLUX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, 6).display(),
+    content="NTRNFLUX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 4, -1).display(),
+    content="parameter_number=disc=4,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(4, 5, 0).display(), content="AMPL")
+  inspect(
+    @lib.decode_parameter_number_name(4, 5, 3).display(),
+    content="WAVELGTH",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 5, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 5, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 5, -1).display(),
+    content="parameter_number=disc=4,cat=5,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(4, 6, 0).display(), content="TSI")
+  inspect(@lib.decode_parameter_number_name(4, 6, 6).display(), content="SOLRF")
+  inspect(
+    @lib.decode_parameter_number_name(4, 6, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 6, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 6, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 6, -1).display(),
+    content="parameter_number=disc=4,cat=6,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, 0).display(),
+    content="LMBINT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, 3).display(),
+    content="DSKNGT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 7, -1).display(),
+    content="parameter_number=disc=4,cat=7,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 8, 0).display(),
+    content="XRAYRAD",
+  )
+  inspect(@lib.decode_parameter_number_name(4, 8, 8).display(), content="SICFL")
+  inspect(
+    @lib.decode_parameter_number_name(4, 8, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 8, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 8, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 8, -1).display(),
+    content="parameter_number=disc=4,cat=8,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, 0).display(),
+    content="SIGPED",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, 2).display(),
+    content="SIGPAR",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 9, -1).display(),
+    content="parameter_number=disc=4,cat=9,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, 0).display(),
+    content="SCINIDX",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, 7).display(),
+    content="AURELEC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(4, 10, -1).display(),
+    content="parameter_number=disc=4,cat=10,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 0).display(),
+    content="WVSP1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 104).display(),
+    content="VASMF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 105).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 192).display(),
+    content="WSTP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 194).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 0, -1).display(),
+    content="parameter_number=disc=10,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(10, 1, 0).display(), content="DIRC")
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, 6).display(),
+    content="NRTHCUR",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, 192).display(),
+    content="OMLU",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 1, -1).display(),
+    content="parameter_number=disc=10,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(10, 2, 0).display(), content="ICEC")
+  inspect(
+    @lib.decode_parameter_number_name(10, 2, 31).display(),
+    content="DSWRFICE",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 2, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 2, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 2, -1).display(),
+    content="parameter_number=disc=10,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(10, 3, 0).display(), content="WTMP")
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 22).display(),
+    content="DSWRFSS",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 200).display(),
+    content="SSST",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 240).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 254).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 3, -1).display(),
+    content="parameter_number=disc=10,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_number_name(10, 4, 0).display(), content="MTHD")
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, 58).display(),
+    content="DSWRFSEA",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, 9).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, 192).display(),
+    content="WTMPC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 4, -1).display(),
+    content="parameter_number=disc=10,cat=4,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, 0).display(),
+    content="IRTSEC",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, 4).display(),
+    content="BARDSF",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, 2).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(10, 191, -1).display(),
+    content="parameter_number=disc=10,cat=191,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 0, 0).display(),
+    content="UTHCIDX",
+  )
+  inspect(@lib.decode_parameter_number_name(20, 0, 12).display(), content="ECF")
+  inspect(
+    @lib.decode_parameter_number_name(20, 0, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 0, -1).display(),
+    content="parameter_number=disc=20,cat=0,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, 0).display(),
+    content="MALACASE",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, 9).display(),
+    content="FMALVRH",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 1, -1).display(),
+    content="parameter_number=disc=20,cat=1,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 2, 0).display(),
+    content="POPDEN",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 2, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 2, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 2, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 2, -1).display(),
+    content="parameter_number=disc=20,cat=2,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, 0).display(),
+    content="RENPCAP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, 9).display(),
+    content="CSPPROD",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 3, -1).display(),
+    content="parameter_number=disc=20,cat=3,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 1).display(),
+    content="DBURSTHI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 60).display(),
+    content="WINDHI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 191).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 4, -1).display(),
+    content="parameter_number=disc=20,cat=4,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 1).display(),
+    content="HHAIRPOLHI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 24).display(),
+    content="EUTROPHI",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 0).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 191).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(20, 5, -1).display(),
+    content="parameter_number=disc=20,cat=5,param=-1",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, 0).display(),
+    content="SPPT",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, 5).display(),
+    content="STTP",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, 100).display(),
+    content="Reserved",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, 255).display(),
+    content="Missing",
+  )
+  inspect(
+    @lib.decode_parameter_number_name(191, 0, -1).display(),
+    content="parameter_number=disc=191,cat=0,param=-1",
+  )
+  inspect(
     @lib.decode_parameter_number_name(0, 0, 193).display(),
     content="TTRAD",
   )
@@ -958,6 +3478,540 @@ test "table lookup foundation: parameter and level known-unknown split" {
   inspect(
     @lib.decode_parameter_name(0, 190, -1).display(),
     content="disc=0,cat=190,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 191, 0).display(), content="TSEC")
+  inspect(@lib.decode_parameter_name(0, 191, 7).display(), content="TDTSV")
+  inspect(@lib.decode_parameter_name(0, 191, 80).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(0, 191, 194).display(), content="RTSEC")
+  inspect(
+    @lib.decode_parameter_name(0, 191, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 191, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 191, -1).display(),
+    content="disc=0,cat=191,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(0, 192, 1).display(), content="COVMZ")
+  inspect(@lib.decode_parameter_name(0, 192, 13).display(), content="COVVVVV")
+  inspect(@lib.decode_parameter_name(0, 192, 0).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(0, 192, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(0, 192, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(0, 192, -1).display(),
+    content="disc=0,cat=192,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(1, 0, 0).display(), content="FFLDG")
+  inspect(@lib.decode_parameter_name(1, 0, 24).display(), content="DARVERVEL")
+  inspect(@lib.decode_parameter_name(1, 0, 100).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(1, 0, 196).display(), content="AHD")
+  inspect(
+    @lib.decode_parameter_name(1, 0, 195).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(1, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(1, 0, -1).display(),
+    content="disc=1,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(1, 1, 2).display(), content="POP")
+  inspect(@lib.decode_parameter_name(1, 1, 3).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(1, 1, 195).display(), content="CWR")
+  inspect(
+    @lib.decode_parameter_name(1, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(1, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(1, 1, -1).display(),
+    content="disc=1,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(1, 2, 0).display(), content="WDPTHIL")
+  inspect(@lib.decode_parameter_name(1, 2, 23).display(), content="ARCRF")
+  inspect(@lib.decode_parameter_name(1, 2, 24).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(1, 2, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(1, 2, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(1, 2, -1).display(),
+    content="disc=1,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 0, 0).display(), content="LAND")
+  inspect(@lib.decode_parameter_name(2, 0, 63).display(), content="CANTMP")
+  inspect(@lib.decode_parameter_name(2, 0, 100).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(2, 0, 205).display(), content="RCSOL")
+  inspect(
+    @lib.decode_parameter_name(2, 0, 250).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 0, -1).display(),
+    content="disc=2,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 1, 192).display(), content="CANL")
+  inspect(@lib.decode_parameter_name(2, 1, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(2, 1, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 1, -1).display(),
+    content="disc=2,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 3, 0).display(), content="SOTYP")
+  inspect(@lib.decode_parameter_name(2, 3, 30).display(), content="SWET")
+  inspect(@lib.decode_parameter_name(2, 3, 60).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(2, 3, 203).display(), content="FLDCP")
+  inspect(
+    @lib.decode_parameter_name(2, 3, 240).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 3, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 3, -1).display(),
+    content="disc=2,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 4, 0).display(), content="FIREOLK")
+  inspect(@lib.decode_parameter_name(2, 4, 44).display(), content="IGNLTNG")
+  inspect(@lib.decode_parameter_name(2, 4, 70).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(2, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 4, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 4, -1).display(),
+    content="disc=2,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 5, 0).display(), content="GLACCOV")
+  inspect(@lib.decode_parameter_name(2, 5, 1).display(), content="GLACTMP")
+  inspect(@lib.decode_parameter_name(2, 5, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(2, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 5, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 5, -1).display(),
+    content="disc=2,cat=5,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 6, 0).display(), content="URBCOVER")
+  inspect(@lib.decode_parameter_name(2, 6, 8).display(), content="DDROAD")
+  inspect(@lib.decode_parameter_name(2, 6, 50).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(2, 6, 192).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 6, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 6, -1).display(),
+    content="disc=2,cat=6,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(2, 7, 0).display(), content="HNETFLUX")
+  inspect(@lib.decode_parameter_name(2, 7, 2).display(), content="SHTFLUX")
+  inspect(@lib.decode_parameter_name(2, 7, 20).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(2, 7, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(2, 7, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(2, 7, -1).display(),
+    content="disc=2,cat=7,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 0, 0).display(), content="SRAD")
+  inspect(@lib.decode_parameter_name(3, 0, 9).display(), content="FIREDI")
+  inspect(@lib.decode_parameter_name(3, 0, 150).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 0, -1).display(),
+    content="disc=3,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 1, 27).display(), content="BRFLF")
+  inspect(@lib.decode_parameter_name(3, 1, 193).display(), content="VSCT")
+  inspect(@lib.decode_parameter_name(3, 1, 50).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 1, -1).display(),
+    content="disc=3,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 2, 0).display(), content="CSKPROB")
+  inspect(@lib.decode_parameter_name(3, 2, 30).display(), content="MEACST")
+  inspect(@lib.decode_parameter_name(3, 2, 15).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 2, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 2, -1).display(),
+    content="disc=3,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 3, 0).display(), content="PBMVFRC")
+  inspect(@lib.decode_parameter_name(3, 3, 2).display(), content="PBINFRC")
+  inspect(@lib.decode_parameter_name(3, 3, 50).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 3, 210).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 3, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 3, -1).display(),
+    content="disc=3,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 4, 0).display(), content="VOLAPROB")
+  inspect(@lib.decode_parameter_name(3, 4, 8).display(), content="VOLAPER")
+  inspect(@lib.decode_parameter_name(3, 4, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 4, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 4, -1).display(),
+    content="disc=3,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 5, 0).display(), content="ISSTMP")
+  inspect(@lib.decode_parameter_name(3, 5, 5).display(), content="EBSDSSTS")
+  inspect(@lib.decode_parameter_name(3, 5, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 5, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 5, -1).display(),
+    content="disc=3,cat=5,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 6, 0).display(), content="GSOLIRR")
+  inspect(@lib.decode_parameter_name(3, 6, 3).display(), content="DIRSOLEX")
+  inspect(@lib.decode_parameter_name(3, 6, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 6, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 6, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 6, -1).display(),
+    content="disc=3,cat=6,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(3, 192, 0).display(), content="SBT122")
+  inspect(@lib.decode_parameter_name(3, 192, 87).display(), content="SSMS1713")
+  inspect(@lib.decode_parameter_name(3, 192, 120).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(3, 192, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(3, 192, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(3, 192, -1).display(),
+    content="disc=3,cat=192,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 0, 0).display(), content="TMPSWP")
+  inspect(@lib.decode_parameter_name(4, 0, 5).display(), content="PRPTMP")
+  inspect(@lib.decode_parameter_name(4, 0, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 0, -1).display(),
+    content="disc=4,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 1, 0).display(), content="SPEED")
+  inspect(@lib.decode_parameter_name(4, 1, 3).display(), content="VEL3")
+  inspect(@lib.decode_parameter_name(4, 1, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 1, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 1, -1).display(),
+    content="disc=4,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 2, 0).display(), content="PLSMDEN")
+  inspect(@lib.decode_parameter_name(4, 2, 13).display(), content="EQSLABT")
+  inspect(@lib.decode_parameter_name(4, 2, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 2, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 2, -1).display(),
+    content="disc=4,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 3, 0).display(), content="BTOT")
+  inspect(@lib.decode_parameter_name(4, 3, 7).display(), content="EVEC3")
+  inspect(@lib.decode_parameter_name(4, 3, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 3, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 3, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 3, -1).display(),
+    content="disc=4,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 4, 0).display(), content="DIFPFLUX")
+  inspect(@lib.decode_parameter_name(4, 4, 6).display(), content="NTRNFLUX")
+  inspect(@lib.decode_parameter_name(4, 4, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 4, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 4, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 4, -1).display(),
+    content="disc=4,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 5, 0).display(), content="AMPL")
+  inspect(@lib.decode_parameter_name(4, 5, 3).display(), content="WAVELGTH")
+  inspect(@lib.decode_parameter_name(4, 5, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 5, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 5, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 5, -1).display(),
+    content="disc=4,cat=5,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 6, 0).display(), content="TSI")
+  inspect(@lib.decode_parameter_name(4, 6, 6).display(), content="SOLRF")
+  inspect(@lib.decode_parameter_name(4, 6, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 6, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 6, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 6, -1).display(),
+    content="disc=4,cat=6,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 7, 0).display(), content="LMBINT")
+  inspect(@lib.decode_parameter_name(4, 7, 3).display(), content="DSKNGT")
+  inspect(@lib.decode_parameter_name(4, 7, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 7, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 7, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 7, -1).display(),
+    content="disc=4,cat=7,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 8, 0).display(), content="XRAYRAD")
+  inspect(@lib.decode_parameter_name(4, 8, 8).display(), content="SICFL")
+  inspect(@lib.decode_parameter_name(4, 8, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 8, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 8, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 8, -1).display(),
+    content="disc=4,cat=8,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 9, 0).display(), content="SIGPED")
+  inspect(@lib.decode_parameter_name(4, 9, 2).display(), content="SIGPAR")
+  inspect(@lib.decode_parameter_name(4, 9, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 9, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 9, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 9, -1).display(),
+    content="disc=4,cat=9,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(4, 10, 0).display(), content="SCINIDX")
+  inspect(@lib.decode_parameter_name(4, 10, 7).display(), content="AURELEC")
+  inspect(@lib.decode_parameter_name(4, 10, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(4, 10, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(4, 10, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(4, 10, -1).display(),
+    content="disc=4,cat=10,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 0, 0).display(), content="WVSP1")
+  inspect(@lib.decode_parameter_name(10, 0, 104).display(), content="VASMF")
+  inspect(@lib.decode_parameter_name(10, 0, 105).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 0, 192).display(), content="WSTP")
+  inspect(
+    @lib.decode_parameter_name(10, 0, 194).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(10, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 0, -1).display(),
+    content="disc=10,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 1, 0).display(), content="DIRC")
+  inspect(@lib.decode_parameter_name(10, 1, 6).display(), content="NRTHCUR")
+  inspect(@lib.decode_parameter_name(10, 1, 100).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 1, 192).display(), content="OMLU")
+  inspect(
+    @lib.decode_parameter_name(10, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(10, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 1, -1).display(),
+    content="disc=10,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 2, 0).display(), content="ICEC")
+  inspect(@lib.decode_parameter_name(10, 2, 31).display(), content="DSWRFICE")
+  inspect(@lib.decode_parameter_name(10, 2, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(10, 2, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(10, 2, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 2, -1).display(),
+    content="disc=10,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 3, 0).display(), content="WTMP")
+  inspect(@lib.decode_parameter_name(10, 3, 22).display(), content="DSWRFSS")
+  inspect(@lib.decode_parameter_name(10, 3, 100).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 3, 200).display(), content="SSST")
+  inspect(@lib.decode_parameter_name(10, 3, 240).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 3, 254).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 3, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 3, -1).display(),
+    content="disc=10,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 4, 0).display(), content="MTHD")
+  inspect(@lib.decode_parameter_name(10, 4, 58).display(), content="DSWRFSEA")
+  inspect(@lib.decode_parameter_name(10, 4, 9).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(10, 4, 192).display(), content="WTMPC")
+  inspect(
+    @lib.decode_parameter_name(10, 4, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(10, 4, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 4, -1).display(),
+    content="disc=10,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(10, 191, 0).display(), content="IRTSEC")
+  inspect(@lib.decode_parameter_name(10, 191, 4).display(), content="BARDSF")
+  inspect(@lib.decode_parameter_name(10, 191, 2).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(10, 191, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(10, 191, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(10, 191, -1).display(),
+    content="disc=10,cat=191,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 0, 0).display(), content="UTHCIDX")
+  inspect(@lib.decode_parameter_name(20, 0, 12).display(), content="ECF")
+  inspect(@lib.decode_parameter_name(20, 0, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 0, 200).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 0, -1).display(),
+    content="disc=20,cat=0,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 1, 0).display(), content="MALACASE")
+  inspect(@lib.decode_parameter_name(20, 1, 9).display(), content="FMALVRH")
+  inspect(@lib.decode_parameter_name(20, 1, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 1, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 1, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 1, -1).display(),
+    content="disc=20,cat=1,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 2, 0).display(), content="POPDEN")
+  inspect(@lib.decode_parameter_name(20, 2, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 2, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 2, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 2, -1).display(),
+    content="disc=20,cat=2,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 3, 0).display(), content="RENPCAP")
+  inspect(@lib.decode_parameter_name(20, 3, 9).display(), content="CSPPROD")
+  inspect(@lib.decode_parameter_name(20, 3, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 3, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 3, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 3, -1).display(),
+    content="disc=20,cat=3,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 4, 1).display(), content="DBURSTHI")
+  inspect(@lib.decode_parameter_name(20, 4, 60).display(), content="WINDHI")
+  inspect(@lib.decode_parameter_name(20, 4, 0).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(20, 4, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 4, 191).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 4, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 4, -1).display(),
+    content="disc=20,cat=4,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(20, 5, 1).display(), content="HHAIRPOLHI")
+  inspect(@lib.decode_parameter_name(20, 5, 24).display(), content="EUTROPHI")
+  inspect(@lib.decode_parameter_name(20, 5, 0).display(), content="Reserved")
+  inspect(@lib.decode_parameter_name(20, 5, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(20, 5, 191).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(20, 5, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(20, 5, -1).display(),
+    content="disc=20,cat=5,param=-1",
+  )
+  inspect(@lib.decode_parameter_name(191, 0, 0).display(), content="SPPT")
+  inspect(@lib.decode_parameter_name(191, 0, 5).display(), content="STTP")
+  inspect(@lib.decode_parameter_name(191, 0, 100).display(), content="Reserved")
+  inspect(
+    @lib.decode_parameter_name(191, 0, 220).display(),
+    content="Reserved for Local Use",
+  )
+  inspect(@lib.decode_parameter_name(191, 0, 255).display(), content="Missing")
+  inspect(
+    @lib.decode_parameter_name(191, 0, -1).display(),
+    content="disc=191,cat=0,param=-1",
   )
   inspect(
     @lib.decode_parameter_name(0, 99, 99).display(),
