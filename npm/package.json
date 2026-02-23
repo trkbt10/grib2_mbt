@@ -1,0 +1,33 @@
+{
+  "name": "@trkbt10/grib2-wasm",
+  "version": "0.1.0",
+  "description": "GRIB2 parser and decoder for JavaScript/TypeScript, compiled from MoonBit to WebAssembly",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "grib2.wasm"
+  ],
+  "keywords": [
+    "grib2",
+    "grib",
+    "weather",
+    "meteorology",
+    "wasm",
+    "webassembly"
+  ],
+  "author": "trkbt10",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trkbt10/grib2_mbt"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "build": "cd .. && moon build --target wasm-gc && cp _build/wasm-gc/release/build/lib/lib.wasm npm/grib2.wasm",
+    "test": "node test.js"
+  }
+}

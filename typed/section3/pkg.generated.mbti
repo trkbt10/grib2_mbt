@@ -10,9 +10,24 @@ pub fn decode_section3_bytes(Bytes) -> Result[Grib2Section3Decoded, @section1.Gr
 
 pub fn encode_section3_bytes(Grib2Section3Decoded) -> Bytes
 
+pub fn generate_latlon_coordinates(Grib2GridTemplate30) -> CoordinateGrid
+
+pub fn generate_rotated_latlon_coordinates(Grib2GridTemplate31) -> CoordinateGrid
+
+pub fn parse_scanning_mode(Int) -> ScanningMode
+
 // Errors
 
 // Types and methods
+pub(all) struct CoordinateGrid {
+  latitudes : Array[Double]
+  longitudes : Array[Double]
+  ni : Int
+  nj : Int
+}
+pub fn CoordinateGrid::get_lat(Self, Int, Int) -> Double
+pub fn CoordinateGrid::get_lon(Self, Int, Int) -> Double
+
 pub(all) struct Grib2AzimuthRangeRadial {
   starting_azimuth : Int
   azimuthal_width : Int
@@ -679,6 +694,13 @@ pub(all) enum Grib2Section3TemplateData {
   GridTemplateUnknown(Int, Bytes)
 }
 pub impl Show for Grib2Section3TemplateData
+
+pub(all) struct ScanningMode {
+  i_negative : Bool
+  j_positive : Bool
+  consecutive_j : Bool
+  alternating_rows : Bool
+}
 
 // Type aliases
 

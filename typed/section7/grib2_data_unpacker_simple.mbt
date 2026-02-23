@@ -1,0 +1,245 @@
+///|
+/// Simple Packing (Template 5.0) unpacker.
+/// Unpacks GRIB2 data using the formula: Y = R + (X * 2^E) / 10^D
+///
+/// Where:
+/// - Y = unpacked value
+/// - R = reference_value (IEEE 754 single precision float)
+/// - X = packed integer value
+/// - E = binary_scale_factor (signed 16-bit)
+/// - D = decimal_scale_factor (signed 16-bit)
+
+///|
+/// Result of unpacking grid data.
+pub(all) struct UnpackedGridData {
+  values : Array[Double]
+  num_points : Int
+}
+
+///|
+/// Error during unpacking.
+pub(all) suberror UnpackError {
+  InvalidBitsPerValue(String)
+  InsufficientData(String)
+  UnsupportedTemplate(String)
+}
+
+///|
+/// Convert IEEE 754 single precision float bits to Double.
+/// The input is 32-bit integer representing the float bit pattern.
+pub fn ieee754_single_to_double(bits : Int) -> Double {
+  // IEEE 754 single precision: 1 sign + 8 exponent + 23 mantissa
+  let sign = (bits >> 31) & 1
+  let exponent = (bits >> 23) & 0xFF
+  let mantissa = bits & 0x7FFFFF
+  if exponent == 0 && mantissa == 0 {
+    // Zero
+    if sign == 1 {
+      -0.0
+    } else {
+      0.0
+    }
+  } else if exponent == 0xFF {
+    // Infinity or NaN
+    if mantissa == 0 {
+      if sign == 1 {
+        -1.0 / 0.0 // negative infinity
+      } else {
+        1.0 / 0.0 // positive infinity
+      }
+    } else {
+      0.0 / 0.0 // NaN
+    }
+  } else if exponent == 0 {
+    // Denormalized number
+    let frac = mantissa.to_double() / 8388608.0 // 2^23
+    let exp_val = -126.0
+    let value = frac * pow2(exp_val.to_int())
+    if sign == 1 {
+      -value
+    } else {
+      value
+    }
+  } else {
+    // Normalized number
+    let frac = 1.0 + mantissa.to_double() / 8388608.0 // 1 + m/2^23
+    let exp_val = exponent - 127
+    let value = frac * pow2(exp_val)
+    if sign == 1 {
+      -value
+    } else {
+      value
+    }
+  }
+}
+
+///|
+/// Compute 2^n for integer n (can be negative).
+fn pow2(n : Int) -> Double {
+  if n >= 0 {
+    let mut result = 1.0
+    for i = 0; i < n; i = i + 1 {
+      result = result * 2.0
+    }
+    result
+  } else {
+    let mut result = 1.0
+    for i = 0; i < -n; i = i + 1 {
+      result = result / 2.0
+    }
+    result
+  }
+}
+
+///|
+/// Compute 10^n for integer n (can be negative).
+fn pow10(n : Int) -> Double {
+  if n >= 0 {
+    let mut result = 1.0
+    for i = 0; i < n; i = i + 1 {
+      result = result * 10.0
+    }
+    result
+  } else {
+    let mut result = 1.0
+    for i = 0; i < -n; i = i + 1 {
+      result = result / 10.0
+    }
+    result
+  }
+}
+
+///|
+/// Unpack simple packed data (Template 5.0).
+///
+/// Parameters:
+/// - data: Raw packed data bytes from Section 7
+/// - reference_value_ieee: IEEE 754 bits of reference value
+/// - binary_scale_factor: Binary scale factor E (signed)
+/// - decimal_scale_factor: Decimal scale factor D (signed)
+/// - bits_per_value: Number of bits per packed value
+/// - num_points: Expected number of data points
+pub fn unpack_simple(
+  data : Bytes,
+  reference_value_ieee : Int,
+  binary_scale_factor : Int,
+  decimal_scale_factor : Int,
+  bits_per_value : Int,
+  num_points : Int
+) -> Result[UnpackedGridData, UnpackError] {
+  if bits_per_value < 0 || bits_per_value > 32 {
+    return Err(InvalidBitsPerValue("bits_per_value must be 0-32, got \{bits_per_value}"))
+  }
+  // Special case: all values are the reference value
+  if bits_per_value == 0 {
+    let ref_value = ieee754_single_to_double(reference_value_ieee)
+    let values = Array::make(num_points, ref_value)
+    return Ok({ values, num_points })
+  }
+  // Check if we have enough data
+  let required_bits = num_points * bits_per_value
+  let available_bits = data.length() * 8
+  if available_bits < required_bits {
+    return Err(
+      InsufficientData(
+        "need \{required_bits} bits, have \{available_bits}",
+      ),
+    )
+  }
+  // Calculate scaling factors
+  let ref_value = ieee754_single_to_double(reference_value_ieee)
+  let binary_scale = pow2(binary_scale_factor)
+  let decimal_scale = pow10(decimal_scale_factor)
+  // Unpack values
+  let reader = BitReader::new(data)
+  let values : Array[Double] = []
+  for i = 0; i < num_points; i = i + 1 {
+    let packed = reader.read_bits(bits_per_value)
+    // Y = R + (X * 2^E) / 10^D
+    let unpacked = ref_value + packed.to_double() * binary_scale / decimal_scale
+    values.push(unpacked)
+  }
+  Ok({ values, num_points })
+}
+
+///|
+test "ieee754_single_to_double zero" {
+  // +0.0: 0x00000000
+  inspect(ieee754_single_to_double(0x00000000), content="0")
+  // -0.0: 0x80000000 = -2147483648 in signed int
+  let neg_zero_bits : Int = -2147483648
+  let neg_zero = ieee754_single_to_double(neg_zero_bits)
+  inspect(neg_zero == 0.0, content="true")
+}
+
+///|
+test "ieee754_single_to_double one" {
+  // 1.0: 0x3F800000 = 1065353216
+  inspect(ieee754_single_to_double(1065353216), content="1")
+}
+
+///|
+test "ieee754_single_to_double negative" {
+  // -1.0: 0xBF800000 = -1082130432 in signed int
+  let bits : Int = -1082130432
+  inspect(ieee754_single_to_double(bits), content="-1")
+}
+
+///|
+test "ieee754_single_to_double two" {
+  // 2.0: 0x40000000 = 1073741824
+  inspect(ieee754_single_to_double(1073741824), content="2")
+}
+
+///|
+test "unpack_simple all same value" {
+  // bits_per_value = 0 means all values equal reference
+  let data = Bytes::new(0)
+  // 1.0 in IEEE 754: 0x3F800000 = 1065353216
+  let result = unpack_simple(
+    data,
+    1065353216, // 1.0
+    0, // binary_scale
+    0, // decimal_scale
+    0, // bits_per_value
+    3, // num_points
+  )
+  match result {
+    Ok(grid) => {
+      inspect(grid.num_points, content="3")
+      inspect(grid.values[0], content="1")
+      inspect(grid.values[1], content="1")
+      inspect(grid.values[2], content="1")
+    }
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
+test "unpack_simple basic" {
+  // Pack values: 0, 1, 2, 3 with 2 bits each
+  // ref = 10.0, E = 0, D = 0
+  // Result should be: 10, 11, 12, 13
+  let data = Bytes::from_array([
+    b'\x1B', // 00 01 10 11 = 0, 1, 2, 3
+  ])
+  // 10.0 in IEEE 754: 0x41200000 = 1092616192
+  let result = unpack_simple(
+    data,
+    1092616192, // 10.0
+    0, // binary_scale
+    0, // decimal_scale
+    2, // bits_per_value
+    4, // num_points
+  )
+  match result {
+    Ok(grid) => {
+      inspect(grid.num_points, content="4")
+      inspect(grid.values[0], content="10")
+      inspect(grid.values[1], content="11")
+      inspect(grid.values[2], content="12")
+      inspect(grid.values[3], content="13")
+    }
+    Err(_) => fail("unexpected error")
+  }
+}

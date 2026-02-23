@@ -1,5 +1,17 @@
 {
   "import": [
     "trkbt10/grib2_mbt/typed"
-  ]
+  ],
+  "link": {
+    "wasm-gc": {
+      "exports": [
+        "wasm_parse_grib2:parseGrib2",
+        "wasm_get_message_count:getMessageCount",
+        "wasm_get_record_count:getRecordCount",
+        "wasm_decode_records_json:decodeRecordsJson",
+        "wasm_render_inventory:renderInventory"
+      ],
+      "use-js-builtin-string": true
+    }
+  }
 }

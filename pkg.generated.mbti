@@ -256,6 +256,10 @@ pub fn encode_section7_bytes(@section7.Grib2Section7Decoded) -> Bytes
 
 pub fn fib(Int) -> Int64
 
+pub fn get_submessage_data_representation(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section5.Grib2Section5Decoded, @section7.UnpackError]
+
+pub fn get_submessage_raw_data(Grib2MessageContext, Grib2SubmessageFrame) -> Result[Bytes, @section7.UnpackError]
+
 pub fn inventory_lines(Grib2FileContext) -> Array[String]
 
 pub fn parse_grib2_file(Bytes) -> Result[Grib2FileContext, Grib2ParseError]
@@ -274,9 +278,53 @@ pub fn sec0_lines(Grib2FileContext) -> Array[String]
 
 pub fn sum(data~ : Array[Int], start? : Int, length? : Int) -> Int
 
+pub fn unpack_simple(Bytes, Int, Int, Int, Int, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
+pub fn unpack_submessage_data(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
 pub fn validate_context_invariants(Grib2FileContext) -> Result[Unit, Grib2WriteError]
 
+pub fn wasm_decode_records_json(Int) -> String
+
+pub fn wasm_get_message_count(Int) -> Int
+
+pub fn wasm_get_record_count(Int) -> Int
+
+pub fn wasm_parse_grib2(Bytes) -> Int
+
+pub fn wasm_render_inventory(Int, Int) -> String
+
+pub fn wgrib2_bitmap_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_center_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_default_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_disc_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ens_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ftime_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_grid_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_lev_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_n_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_npts_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_nxny_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_packing_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_pdt_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_prob_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_process_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_range_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_s_lines(Grib2FileContext) -> Array[String]
 
@@ -286,7 +334,17 @@ pub fn wgrib2_sec3_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_sec4_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_sec5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_sec6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_sec_len_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_subcenter_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_var_lev_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_var_lines(Grib2FileContext) -> Array[String]
 
 pub fn write_with_io((String, Bytes) -> Result[Unit, String], String, Grib2FileContext, strict? : Bool) -> Result[Unit, Grib2IoAdapterError]
 
@@ -339,6 +397,26 @@ pub(all) enum Grib2InventoryMode {
   InventorySec0
   InventorySec3
   InventorySec4
+  InventorySec5
+  InventorySec6
+  InventorySecLen
+  InventoryN
+  InventoryRange
+  InventoryVar
+  InventoryLev
+  InventoryFtime
+  InventoryGrid
+  InventoryPdt
+  InventoryProcess
+  InventoryEns
+  InventoryProb
+  InventoryDisc
+  InventoryCenter
+  InventorySubcenter
+  InventoryPacking
+  InventoryBitmap
+  InventoryNxny
+  InventoryNpts
   InventoryVarLev
 }
 pub impl Show for Grib2InventoryMode
@@ -371,6 +449,8 @@ pub(all) struct Grib2RecordMeta {
   reference_time : String
   discipline : Int
   edition : Int
+  section1_center : Int
+  section1_subcenter : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
   tail : String
@@ -378,12 +458,40 @@ pub(all) struct Grib2RecordMeta {
   section3_template : Grib2Section3Template
   section4_template : Grib2Section4Template
   section5_template : Grib2Section5Template
+  section1_length : Int
+  section2_length : Int
   section3_length : Int
+  section3_reused : Bool
   section3_gdef_source : Int
   section3_npts : Int
+  section3_ni : Int
+  section3_nj : Int
+  section3_resolution_flags : Int
+  section3_lat1_microdeg : Int
+  section3_lon1_microdeg : Int
+  section3_lat2_microdeg : Int
+  section3_lon2_microdeg : Int
+  section3_di_microdeg : Int
+  section3_dj_microdeg : Int
   section4_length : Int
   section4_num_coord : Int
+  section4_process_code : Int
+  section4_ens_type : Int
+  section4_ens_perturbation_number : Int
+  section4_ens_member_count : Int
+  section4_prob_forecast_index : Int
+  section4_prob_total_forecasts : Int
+  section4_prob_type : Int
+  section4_prob_lower_scale_factor : Int
+  section4_prob_lower_value : Int
+  section4_prob_upper_scale_factor : Int
+  section4_prob_upper_value : Int
   section5_length : Int
+  section5_num_defined_points : Int
+  section6_length : Int
+  section6_bitmap_indicator : Int
+  section6_undef_points : Int
+  section7_length : Int
 }
 
 pub(all) enum Grib2Section3Template {
@@ -442,6 +550,10 @@ pub using @section6 {type Grib2Section6Decoded}
 pub using @section7 {type Grib2Section7Decoded}
 
 pub using @section1 {type Grib2SectionCodecError}
+
+pub using @section7 {type UnpackError}
+
+pub using @section7 {type UnpackedGridData}
 
 // Traits
 

@@ -5,6 +5,26 @@ pub(all) enum Grib2InventoryMode {
   InventorySec0
   InventorySec3
   InventorySec4
+  InventorySec5
+  InventorySec6
+  InventorySecLen
+  InventoryN
+  InventoryRange
+  InventoryVar
+  InventoryLev
+  InventoryFtime
+  InventoryGrid
+  InventoryPdt
+  InventoryProcess
+  InventoryEns
+  InventoryProb
+  InventoryDisc
+  InventoryCenter
+  InventorySubcenter
+  InventoryPacking
+  InventoryBitmap
+  InventoryNxny
+  InventoryNpts
   InventoryVarLev
 } derive(Show)
 
@@ -19,6 +39,26 @@ pub fn render_inventory_lines(
     InventorySec0 => wgrib2_sec0_lines(context)
     InventorySec3 => wgrib2_sec3_lines(context)
     InventorySec4 => wgrib2_sec4_lines(context)
+    InventorySec5 => wgrib2_sec5_lines(context)
+    InventorySec6 => wgrib2_sec6_lines(context)
+    InventorySecLen => wgrib2_sec_len_lines(context)
+    InventoryN => wgrib2_n_lines(context)
+    InventoryRange => wgrib2_range_lines(context)
+    InventoryVar => wgrib2_var_lines(context)
+    InventoryLev => wgrib2_lev_lines(context)
+    InventoryFtime => wgrib2_ftime_lines(context)
+    InventoryGrid => wgrib2_grid_lines(context)
+    InventoryPdt => wgrib2_pdt_lines(context)
+    InventoryProcess => wgrib2_process_lines(context)
+    InventoryEns => wgrib2_ens_lines(context)
+    InventoryProb => wgrib2_prob_lines(context)
+    InventoryDisc => wgrib2_disc_lines(context)
+    InventoryCenter => wgrib2_center_lines(context)
+    InventorySubcenter => wgrib2_subcenter_lines(context)
+    InventoryPacking => wgrib2_packing_lines(context)
+    InventoryBitmap => wgrib2_bitmap_lines(context)
+    InventoryNxny => wgrib2_nxny_lines(context)
+    InventoryNpts => wgrib2_npts_lines(context)
     InventoryVarLev => wgrib2_var_lev_lines(context)
   }
 }
