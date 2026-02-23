@@ -6,17 +6,23 @@ import type { RecordMeta, RecordGrid, TimeSeriesFrame, LoadedFile } from './type
 import { decodeRecordGrid } from './grib2-browser';
 
 /**
- * Extract forecast hour from levelName.
- * Example: "500 hPa, 3 hour forecast" -> 3
+ * Extract forecast hour from forecastTail.
+ * Examples: "3 hour fcst" -> 3, "anl" -> 0
  */
-export function extractForecastHour(levelName: string): number {
-  const match = levelName.match(/(\d+)\s*hour\s*forecast/i);
-  if (match) {
-    return parseInt(match[1], 10);
-  }
-  // Analysis time (0 hour forecast)
-  if (levelName.includes('analysis') || !levelName.includes('forecast')) {
+export function extractForecastHour(forecastTail: string): number {
+  // Analysis time
+  if (forecastTail === 'anl' || forecastTail.includes('analysis')) {
     return 0;
+  }
+  // "N hour fcst" format
+  const hourMatch = forecastTail.match(/^(\d+)\s*hour\s*fcst/i);
+  if (hourMatch) {
+    return parseInt(hourMatch[1], 10);
+  }
+  // "N day fcst" format
+  const dayMatch = forecastTail.match(/^(\d+)\s*day\s*fcst/i);
+  if (dayMatch) {
+    return parseInt(dayMatch[1], 10) * 24;
   }
   return 0;
 }
@@ -97,7 +103,7 @@ export class TimeSeriesManager {
         const levelMatch = hPaMatch || mbMatch;
         if (!levelMatch || parseInt(levelMatch[1], 10) !== pressureLevel) continue;
 
-        const forecastHour = extractForecastHour(record.levelName);
+        const forecastHour = extractForecastHour(record.forecastTail);
 
         frames.push({
           forecastHour,

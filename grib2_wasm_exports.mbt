@@ -8,6 +8,27 @@
 let wasm_contexts : Array[Grib2FileContext] = []
 
 ///|
+/// Parse GRIB2 from a latin1-encoded string (each char = one byte).
+/// This is the main entry point for browser usage with js-builtin-string.
+/// Returns context handle or -1 on error.
+pub fn wasm_parse_grib2_string(data : String) -> Int {
+  let bytes = string_to_bytes(data)
+  wasm_parse_grib2(bytes)
+}
+
+///|
+/// Convert a latin1 string to Bytes (each char code becomes a byte).
+fn string_to_bytes(s : String) -> Bytes {
+  let len = s.length()
+  let arr : Array[Byte] = Array::new(capacity=len)
+  for i in 0..<len {
+    let code = s[i].to_int()
+    arr.push(code.to_byte())
+  }
+  Bytes::from_array(arr)
+}
+
+///|
 /// Parse GRIB2 bytes and return a context handle (index).
 /// Returns -1 on error.
 pub fn wasm_parse_grib2(bytes : Bytes) -> Int {
@@ -311,6 +332,9 @@ fn record_to_json(r : Grib2RecordMeta) -> String {
   buf.write_string(r.section3_lon2_microdeg.to_string())
   buf.write_string(",\"section5NumDefinedPoints\":")
   buf.write_string(r.section5_num_defined_points.to_string())
+  buf.write_string(",\"forecastTail\":\"")
+  buf.write_string(escape_json_string(r.tail))
+  buf.write_string("\"")
   buf.write_char('}')
   buf.to_string()
 }

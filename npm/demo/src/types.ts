@@ -22,6 +22,7 @@ export interface RecordMeta {
   section3Lat2Microdeg: number;
   section3Lon2Microdeg: number;
   section5NumDefinedPoints: number;
+  forecastTail: string;
 }
 
 export interface RecordGrid {

@@ -255,12 +255,50 @@ test.describe('GRIB2 WASM Time Series', () => {
     await page.waitForTimeout(200);
     const newTimeValue = await page.locator('#timeValue').textContent();
 
-    // Only check if there are multiple distinct time steps
-    // Some datasets may have the same forecast hour for all records
+    // Verify time display changed
     if (Number(maxValue) > 0) {
-      // The slider should have moved
       const sliderValue = await timeSlider.inputValue();
       expect(Number(sliderValue)).toBeGreaterThan(0);
+
+      // The time value should have changed (different forecast hour)
+      // MSM has 0h, 1h, 2h... so moving slider should change the display
+      expect(newTimeValue).not.toEqual(initialTimeValue);
     }
+  });
+
+  test('forecast time display shows different hours when slider moves', async ({ page }) => {
+    test.slow();
+
+    await page.goto('/');
+    await expect(page.locator('#status')).toHaveClass(/success/, { timeout: 10000 });
+
+    // Load MSM
+    await page.locator('#loadMsm').click();
+    await expect(page.locator('#status')).toHaveClass(/success/, { timeout: 90000 });
+
+    // Wait for level select
+    await expect(page.locator('#levelSelect')).toBeEnabled({ timeout: 10000 });
+    await page.waitForTimeout(500);
+
+    const timeSlider = page.locator('#timeSlider');
+    await expect(timeSlider).toBeEnabled({ timeout: 5000 });
+
+    // Collect time values at different slider positions
+    const timeValues: string[] = [];
+    const maxValue = Number(await timeSlider.getAttribute('max'));
+
+    for (let i = 0; i <= Math.min(maxValue, 5); i++) {
+      await timeSlider.fill(String(i));
+      await page.waitForTimeout(100);
+      const value = await page.locator('#timeValue').textContent();
+      timeValues.push(value || '');
+    }
+
+    // Should have different forecast hours in MSM data
+    const uniqueValues = new Set(timeValues);
+    expect(uniqueValues.size).toBeGreaterThan(1);
+
+    // Log for debugging
+    console.log('Forecast times collected:', timeValues);
   });
 });
