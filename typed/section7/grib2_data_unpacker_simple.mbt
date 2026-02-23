@@ -92,6 +92,17 @@ fn pow2(n : Int) -> Double {
 }
 
 ///|
+/// Convert unsigned 16-bit value to signed 16-bit integer.
+pub fn u16_to_i16(raw : Int) -> Int {
+  let v = raw & 0xFFFF
+  if v >= 0x8000 {
+    v - 0x10000
+  } else {
+    v
+  }
+}
+
+///|
 /// Compute 10^n for integer n (can be negative).
 fn pow10(n : Int) -> Double {
   if n >= 0 {
@@ -125,10 +136,12 @@ pub fn unpack_simple(
   binary_scale_factor : Int,
   decimal_scale_factor : Int,
   bits_per_value : Int,
-  num_points : Int
+  num_points : Int,
 ) -> Result[UnpackedGridData, UnpackError] {
   if bits_per_value < 0 || bits_per_value > 32 {
-    return Err(InvalidBitsPerValue("bits_per_value must be 0-32, got \{bits_per_value}"))
+    return Err(
+      InvalidBitsPerValue("bits_per_value must be 0-32, got \{bits_per_value}"),
+    )
   }
   // Special case: all values are the reference value
   if bits_per_value == 0 {
@@ -141,15 +154,13 @@ pub fn unpack_simple(
   let available_bits = data.length() * 8
   if available_bits < required_bits {
     return Err(
-      InsufficientData(
-        "need \{required_bits} bits, have \{available_bits}",
-      ),
+      InsufficientData("need \{required_bits} bits, have \{available_bits}"),
     )
   }
   // Calculate scaling factors
   let ref_value = ieee754_single_to_double(reference_value_ieee)
-  let binary_scale = pow2(binary_scale_factor)
-  let decimal_scale = pow10(decimal_scale_factor)
+  let binary_scale = pow2(u16_to_i16(binary_scale_factor))
+  let decimal_scale = pow10(u16_to_i16(decimal_scale_factor))
   // Unpack values
   let reader = BitReader::new(data)
   let values : Array[Double] = []
@@ -197,12 +208,11 @@ test "unpack_simple all same value" {
   let data = Bytes::new(0)
   // 1.0 in IEEE 754: 0x3F800000 = 1065353216
   let result = unpack_simple(
-    data,
-    1065353216, // 1.0
-    0, // binary_scale
-    0, // decimal_scale
-    0, // bits_per_value
-    3, // num_points
+    data, 1065353216, // 1.0
+     0, // binary_scale
+     0, // decimal_scale
+     0, // bits_per_value
+     3, // num_points
   )
   match result {
     Ok(grid) => {
@@ -220,17 +230,15 @@ test "unpack_simple basic" {
   // Pack values: 0, 1, 2, 3 with 2 bits each
   // ref = 10.0, E = 0, D = 0
   // Result should be: 10, 11, 12, 13
-  let data = Bytes::from_array([
-    b'\x1B', // 00 01 10 11 = 0, 1, 2, 3
-  ])
+  let data = Bytes::from_array([b'\x1B'], // 00 01 10 11 = 0, 1, 2, 3
+  )
   // 10.0 in IEEE 754: 0x41200000 = 1092616192
   let result = unpack_simple(
-    data,
-    1092616192, // 10.0
-    0, // binary_scale
-    0, // decimal_scale
-    2, // bits_per_value
-    4, // num_points
+    data, 1092616192, // 10.0
+     0, // binary_scale
+     0, // decimal_scale
+     2, // bits_per_value
+     4, // num_points
   )
   match result {
     Ok(grid) => {

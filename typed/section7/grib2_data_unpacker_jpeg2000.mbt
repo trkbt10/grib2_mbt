@@ -1,5 +1,5 @@
 ///|
-/// JPEG2000 Data Unpacker Stub (Template 5.40/5.41)
+/// JPEG2000 Data Unpacker Stub (Template 5.40)
 ///
 /// JPEG2000 decoding is not implemented in pure MoonBit.
 /// Use this stub to get raw bytes for JS-side decoding with
@@ -12,30 +12,55 @@
 /// For actual JPEG2000 decoding, extract the raw bytes using
 /// `get_jpeg2000_raw_bytes` and decode using a JS library.
 pub fn unpack_jpeg2000(
-  _data : Bytes,
-  _template : @section5.Grib2DataRepresentationTemplate540,
-  _num_points : Int
+  data : Bytes,
+  template : @section5.Grib2DataRepresentationTemplate540,
+  num_points : Int,
 ) -> Result[UnpackedGridData, UnpackError] {
+  if num_points < 0 {
+    return Err(UnsupportedTemplate("num_points must be >= 0"))
+  }
+  let info = match parse_jpeg2000_codestream_info(data) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  if info.siz.num_components != 1 {
+    return Err(
+      UnsupportedTemplate(
+        "JPEG2000 with \{info.siz.num_components} components is not yet supported",
+      ),
+    )
+  }
+  if info.siz.bits_per_component != template.bits_per_value {
+    return Err(
+      UnsupportedTemplate(
+        "JPEG2000 bit depth mismatch: codestream=\{info.siz.bits_per_component}, template=\{template.bits_per_value}",
+      ),
+    )
+  }
+  let coded_points = info.siz.width * info.siz.height
+  if coded_points != num_points {
+    return Err(
+      InsufficientData(
+        "JPEG2000 point count mismatch: codestream=\{coded_points}, template points=\{num_points}",
+      ),
+    )
+  }
   Err(
     UnsupportedTemplate(
-      "JPEG2000 decoding requires external decoder. Use get_jpeg2000_raw_bytes() to extract raw data for JS-side decoding.",
+      "JPEG2000 codestream parsed, but Tier-1/Tier-2 and inverse wavelet reconstruction are not implemented yet.",
     ),
   )
 }
 
 ///|
-/// Unpack JPEG2000 compressed data with order-2 spatial differencing (Template 5.41).
-/// This is a stub that returns an error directing users to use JS-side decoding.
+/// Legacy placeholder kept for API compatibility.
+/// Template 5.41 is PNG in GRIB2 and should use `unpack_png`.
 pub fn unpack_jpeg2000_differencing(
   _data : Bytes,
   _template : @section5.Grib2DataRepresentationTemplate541,
-  _num_points : Int
+  _num_points : Int,
 ) -> Result[UnpackedGridData, UnpackError] {
-  Err(
-    UnsupportedTemplate(
-      "JPEG2000 decoding requires external decoder. Use get_jpeg2000_raw_bytes() to extract raw data for JS-side decoding.",
-    ),
-  )
+  Err(UnsupportedTemplate("Template 5.41 is PNG. Use unpack_png()."))
 }
 
 ///|
@@ -50,7 +75,7 @@ pub fn get_jpeg2000_raw_bytes(data : Bytes) -> Bytes {
 /// Returns (reference_value_ieee, binary_scale_factor, decimal_scale_factor, bits_per_value)
 /// for post-processing after JPEG2000 decoding.
 pub fn get_jpeg2000_params(
-  template : @section5.Grib2DataRepresentationTemplate540
+  template : @section5.Grib2DataRepresentationTemplate540,
 ) -> (Int, Int, Int, Int) {
   (
     template.reference_value_ieee,
@@ -74,7 +99,7 @@ test "unpack_jpeg2000 returns stub error" {
     reserved_tail: Bytes::new(0),
   }
   match unpack_jpeg2000(empty_data, template, 0) {
-    Err(UnsupportedTemplate(_)) => inspect(true, content="true")
-    _ => fail("expected UnsupportedTemplate error")
+    Err(_) => inspect(true, content="true")
+    _ => fail("expected error")
   }
 }

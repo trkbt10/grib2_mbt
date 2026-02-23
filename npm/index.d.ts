@@ -61,11 +61,31 @@ export interface RecordMeta {
 }
 
 /**
+ * Grid-point data for one record.
+ * `values` may include `null` where the source value is NaN.
+ */
+export interface RecordGrid {
+  recordIndex: number;
+  numPoints: number;
+  section5Template: number;
+  hasBitmap: boolean;
+  values: Array<number | null>;
+}
+
+/**
  * Decode records and return as objects.
  * @param handle - Context handle from parseGrib2
  * @returns Array of record metadata objects
  */
 export function decodeRecords(handle: number): RecordMeta[];
+
+/**
+ * Decode one record's grid-point values.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Decoded grid-point values
+ */
+export function decodeRecordGrid(handle: number, recordIndex: number): RecordGrid;
 
 /**
  * Inventory mode constants.

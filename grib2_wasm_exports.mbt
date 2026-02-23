@@ -67,6 +67,81 @@ pub fn wasm_render_inventory(handle : Int, mode : Int) -> String {
 }
 
 ///|
+/// Decode a record's grid-point values and return as JSON string.
+/// record_index is 1-based (same as decodeRecords output).
+/// Returns {"error":"..."} on error.
+pub fn wasm_decode_record_grid_json(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return grid_error_to_json(record_index, "invalid handle")
+  }
+  if record_index <= 0 {
+    return grid_error_to_json(record_index, "record_index must be >= 1")
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None =>
+      return grid_error_to_json(
+        record_index,
+        "record_index out of range: \{record_index}",
+      )
+  }
+  let message = frame.0
+  let submessage = frame.1
+  let unpacked = match unpack_submessage_data(message, submessage) {
+    Ok(v) => v
+    Err(e) => return grid_error_to_json(record_index, unpack_error_message(e))
+  }
+  let section5_template = match
+    decode_submessage_section5(message, submessage) {
+    Ok(s5) => section5_template_id(s5)
+    Err(_) => -1
+  }
+  let has_bitmap = match decode_submessage_section6(message, submessage) {
+    Ok(s6) => s6.bitmap_indicator == 0
+    Err(_) => false
+  }
+  grid_data_to_json(record_index, unpacked, section5_template, has_bitmap)
+}
+
+///|
+fn find_submessage_by_record_index(
+  context : Grib2FileContext,
+  record_index : Int,
+) -> (Grib2MessageContext, Grib2SubmessageFrame)? {
+  let mut current = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      if current == record_index {
+        return Some((message, submessage))
+      }
+      current += 1
+    }
+  }
+  None
+}
+
+///|
+fn section5_template_id(section5 : Grib2Section5Decoded) -> Int {
+  match section5.template {
+    DataRepresentationTemplate50(_) => 0
+    DataRepresentationTemplate51(_) => 1
+    DataRepresentationTemplate52(_) => 2
+    DataRepresentationTemplate53(_) => 3
+    DataRepresentationTemplate54(_) => 4
+    DataRepresentationTemplate540(_) => 40
+    DataRepresentationTemplate541(_) => 41
+    DataRepresentationTemplate542(_) => 42
+    DataRepresentationTemplate550(_) => 50
+    DataRepresentationTemplate551(_) => 51
+    DataRepresentationTemplate553(_) => 53
+    DataRepresentationTemplate561(_) => 61
+    DataRepresentationTemplate5200(_) => 200
+    DataRepresentationTemplateUnknown(id, _) => id
+  }
+}
+
+///|
 fn int_to_inventory_mode(mode : Int) -> Grib2InventoryMode {
   match mode {
     0 => InventoryDefault
@@ -102,6 +177,66 @@ fn lines_to_json(lines : Array[String]) -> String {
   }
   buf.write_char(']')
   buf.to_string()
+}
+
+///|
+fn grid_error_to_json(record_index : Int, error : String) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"recordIndex\":")
+  buf.write_string(record_index.to_string())
+  buf.write_string(",\"error\":\"")
+  buf.write_string(escape_json_string(error))
+  buf.write_string("\"}")
+  buf.to_string()
+}
+
+///|
+fn double_to_json(value : Double) -> String {
+  if value != value {
+    "null"
+  } else {
+    value.to_string()
+  }
+}
+
+///|
+fn grid_data_to_json(
+  record_index : Int,
+  grid : UnpackedGridData,
+  section5_template : Int,
+  has_bitmap : Bool,
+) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"recordIndex\":")
+  buf.write_string(record_index.to_string())
+  buf.write_string(",\"numPoints\":")
+  buf.write_string(grid.num_points.to_string())
+  buf.write_string(",\"section5Template\":")
+  buf.write_string(section5_template.to_string())
+  buf.write_string(",\"hasBitmap\":")
+  buf.write_string(if has_bitmap { "true" } else { "false" })
+  buf.write_string(",\"values\":")
+  buf.write_char('[')
+  for i, value in grid.values {
+    if i > 0 {
+      buf.write_char(',')
+    }
+    buf.write_string(double_to_json(value))
+  }
+  buf.write_char(']')
+  buf.write_char('}')
+  buf.to_string()
+}
+
+///|
+fn unpack_error_message(err : UnpackError) -> String {
+  match err {
+    InvalidBitsPerValue(msg) => msg
+    InsufficientData(msg) => msg
+    UnsupportedTemplate(msg) => msg
+  }
 }
 
 ///|

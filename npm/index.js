@@ -170,6 +170,33 @@ function renderInventory(handle, mode = InventoryMode.DEFAULT) {
   throw new Error('renderInventory export not found');
 }
 
+/**
+ * Decode a record's grid-point values.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Object} - Decoded grid data
+ */
+function decodeRecordGrid(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+
+  const exports = wasmInstance.exports;
+  if (exports.decodeRecordGridJson) {
+    const jsonStr = exports.decodeRecordGridJson(handle, recordIndex);
+    if (!jsonStr) {
+      throw new Error('decodeRecordGridJson returned empty response');
+    }
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.error) {
+      throw new Error(parsed.error);
+    }
+    return parsed;
+  }
+  throw new Error('decodeRecordGridJson export not found');
+}
+
 module.exports = {
   init,
   initBrowser,
@@ -177,6 +204,7 @@ module.exports = {
   getMessageCount,
   getRecordCount,
   decodeRecords,
+  decodeRecordGrid,
   renderInventory,
   InventoryMode
 };
