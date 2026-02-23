@@ -143,7 +143,125 @@ This file is the minimal context needed to continue work without drift.
   - Table 4.2-0-18 nuclear/radiology parameter decoder (known/unknown split)
   - Table 4.2-0-19 physical atmospheric properties parameter decoder (known/unknown split)
   - Table 4.2-0-190 meteorological ASCII parameter decoder (known/unknown split)
-- Next target: continue Code Tables from `grib2_table4-2-0-191`.
+  - Table 4.2-0-191 miscellaneous parameter decoder (known/unknown split)
+  - Table 4.2-0-192 covariance parameter decoder (known/unknown split)
+  - Table 4.2-1-0 hydrology basic parameter decoder (known/unknown split)
+  - Table 4.2-1-1 hydrology probabilities parameter decoder (known/unknown split)
+  - Table 4.2-1-2 inland water and sediment properties parameter decoder (known/unknown split)
+  - Table 4.2-2-0 vegetation/biomass parameter decoder (known/unknown split)
+  - Table 4.2-2-1 agricultural special products parameter decoder (known/unknown split)
+  - Table 4.2-2-3 soil parameter decoder (known/unknown split)
+  - Table 4.2-2-4 fire weather parameter decoder (known/unknown split)
+  - Table 4.2-2-5 glaciers and inland ice parameter decoder (known/unknown split)
+  - Table 4.2-2-6 urban areas parameter decoder (known/unknown split)
+  - Table 4.2-2-7 thermodynamic properties parameter decoder (known/unknown split)
+  - Table 4.2-3-0 image format parameter decoder (known/unknown split)
+  - Table 4.2-3-1 quantitative parameter decoder (known/unknown split)
+  - Table 4.2-3-2 cloud properties parameter decoder (known/unknown split)
+  - Table 4.2-3-3 flight rules conditions parameter decoder (known/unknown split)
+  - Table 4.2-3-4 volcanic ash parameter decoder (known/unknown split)
+  - Table 4.2-3-5 sea surface temperature parameter decoder (known/unknown split)
+  - Table 4.2-3-6 solar radiation parameter decoder (known/unknown split)
+  - Table 4.2-3-192 forecast satellite imagery parameter decoder (known/unknown split)
+  - Table 4.2-4-0 space weather temperature parameter decoder (known/unknown split)
+  - Table 4.2-4-1 space weather momentum parameter decoder (known/unknown split)
+  - Table 4.2-4-2 space weather charged particle parameter decoder (known/unknown split)
+  - Table 4.2-4-3 space weather electric/magnetic fields parameter decoder (known/unknown split)
+  - Table 4.2-4-4 space weather energetic particles parameter decoder (known/unknown split)
+  - Table 4.2-4-5 space weather waves parameter decoder (known/unknown split)
+  - Table 4.2-4-6 space weather solar electromagnetic emissions parameter decoder (known/unknown split)
+  - Table 4.2-4-7 space weather terrestrial electromagnetic emissions parameter decoder (known/unknown split)
+  - Table 4.2-4-8 space weather imagery parameter decoder (known/unknown split)
+  - Table 4.2-4-9 space weather ion-neutral coupling parameter decoder (known/unknown split)
+  - Table 4.2-4-10 space weather indices parameter decoder (known/unknown split)
+  - Table 4.2-10-0 oceanographic waves parameter decoder (known/unknown split)
+  - Table 4.2-10-1 oceanographic currents parameter decoder (known/unknown split)
+  - Table 4.2-10-2 oceanographic ice parameter decoder (known/unknown split)
+  - Table 4.2-10-3 oceanographic surface properties parameter decoder (known/unknown split)
+  - Table 4.2-10-4 oceanographic subsurface properties parameter decoder (known/unknown split)
+  - Table 4.2-10-191 oceanographic miscellaneous parameter decoder (known/unknown split)
+  - Table 4.2-20-0 health and socioeconomic impacts health indicators parameter decoder (known/unknown split)
+  - Table 4.2-20-1 health and socioeconomic impacts epidemiology parameter decoder (known/unknown split)
+  - Table 4.2-20-2 health and socioeconomic impacts socioeconomic indicators parameter decoder (known/unknown split)
+  - Table 4.2-20-3 renewable energy sector parameter decoder (known/unknown split)
+  - Table 4.2-20-4 meteorological and hydrological hazard indices parameter decoder (known/unknown split)
+  - Table 4.2-20-5 environmental hazard indices parameter decoder (known/unknown split)
+  - Table 4.2-191-0 computational parameters stochastic parameterizations parameter decoder (known/unknown split)
+  - Code Table 4.3 type of generating process decoder (known/unknown split)
+  - Code Table 4.4 indicator of unit of time range decoder (known/unknown split)
+  - Code Table 4.5 fixed surface types and units decoder (known/unknown split)
+  - Code Table 4.6 type of ensemble forecast decoder (known/unknown split)
+  - Code Table 4.7 derived forecast decoder (known/unknown split)
+  - Code Table 4.8 clustering method decoder (known/unknown split)
+  - Code Table 4.9 probability type decoder (known/unknown split)
+  - Code Table 4.10 type of statistical processing decoder (known/unknown split)
+  - Code Table 4.11 type of time intervals decoder (known/unknown split)
+  - Code Table 4.12 operating mode decoder (known/unknown split)
+  - Code Table 4.13 quality control indicator decoder (known/unknown split)
+  - Code Table 4.14 clutter filter indicator decoder (known/unknown split)
+  - Code Table 4.15 type of spatial processing decoder (known/unknown split)
+  - Code Table 4.16 quality value associated with parameter decoder (known/unknown split)
+  - Code Table 4.91 type of interval decoder (known/unknown split)
+  - Code Table 4.100 type of reference dataset decoder (known/unknown split)
+  - Code Table 4.101 type of relationship to reference dataset decoder (known/unknown split)
+  - Code Table 4.102 statistical processing of reference period decoder (known/unknown split)
+  - Code Table 4.103 spatial vicinity type decoder (known/unknown split)
+  - Code Table 4.104 spatial and temporal vicinity processing decoder (known/unknown split)
+  - Code Table 4.105 spatial and temporal vicinity missing data decoder (known/unknown split)
+  - Code Table 4.106 radar data quality flags decoder (known/unknown split)
+  - Code Table 4.120 verification scores decoder (known/unknown split)
+  - Code Table 4.121 type of reference dataset for verification decoder (known/unknown split)
+  - Code Table 4.122 type of additional arguments for verification score decoder (known/unknown split)
+  - Code Table 4.201 precipitation type decoder (known/unknown split)
+  - Code Table 4.202 precipitable water category decoder (known/unknown split)
+  - Code Table 4.203 cloud type decoder (known/unknown split)
+  - Code Table 4.204 thunderstorm coverage decoder (known/unknown split)
+  - Code Table 4.205 presence of aerosol decoder (known/unknown split)
+  - Code Table 4.206 volcanic ash decoder (known/unknown split)
+  - Code Table 4.207 icing decoder (known/unknown split)
+  - Code Table 4.208 turbulence decoder (known/unknown split)
+  - Code Table 4.209 planetary boundary-layer regime decoder (known/unknown split)
+  - Code Table 4.210 contrail intensity decoder (known/unknown split)
+  - Code Table 4.211 contrail engine type decoder (known/unknown split)
+  - Code Table 4.212 land use decoder (known/unknown split)
+  - Code Table 4.213 soil type decoder (known/unknown split)
+  - Code Table 4.214 environmental factor qualifier decoder (known/unknown split)
+  - Code Table 4.215 remotely-sensed snow coverage decoder (known/unknown split)
+  - Code Table 4.216 elevation of snow covered terrain decoder (known/unknown split)
+  - Code Table 4.217 cloud mask type decoder (known/unknown split)
+  - Code Table 4.218 pixel scene type decoder (known/unknown split)
+  - Code Table 4.219 cloud top height quality indicator decoder (known/unknown split)
+  - Code Table 4.220 horizontal dimension processed decoder (known/unknown split)
+  - Code Table 4.221 treatment of missing data decoder (known/unknown split)
+  - Code Table 4.222 categorical result decoder (known/unknown split)
+  - Code Table 4.223 fire detection indicator decoder (known/unknown split)
+  - Code Table 4.224 categorical outlook decoder (known/unknown split)
+  - Code Table 4.225 weather decoder (known/unknown split)
+  - Code Table 4.227 icing scenario decoder (known/unknown split)
+  - Code Table 4.228 icing severity decoder (known/unknown split)
+  - Code Table 4.230 atmospheric chemical or physical constituent type decoder (known/unknown split)
+  - Code Table 4.233 aerosol type decoder (known/unknown split)
+  - Code Table 4.234 canopy cover fraction decoder (known/unknown split)
+  - Code Table 4.236 soil texture fraction decoder (known/unknown split)
+  - Code Table 4.238 source or sink decoder (known/unknown split)
+  - Code Table 4.239 wetland type decoder (known/unknown split)
+  - Code Table 4.240 type of distribution function decoder (known/unknown split)
+  - Code Table 4.241 coverage attributes decoder (known/unknown split)
+  - Code Table 4.242 tile classification decoder (known/unknown split)
+  - Code Table 4.243 tile class decoder (known/unknown split)
+  - Code Table 4.244 quality indicator decoder (known/unknown split)
+  - Code Table 4.246 thunderstorm intensity index decoder (known/unknown split)
+  - Code Table 4.247 precipitation intensity decoder (known/unknown split)
+  - Code Table 4.248 method used to derive data value for a given local time decoder (known/unknown split)
+  - Code Table 4.249 character of precipitation decoder (known/unknown split)
+  - Code Table 4.250 drainage direction decoder (known/unknown split)
+  - Code Table 4.251 wave direction and frequency formulae decoder (known/unknown split)
+  - Code Table 4.252 tile classes and groupings decoder (known/unknown split)
+  - Code Table 4.253 hazard index decoder (known/unknown split)
+  - Code Table 4.333 transport dispersion model decoder (known/unknown split)
+  - Code Table 4.335 emission scenario origin decoder (known/unknown split)
+  - Code Table 4.336 NWP model decoder (known/unknown split)
+- Next target: proceed to Section 5 related tables.
 
 ## Read First
 
@@ -292,7 +410,125 @@ Code Table 4.2-0-17 is done.
 Code Table 4.2-0-18 is done.
 Code Table 4.2-0-19 is done.
 Code Table 4.2-0-190 is done.
-So continue from code tables, starting with `grib2_table4-2-0-191`.
+Code Table 4.2-0-191 is done.
+Code Table 4.2-0-192 is done.
+Code Table 4.2-1-0 is done.
+Code Table 4.2-1-1 is done.
+Code Table 4.2-1-2 is done.
+Code Table 4.2-2-0 is done.
+Code Table 4.2-2-1 is done.
+Code Table 4.2-2-3 is done.
+Code Table 4.2-2-4 is done.
+Code Table 4.2-2-5 is done.
+Code Table 4.2-2-6 is done.
+Code Table 4.2-2-7 is done.
+Code Table 4.2-3-0 is done.
+Code Table 4.2-3-1 is done.
+Code Table 4.2-3-2 is done.
+Code Table 4.2-3-3 is done.
+Code Table 4.2-3-4 is done.
+Code Table 4.2-3-5 is done.
+Code Table 4.2-3-6 is done.
+Code Table 4.2-3-192 is done.
+Code Table 4.2-4-0 is done.
+Code Table 4.2-4-1 is done.
+Code Table 4.2-4-2 is done.
+Code Table 4.2-4-3 is done.
+Code Table 4.2-4-4 is done.
+Code Table 4.2-4-5 is done.
+Code Table 4.2-4-6 is done.
+Code Table 4.2-4-7 is done.
+Code Table 4.2-4-8 is done.
+Code Table 4.2-4-9 is done.
+Code Table 4.2-4-10 is done.
+Code Table 4.2-10-0 is done.
+Code Table 4.2-10-1 is done.
+Code Table 4.2-10-2 is done.
+Code Table 4.2-10-3 is done.
+Code Table 4.2-10-4 is done.
+Code Table 4.2-10-191 is done.
+Code Table 4.2-20-0 is done.
+Code Table 4.2-20-1 is done.
+Code Table 4.2-20-2 is done.
+Code Table 4.2-20-3 is done.
+Code Table 4.2-20-4 is done.
+Code Table 4.2-20-5 is done.
+Code Table 4.2-191-0 is done.
+Code Table 4.3 is done.
+Code Table 4.4 is done.
+Code Table 4.5 is done.
+Code Table 4.6 is done.
+Code Table 4.7 is done.
+Code Table 4.8 is done.
+Code Table 4.9 is done.
+Code Table 4.10 is done.
+Code Table 4.11 is done.
+Code Table 4.12 is done.
+Code Table 4.13 is done.
+Code Table 4.14 is done.
+Code Table 4.15 is done.
+Code Table 4.16 is done.
+Code Table 4.91 is done.
+Code Table 4.100 is done.
+Code Table 4.101 is done.
+Code Table 4.102 is done.
+Code Table 4.103 is done.
+Code Table 4.104 is done.
+Code Table 4.105 is done.
+Code Table 4.106 is done.
+Code Table 4.120 is done.
+Code Table 4.121 is done.
+Code Table 4.122 is done.
+Code Table 4.201 is done.
+Code Table 4.202 is done.
+Code Table 4.203 is done.
+Code Table 4.204 is done.
+Code Table 4.205 is done.
+Code Table 4.206 is done.
+Code Table 4.207 is done.
+Code Table 4.208 is done.
+Code Table 4.209 is done.
+Code Table 4.210 is done.
+Code Table 4.211 is done.
+Code Table 4.212 is done.
+Code Table 4.213 is done.
+Code Table 4.214 is done.
+Code Table 4.215 is done.
+Code Table 4.216 is done.
+Code Table 4.217 is done.
+Code Table 4.218 is done.
+Code Table 4.219 is done.
+Code Table 4.220 is done.
+Code Table 4.221 is done.
+Code Table 4.222 is done.
+Code Table 4.223 is done.
+Code Table 4.224 is done.
+Code Table 4.225 is done.
+Code Table 4.227 is done.
+Code Table 4.228 is done.
+Code Table 4.230 is done.
+Code Table 4.233 is done.
+Code Table 4.234 is done.
+Code Table 4.236 is done.
+Code Table 4.238 is done.
+Code Table 4.239 is done.
+Code Table 4.240 is done.
+Code Table 4.241 is done.
+Code Table 4.242 is done.
+Code Table 4.243 is done.
+Code Table 4.244 is done.
+Code Table 4.246 is done.
+Code Table 4.247 is done.
+Code Table 4.248 is done.
+Code Table 4.249 is done.
+Code Table 4.250 is done.
+Code Table 4.251 is done.
+Code Table 4.252 is done.
+Code Table 4.253 is done.
+Code Table 4.333 is done.
+Code Table 4.335 is done.
+Code Table 4.336 is done.
+So continue from Section 5 related tables.
 For code tables:
 - add known/unknown split decoders and display mappings
 - keep unknown code values roundtrip-safe and non-throwing

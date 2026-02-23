@@ -12,7 +12,37 @@ import {
 }
 
 // Values
+pub fn decode_aerosol_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_atmospheric_chemical_or_physical_constituent_type_name(Int) -> Grib2NameLookup
+
 pub fn decode_calendar_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_canopy_cover_fraction_name(Int) -> Grib2NameLookup
+
+pub fn decode_categorical_outlook_name(Int) -> Grib2NameLookup
+
+pub fn decode_categorical_result_name(Int) -> Grib2NameLookup
+
+pub fn decode_character_of_precipitation_name(Int) -> Grib2NameLookup
+
+pub fn decode_cloud_mask_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_cloud_top_height_quality_indicator_name(Int) -> Grib2NameLookup
+
+pub fn decode_cloud_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_clustering_method_name(Int) -> Grib2NameLookup
+
+pub fn decode_clutter_filter_indicator_name(Int) -> Grib2NameLookup
+
+pub fn decode_contrail_engine_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_contrail_intensity_name(Int) -> Grib2NameLookup
+
+pub fn decode_coverage_attributes_name(Int) -> Grib2NameLookup
+
+pub fn decode_derived_forecast_name(Int) -> Grib2NameLookup
 
 pub fn decode_diamond_numbering_order_name(Int) -> Grib2NameLookup
 
@@ -20,13 +50,39 @@ pub fn decode_diamond_scanning_mode_name(Int) -> Grib2NameLookup
 
 pub fn decode_discipline_name(Int) -> Grib2NameLookup
 
+pub fn decode_drainage_direction_name(Int) -> Grib2NameLookup
+
+pub fn decode_elevation_of_snow_covered_terrain_name(Int) -> Grib2NameLookup
+
+pub fn decode_emission_scenario_origin_name(Int) -> Grib2NameLookup
+
+pub fn decode_environmental_factor_qualifier_name(Int) -> Grib2NameLookup
+
+pub fn decode_fire_detection_indicator_name(Int) -> Grib2NameLookup
+
+pub fn decode_fixed_surface_type_name(Int) -> Grib2NameLookup
+
 pub fn decode_grid_definition_source_name(Int) -> Grib2NameLookup
 
 pub fn decode_grid_definition_template_number_name(Int) -> Grib2NameLookup
 
 pub fn decode_grid_point_position_name(Int) -> Grib2NameLookup
 
+pub fn decode_hazard_index_name(Int) -> Grib2NameLookup
+
+pub fn decode_horizontal_dimension_processed_name(Int) -> Grib2NameLookup
+
+pub fn decode_icing_name(Int) -> Grib2NameLookup
+
+pub fn decode_icing_scenario_name(Int) -> Grib2NameLookup
+
+pub fn decode_icing_severity_name(Int) -> Grib2NameLookup
+
 pub fn decode_identification_template_number_name(Int) -> Grib2NameLookup
+
+pub fn decode_indicator_of_unit_of_time_range_name(Int) -> Grib2NameLookup
+
+pub fn decode_land_use_name(Int) -> Grib2NameLookup
 
 pub fn decode_level_name(Int, Int, Int, Int, Int, Int) -> Grib2NameLookup
 
@@ -36,11 +92,31 @@ pub fn decode_master_table_version_name(Int) -> Grib2NameLookup
 
 pub fn decode_message_section1(Grib2MessageContext) -> Result[@section1.Grib2Section1Decoded, @section1.Grib2SectionCodecError]
 
+pub fn decode_method_used_to_derive_data_value_for_local_time_name(Int) -> Grib2NameLookup
+
+pub fn decode_nwp_model_name(Int) -> Grib2NameLookup
+
+pub fn decode_operating_mode_name(Int) -> Grib2NameLookup
+
 pub fn decode_parameter_category_name(Int, Int) -> Grib2NameLookup
 
 pub fn decode_parameter_name(Int, Int, Int) -> Grib2NameLookup
 
 pub fn decode_parameter_number_name(Int, Int, Int) -> Grib2NameLookup
+
+pub fn decode_pixel_scene_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_planetary_boundary_layer_regime_name(Int) -> Grib2NameLookup
+
+pub fn decode_precipitable_water_category_name(Int) -> Grib2NameLookup
+
+pub fn decode_precipitation_intensity_name(Int) -> Grib2NameLookup
+
+pub fn decode_precipitation_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_presence_of_aerosol_name(Int) -> Grib2NameLookup
+
+pub fn decode_probability_type_name(Int) -> Grib2NameLookup
 
 pub fn decode_processed_data_type_name(Int) -> Grib2NameLookup
 
@@ -50,7 +126,17 @@ pub fn decode_production_status_name(Int) -> Grib2NameLookup
 
 pub fn decode_projection_center_name(Int) -> Grib2NameLookup
 
+pub fn decode_quality_control_indicator_name(Int) -> Grib2NameLookup
+
+pub fn decode_quality_indicator_name(Int) -> Grib2NameLookup
+
+pub fn decode_quality_value_associated_with_parameter_name(Int) -> Grib2NameLookup
+
+pub fn decode_radar_data_quality_flags_name(Int) -> Grib2NameLookup
+
 pub fn decode_records(Grib2FileContext) -> Array[Grib2RecordMeta]
+
+pub fn decode_remotely_sensed_snow_coverage_name(Int) -> Grib2NameLookup
 
 pub fn decode_resolution_and_component_flags_name(Int) -> Grib2NameLookup
 
@@ -76,9 +162,23 @@ pub fn decode_shape_of_reference_system_name(Int) -> Grib2NameLookup
 
 pub fn decode_significance_of_reference_time_name(Int) -> Grib2NameLookup
 
+pub fn decode_soil_texture_fraction_name(Int) -> Grib2NameLookup
+
+pub fn decode_soil_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_source_or_sink_name(Int) -> Grib2NameLookup
+
+pub fn decode_spatial_and_temporal_vicinity_missing_data_name(Int) -> Grib2NameLookup
+
+pub fn decode_spatial_and_temporal_vicinity_processing_name(Int) -> Grib2NameLookup
+
+pub fn decode_spatial_vicinity_type_name(Int) -> Grib2NameLookup
+
 pub fn decode_spectral_data_representation_mode_name(Int) -> Grib2NameLookup
 
 pub fn decode_spectral_data_representation_type_name(Int) -> Grib2NameLookup
+
+pub fn decode_statistical_processing_of_reference_period_name(Int) -> Grib2NameLookup
 
 pub fn decode_submessage_section2(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section2.Grib2Section2Decoded?, @section1.Grib2SectionCodecError]
 
@@ -91,6 +191,54 @@ pub fn decode_submessage_section5(Grib2MessageContext, Grib2SubmessageFrame) -> 
 pub fn decode_submessage_section6(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section6.Grib2Section6Decoded, @section1.Grib2SectionCodecError]
 
 pub fn decode_submessage_section7(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section7.Grib2Section7Decoded, @section1.Grib2SectionCodecError]
+
+pub fn decode_thunderstorm_coverage_name(Int) -> Grib2NameLookup
+
+pub fn decode_thunderstorm_intensity_index_name(Int) -> Grib2NameLookup
+
+pub fn decode_tile_class_name(Int) -> Grib2NameLookup
+
+pub fn decode_tile_classes_and_groupings_name(Int) -> Grib2NameLookup
+
+pub fn decode_tile_classification_name(Int) -> Grib2NameLookup
+
+pub fn decode_transport_dispersion_model_name(Int) -> Grib2NameLookup
+
+pub fn decode_treatment_of_missing_data_name(Int) -> Grib2NameLookup
+
+pub fn decode_turbulence_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_additional_arguments_for_verification_score_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_distribution_function_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_ensemble_forecast_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_generating_process_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_interval_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_reference_dataset_for_verification_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_reference_dataset_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_relationship_to_reference_dataset_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_spatial_processing_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_statistical_processing_name(Int) -> Grib2NameLookup
+
+pub fn decode_type_of_time_intervals_name(Int) -> Grib2NameLookup
+
+pub fn decode_verification_scores_name(Int) -> Grib2NameLookup
+
+pub fn decode_volcanic_ash_name(Int) -> Grib2NameLookup
+
+pub fn decode_wave_direction_and_frequency_formulae_name(Int) -> Grib2NameLookup
+
+pub fn decode_weather_name(Int) -> Grib2NameLookup
+
+pub fn decode_wetland_type_name(Int) -> Grib2NameLookup
 
 pub fn encode_section1_bytes(@section1.Grib2Section1Decoded) -> Bytes
 
