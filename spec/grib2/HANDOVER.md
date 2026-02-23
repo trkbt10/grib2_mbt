@@ -115,6 +115,10 @@ This file is the minimal context needed to continue work without drift.
 - Completed in Core Sections validation:
   - Section 0 parse/rebuild + strict invariant coverage
   - Section 8 magic/tail + strict invariant coverage
+- Completed in CLI compatibility expansion:
+  - Added inventory parity for `-Sec5`, `-Sec6`, `-Sec_len`, `-n`, `-range`, `-var`, `-lev`, `-ftime`, `-grid`, `-pdt`, `-process`, `-ens`, `-prob`, `-disc`, `-center`, `-subcenter`, `-packing`, `-bitmap`, `-nxny`, `-npts`
+  - Extended snapshot generator and parser tests to compare the above options against committed `wgrib2` outputs
+  - Added `spec/grib2/WGRIB2_OPTION_MATRIX.md` and `spec/grib2/wgrib2_options_v3.1.3.tsv` for option inventory tracking
 - Completed in Code Tables:
   - Table 0.0 discipline decoder (known/unknown split)
   - Table 1.0 master table version decoder (known/unknown split)

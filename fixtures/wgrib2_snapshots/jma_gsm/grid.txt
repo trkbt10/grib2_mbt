@@ -1,0 +1,412 @@
+1.1:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.2:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.3:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.4:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.5:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.6:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.7:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.8:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.9:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.10:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.11:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.12:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.13:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.14:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.15:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.16:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.17:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.18:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.19:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.20:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.21:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.22:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.23:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.24:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.25:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.26:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.27:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.28:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.29:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.30:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.31:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.32:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.33:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.34:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.35:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.36:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.37:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.38:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.39:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.40:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.41:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.42:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.43:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.44:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.45:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.46:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.47:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.48:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.49:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.50:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.51:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.52:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.53:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.54:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.55:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.56:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.57:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.58:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.59:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.60:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.61:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.62:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.63:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.64:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.65:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.66:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.67:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.68:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.69:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.70:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.71:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.72:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.73:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.74:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.75:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.76:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.77:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.78:0:grid_template=0:winds(N/S):
+	lat-lon grid:(720 x 361) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 0.500000
+	lon 0.000000 to 359.500000 by 0.500000 #points=259920
+1.79:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.80:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.81:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.82:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.83:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.84:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.85:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.86:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.87:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.88:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.89:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.90:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.91:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.92:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.93:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.94:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.95:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.96:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.97:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.98:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.99:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.100:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.101:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.102:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160
+1.103:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input WE:NS output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160

@@ -3,6 +3,7 @@ package "trkbt10/grib2_mbt/typed/section7"
 
 import {
   "trkbt10/grib2_mbt/typed/section1",
+  "trkbt10/grib2_mbt/typed/section5",
 }
 
 // Values
@@ -10,9 +11,42 @@ pub fn decode_section7_bytes(Bytes, Int) -> Result[Grib2Section7Decoded, @sectio
 
 pub fn encode_section7_bytes(Grib2Section7Decoded) -> Bytes
 
+pub fn get_jpeg2000_params(@section5.Grib2DataRepresentationTemplate540) -> (Int, Int, Int, Int)
+
+pub fn get_jpeg2000_raw_bytes(Bytes) -> Bytes
+
+pub fn get_png_raw_bytes(Bytes) -> Bytes
+
+pub fn ieee754_single_to_double(Int) -> Double
+
+pub fn unpack_jpeg2000(Bytes, @section5.Grib2DataRepresentationTemplate540, Int) -> Result[UnpackedGridData, UnpackError]
+
+pub fn unpack_jpeg2000_differencing(Bytes, @section5.Grib2DataRepresentationTemplate541, Int) -> Result[UnpackedGridData, UnpackError]
+
+pub fn unpack_png(Bytes, @section5.Grib2DataRepresentationTemplate54, Int) -> Result[UnpackedGridData, UnpackError]
+
+pub fn unpack_simple(Bytes, Int, Int, Int, Int, Int) -> Result[UnpackedGridData, UnpackError]
+
 // Errors
+pub(all) suberror UnpackError {
+  InvalidBitsPerValue(String)
+  InsufficientData(String)
+  UnsupportedTemplate(String)
+}
 
 // Types and methods
+pub(all) struct BitReader {
+  data : Bytes
+  mut bit_position : Int
+}
+pub fn BitReader::has_bits(Self, Int) -> Bool
+pub fn BitReader::new(Bytes) -> Self
+pub fn BitReader::read_bits(Self, Int) -> UInt
+pub fn BitReader::read_bits_signed(Self, Int) -> Int
+pub fn BitReader::remaining_bits(Self) -> Int
+pub fn BitReader::reset(Self) -> Unit
+pub fn BitReader::skip_bits(Self, Int) -> Unit
+
 pub(all) struct Grib2DataTemplate70 {
   data_values_raw : Bytes
 }
@@ -87,6 +121,11 @@ pub(all) enum Grib2Section7TemplateData {
   DataTemplateUnknown(Int, Bytes)
 }
 pub impl Show for Grib2Section7TemplateData
+
+pub(all) struct UnpackedGridData {
+  values : Array[Double]
+  num_points : Int
+}
 
 // Type aliases
 

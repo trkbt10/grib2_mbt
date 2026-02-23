@@ -87,6 +87,8 @@ pub(all) struct Grib2RecordMeta {
   reference_time : String
   discipline : Int
   edition : Int
+  section1_center : Int
+  section1_subcenter : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
   tail : String
@@ -94,12 +96,40 @@ pub(all) struct Grib2RecordMeta {
   section3_template : Grib2Section3Template
   section4_template : Grib2Section4Template
   section5_template : Grib2Section5Template
+  section1_length : Int
+  section2_length : Int
   section3_length : Int
+  section3_reused : Bool
   section3_gdef_source : Int
   section3_npts : Int
+  section3_ni : Int
+  section3_nj : Int
+  section3_resolution_flags : Int
+  section3_lat1_microdeg : Int
+  section3_lon1_microdeg : Int
+  section3_lat2_microdeg : Int
+  section3_lon2_microdeg : Int
+  section3_di_microdeg : Int
+  section3_dj_microdeg : Int
   section4_length : Int
   section4_num_coord : Int
+  section4_process_code : Int
+  section4_ens_type : Int
+  section4_ens_perturbation_number : Int
+  section4_ens_member_count : Int
+  section4_prob_forecast_index : Int
+  section4_prob_total_forecasts : Int
+  section4_prob_type : Int
+  section4_prob_lower_scale_factor : Int
+  section4_prob_lower_value : Int
+  section4_prob_upper_scale_factor : Int
+  section4_prob_upper_value : Int
   section5_length : Int
+  section5_num_defined_points : Int
+  section6_length : Int
+  section6_bitmap_indicator : Int
+  section6_undef_points : Int
+  section7_length : Int
 }
 
 ///|
@@ -120,6 +150,50 @@ fn read_u16_be_from(bytes : BytesView, index : Int) -> Int {
 ///|
 fn read_u32_be_from(bytes : BytesView, index : Int) -> Int {
   bytes.unsafe_read_uint32_be(index).reinterpret_as_int()
+}
+
+///|
+fn read_i32_sign_magnitude_from(bytes : BytesView, index : Int) -> Int {
+  let b0 = bytes[index].to_uint().reinterpret_as_int()
+  let b1 = bytes[index + 1].to_uint().reinterpret_as_int()
+  let b2 = bytes[index + 2].to_uint().reinterpret_as_int()
+  let b3 = bytes[index + 3].to_uint().reinterpret_as_int()
+  let magnitude = ((b0 & 0x7f) << 24) | (b1 << 16) | (b2 << 8) | b3
+  if (b0 & 0x80) != 0 {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
+fn read_signed_byte_from(bytes : BytesView, index : Int) -> Int {
+  let raw = bytes[index].to_uint().reinterpret_as_int()
+  if raw >= 128 {
+    raw - 256
+  } else {
+    raw
+  }
+}
+
+///|
+fn count_bitmap_undefined_points(section6 : BytesView, npts : Int) -> Int {
+  if npts <= 0 || section6.length() <= 6 {
+    return 0
+  }
+  let available_bits = (section6.length() - 6) * 8
+  let limit = if npts < available_bits { npts } else { available_bits }
+  let mut undefined_points = 0
+  for bit_index in 0..<limit {
+    let byte_index = 6 + (bit_index / 8)
+    let bit_offset = 7 - (bit_index % 8)
+    let mask = 1 << bit_offset
+    let value = section6[byte_index].to_uint().reinterpret_as_int()
+    if (value & mask) == 0 {
+      undefined_points += 1
+    }
+  }
+  undefined_points
 }
 
 ///|
@@ -7359,9 +7433,21 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     let message = context.messages[message_index]
     let submessage_count = message.submessages.length()
     let record_time = format_ref_time_yyyymmddhh(message)
+    let section1 = section_slice(message, message.section1)
+    let section1_center = if section1.length() >= 9 {
+      read_u16_be_from(section1, 5)
+    } else {
+      -1
+    }
+    let section1_subcenter = if section1.length() >= 11 {
+      read_u16_be_from(section1, 7)
+    } else {
+      -1
+    }
     let section0_reserved = "0x" +
       hex_byte(message.raw[4]) +
       hex_byte(message.raw[5])
+    let mut previous_submessage_end = -1
     for submessage_index in 0..<submessage_count {
       let submessage = message.submessages[submessage_index]
       let record_id = format_record_id(
@@ -7371,13 +7457,23 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         submessage_count,
         global_index,
       )
+      let section2_length = match submessage.section2 {
+        Some(section2) => section2.length
+        None => 0
+      }
       let section3 = section_slice(message, submessage.section3)
       let section4 = section_slice(message, submessage.section4)
       let section5 = section_slice(message, submessage.section5)
+      let section6 = section_slice(message, submessage.section6)
       let section3_template_id = if section3.length() >= 14 {
         read_u16_be_from(section3, 12)
       } else {
         -1
+      }
+      let section3_reused = if submessage_index == 0 {
+        false
+      } else {
+        submessage.section3.start < previous_submessage_end
       }
       let section3_gdef_source = if section3.length() >= 6 {
         section3[5].to_uint().reinterpret_as_int()
@@ -7389,6 +7485,58 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         0
       }
+      let section3_ni = if section3_template_id == 0 && section3.length() >= 34 {
+        read_u32_be_from(section3, 30)
+      } else {
+        -1
+      }
+      let section3_nj = if section3_template_id == 0 && section3.length() >= 38 {
+        read_u32_be_from(section3, 34)
+      } else {
+        -1
+      }
+      let section3_resolution_flags = if section3_template_id == 0 &&
+        section3.length() >= 55 {
+        section3[54].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section3_lat1_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 50 {
+        read_i32_sign_magnitude_from(section3, 46)
+      } else {
+        -1
+      }
+      let section3_lon1_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 54 {
+        read_i32_sign_magnitude_from(section3, 50)
+      } else {
+        -1
+      }
+      let section3_lat2_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 59 {
+        read_i32_sign_magnitude_from(section3, 55)
+      } else {
+        -1
+      }
+      let section3_lon2_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 63 {
+        read_i32_sign_magnitude_from(section3, 59)
+      } else {
+        -1
+      }
+      let section3_di_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 67 {
+        read_u32_be_from(section3, 63)
+      } else {
+        -1
+      }
+      let section3_dj_microdeg = if section3_template_id == 0 &&
+        section3.length() >= 71 {
+        read_u32_be_from(section3, 67)
+      } else {
+        -1
+      }
       let section4_template_id = if section4.length() >= 9 {
         read_u16_be_from(section4, 7)
       } else {
@@ -7398,6 +7546,11 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         read_u16_be_from(section4, 5)
       } else {
         0
+      }
+      let section4_process_code = if section4.length() >= 12 {
+        section4[11].to_uint().reinterpret_as_int()
+      } else {
+        -1
       }
       let category = if section4.length() >= 11 {
         section4[9].to_uint().reinterpret_as_int()
@@ -7449,10 +7602,90 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         -1
       }
+      let section4_ens_type = if (section4_template_id == 1 ||
+        section4_template_id == 11 ||
+        section4_template_id == 2 ||
+        section4_template_id == 12) && section4.length() >= 35 {
+        section4[34].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_ens_perturbation_number = if (section4_template_id == 1 ||
+        section4_template_id == 11) && section4.length() >= 36 {
+        section4[35].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_ens_member_count = if (section4_template_id == 1 ||
+        section4_template_id == 11) && section4.length() >= 37 {
+        section4[36].to_uint().reinterpret_as_int()
+      } else if (section4_template_id == 2 ||
+        section4_template_id == 12) && section4.length() >= 36 {
+        section4[35].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_prob_forecast_index = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 35 {
+        section4[34].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_prob_total_forecasts = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 36 {
+        section4[35].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_prob_type = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 37 {
+        section4[36].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_prob_lower_scale_factor = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 38 {
+        read_signed_byte_from(section4, 37)
+      } else {
+        0
+      }
+      let section4_prob_lower_value = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 42 {
+        read_i32_sign_magnitude_from(section4, 38)
+      } else {
+        -1
+      }
+      let section4_prob_upper_scale_factor = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 43 {
+        read_signed_byte_from(section4, 42)
+      } else {
+        0
+      }
+      let section4_prob_upper_value = if (section4_template_id == 5 ||
+        section4_template_id == 9) && section4.length() >= 47 {
+        read_i32_sign_magnitude_from(section4, 43)
+      } else {
+        -1
+      }
       let section5_template_id = if section5.length() >= 11 {
         read_u16_be_from(section5, 9)
       } else {
         -1
+      }
+      let section5_num_defined_points = if section5.length() >= 9 {
+        read_u32_be_from(section5, 5)
+      } else {
+        0
+      }
+      let section6_bitmap_indicator = if section6.length() >= 6 {
+        section6[5].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section6_undef_points = if section6_bitmap_indicator == 0 {
+        count_bitmap_undefined_points(section6, section3_npts)
+      } else {
+        0
       }
       let parameter_name = if category >= 0 && parameter >= 0 {
         decode_parameter_name(message.discipline, category, parameter)
@@ -7472,6 +7705,8 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         reference_time: record_time,
         discipline: message.discipline,
         edition: message.edition,
+        section1_center,
+        section1_subcenter,
         parameter_name,
         level_name,
         tail: format_tail(time_unit, forecast_time),
@@ -7479,13 +7714,42 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section3_template: decode_section3_template(section3_template_id),
         section4_template: decode_section4_template(section4_template_id),
         section5_template: decode_section5_template(section5_template_id),
+        section1_length: message.section1.length,
+        section2_length,
         section3_length: submessage.section3.length,
+        section3_reused,
         section3_gdef_source,
         section3_npts,
+        section3_ni,
+        section3_nj,
+        section3_resolution_flags,
+        section3_lat1_microdeg,
+        section3_lon1_microdeg,
+        section3_lat2_microdeg,
+        section3_lon2_microdeg,
+        section3_di_microdeg,
+        section3_dj_microdeg,
         section4_length: submessage.section4.length,
         section4_num_coord,
+        section4_process_code,
+        section4_ens_type,
+        section4_ens_perturbation_number,
+        section4_ens_member_count,
+        section4_prob_forecast_index,
+        section4_prob_total_forecasts,
+        section4_prob_type,
+        section4_prob_lower_scale_factor,
+        section4_prob_lower_value,
+        section4_prob_upper_scale_factor,
+        section4_prob_upper_value,
         section5_length: submessage.section5.length,
+        section5_num_defined_points,
+        section6_length: submessage.section6.length,
+        section6_bitmap_indicator,
+        section6_undef_points,
+        section7_length: submessage.section7.length,
       })
+      previous_submessage_end = submessage.section7.end_offset()
       global_index += 1
     }
   }

@@ -29,6 +29,26 @@ WGRIB2_BIN=/opt/homebrew/bin/wgrib2 bash tools/update_wgrib2_snapshots.sh
 - `-Sec0`
 - `-Sec3`
 - `-Sec4`
+- `-Sec5`
+- `-Sec6`
+- `-Sec_len`
+- `-n`
+- `-range`
+- `-var`
+- `-lev`
+- `-ftime`
+- `-grid`
+- `-pdt`
+- `-process`
+- `-ens`
+- `-prob`
+- `-disc`
+- `-center`
+- `-subcenter`
+- `-packing`
+- `-bitmap`
+- `-nxny`
+- `-npts`
 - `-var -lev`
 
 See `manifest.tsv` for fixture/snapshot mapping.

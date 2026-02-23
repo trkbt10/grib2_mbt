@@ -32,6 +32,7 @@ This checklist is the execution control board for the GRIB2 parser/reader/writer
 - [x] Add CLI option parser compatible with first target options
 - [x] Implement baseline output path for `wgrib2 <file>` / `-s`
 - [x] Implement baseline output path for `-Sec0`, `-Sec3`, `-Sec4`, `-var -lev`
+- [x] Expand inventory output path for `-Sec5`, `-Sec6`, `-Sec_len`, `-n`, `-range`, `-var`, `-lev`, `-ftime`, `-grid`, `-pdt`, `-process`, `-ens`, `-prob`, `-disc`, `-center`, `-subcenter`, `-packing`, `-bitmap`, `-nxny`, `-npts`
 - [x] Snapshot tests: compare CLI output to committed golden files
 - [x] Ensure tests do not execute `wgrib2`
 
