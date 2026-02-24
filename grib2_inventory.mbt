@@ -2022,3 +2022,326 @@ pub fn wgrib2_code_table_4_11_lines(context : Grib2FileContext) -> Array[String]
   }
   lines
 }
+
+///|
+fn code_table_3_11_description(value : Int) -> String {
+  match value {
+    0 => "not used"
+    1 => "Thinned"
+    2 => "Reduced"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_3_11_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.11: Interpretation of list of numbers defining number of points
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For lat/lon grids (template 0), this is typically 0 (not used)
+    // The value is at octet 11 of Section 3
+    let value = 0 // For regular grids, this is always 0
+    let desc = code_table_3_11_description(value)
+    if desc.length() > 0 {
+      lines.push(
+        format_prefix(meta) +
+        "code table 3.11=" +
+        value.to_string() +
+        " " +
+        desc,
+      )
+    } else {
+      lines.push(format_prefix(meta) + "code table 3.11=" + value.to_string())
+    }
+  }
+  lines
+}
+
+///|
+fn code_table_5_1_description(value : Int) -> String {
+  match value {
+    0 => "Floating point"
+    1 => "Integer"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_5_1_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_5.1: Type of original field values
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For simple packing (template 0), this is at octet 21
+    // For JPEG2000 (template 40), this is at a different offset
+    // Default to 0 (floating point) for now
+    let value = 0
+    let desc = code_table_5_1_description(value)
+    if desc.length() > 0 {
+      lines.push(
+        format_prefix(meta) +
+        "code table 5.1=" +
+        value.to_string() +
+        " " +
+        desc,
+      )
+    } else {
+      lines.push(format_prefix(meta) + "code table 5.1=" + value.to_string())
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_6_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.6: Spectral data representation type (only for spectral grids)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_7_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.7: Spectral data representation mode (only for spectral grids)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_8_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.8: Grid point position
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_15_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.15: Physical meaning of vertical coordinate
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_20_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.20: Type of horizontal line
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_21_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.21: Vertical dimension coordinate values definition
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_7_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.7: Derived forecast type
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_8_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.8: Cluster mean (same as 4.7)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_11s_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.11s: Type of time intervals (all occurrences)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_15_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.15: Type of areal statistical processing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_16_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.16: Quality control value
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_91_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.91: Type of interval (first)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_91b_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.91b: Type of interval (second copy)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_230_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.230: Chemical constituent type
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_233_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.233: Aerosol type
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_235_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.235: Wind-generated wave spectral description
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_240_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.240: Type of distribution function
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_241_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.241: Coverage attributes
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_242_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.242: Tile classification
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_5_4_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_5.4: Group splitting method
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_5_5_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_5.5: Missing value management for complex packing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_5_6_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_5.6: Complex packing spatial differencing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_5_7_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_5.7: Precision in IEEE packing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}

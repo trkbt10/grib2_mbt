@@ -83,6 +83,31 @@ pub(all) enum Grib2InventoryMode {
   InventoryCodeTable49
   InventoryCodeTable410
   InventoryCodeTable411
+  InventoryCodeTable311
+  InventoryCodeTable51
+  InventoryCodeTable36
+  InventoryCodeTable37
+  InventoryCodeTable38
+  InventoryCodeTable315
+  InventoryCodeTable320
+  InventoryCodeTable321
+  InventoryCodeTable47
+  InventoryCodeTable48
+  InventoryCodeTable411s
+  InventoryCodeTable415
+  InventoryCodeTable416
+  InventoryCodeTable491
+  InventoryCodeTable491b
+  InventoryCodeTable4230
+  InventoryCodeTable4233
+  InventoryCodeTable4235
+  InventoryCodeTable4240
+  InventoryCodeTable4241
+  InventoryCodeTable4242
+  InventoryCodeTable54
+  InventoryCodeTable55
+  InventoryCodeTable56
+  InventoryCodeTable57
 } derive(Show)
 
 ///|
@@ -174,6 +199,31 @@ pub fn render_inventory_lines(
     InventoryCodeTable49 => wgrib2_code_table_4_9_lines(context)
     InventoryCodeTable410 => wgrib2_code_table_4_10_lines(context)
     InventoryCodeTable411 => wgrib2_code_table_4_11_lines(context)
+    InventoryCodeTable311 => wgrib2_code_table_3_11_lines(context)
+    InventoryCodeTable51 => wgrib2_code_table_5_1_lines(context)
+    InventoryCodeTable36 => wgrib2_code_table_3_6_lines(context)
+    InventoryCodeTable37 => wgrib2_code_table_3_7_lines(context)
+    InventoryCodeTable38 => wgrib2_code_table_3_8_lines(context)
+    InventoryCodeTable315 => wgrib2_code_table_3_15_lines(context)
+    InventoryCodeTable320 => wgrib2_code_table_3_20_lines(context)
+    InventoryCodeTable321 => wgrib2_code_table_3_21_lines(context)
+    InventoryCodeTable47 => wgrib2_code_table_4_7_lines(context)
+    InventoryCodeTable48 => wgrib2_code_table_4_8_lines(context)
+    InventoryCodeTable411s => wgrib2_code_table_4_11s_lines(context)
+    InventoryCodeTable415 => wgrib2_code_table_4_15_lines(context)
+    InventoryCodeTable416 => wgrib2_code_table_4_16_lines(context)
+    InventoryCodeTable491 => wgrib2_code_table_4_91_lines(context)
+    InventoryCodeTable491b => wgrib2_code_table_4_91b_lines(context)
+    InventoryCodeTable4230 => wgrib2_code_table_4_230_lines(context)
+    InventoryCodeTable4233 => wgrib2_code_table_4_233_lines(context)
+    InventoryCodeTable4235 => wgrib2_code_table_4_235_lines(context)
+    InventoryCodeTable4240 => wgrib2_code_table_4_240_lines(context)
+    InventoryCodeTable4241 => wgrib2_code_table_4_241_lines(context)
+    InventoryCodeTable4242 => wgrib2_code_table_4_242_lines(context)
+    InventoryCodeTable54 => wgrib2_code_table_5_4_lines(context)
+    InventoryCodeTable55 => wgrib2_code_table_5_5_lines(context)
+    InventoryCodeTable56 => wgrib2_code_table_5_6_lines(context)
+    InventoryCodeTable57 => wgrib2_code_table_5_7_lines(context)
   }
 }
 
