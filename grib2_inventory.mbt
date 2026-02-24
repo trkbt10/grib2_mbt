@@ -906,3 +906,93 @@ pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] 
   // Same as -process
   wgrib2_process_lines(context)
 }
+
+///|
+fn code_table_3_1_label(template_id : Int) -> String {
+  match template_id {
+    0 => "Latitude/longitude"
+    1 => "Rotated latitude/longitude"
+    2 => "Stretched latitude/longitude"
+    3 => "Rotated and stretched latitude/longitude"
+    10 => "Mercator"
+    20 => "Polar stereographic"
+    30 => "Lambert conformal"
+    31 => "Albers equal-area"
+    40 => "Gaussian latitude/longitude"
+    41 => "Rotated Gaussian latitude/longitude"
+    42 => "Stretched Gaussian latitude/longitude"
+    43 => "Rotated and stretched Gaussian latitude/longitude"
+    50 => "Spherical harmonic coefficients"
+    51 => "Rotated spherical harmonic coefficients"
+    52 => "Stretched spherical harmonic coefficients"
+    53 => "Rotated and stretched spherical harmonic coefficients"
+    90 => "Space view"
+    100 => "Triangular grid"
+    101 => "General unstructured grid"
+    110 => "Equatorial azimuthal equidistant"
+    120 => "Azimuth-range"
+    130 => "Irregular latitude/longitude"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_3_1_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section3_template.id()
+    let label = code_table_3_1_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 3.1=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 3.1=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
+fn code_table_5_0_label(template_id : Int) -> String {
+  match template_id {
+    0 => "Grid point data - simple packing"
+    2 => "Grid point data - complex packing"
+    3 => "Grid point data - complex packing and spatial differencing"
+    4 => "Grid point data - IEEE floating point data"
+    40 => "Grid point data - JPEG 2000 code stream format"
+    41 => "Grid point data - Portable Network Graphics (PNG)"
+    50 => "Spectral data - simple packing"
+    51 => "Spherical harmonics data - complex packing"
+    61 => "Grid point data - simple packing with logarithm pre-processing"
+    200 => "Run length packing with level values"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_5_0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section5_template.id()
+    let label = code_table_5_0_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 5.0=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 5.0=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
