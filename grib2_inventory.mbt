@@ -2345,3 +2345,330 @@ pub fn wgrib2_code_table_5_7_lines(context : Grib2FileContext) -> Array[String] 
   }
   lines
 }
+
+///|
+pub fn wgrib2_ftime1_lines(context : Grib2FileContext) -> Array[String] {
+  // -ftime1: Same as -ftime
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + meta.tail)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_s2_lines(context : Grib2FileContext) -> Array[String] {
+  // -s2: Simple inventory (same format as -s)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "d=" +
+      meta.reference_time +
+      ":" +
+      meta.parameter_name.display() +
+      ":" +
+      meta.level_name.display() +
+      ":" +
+      meta.tail +
+      ":",
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_pds_fcst_time_lines(context : Grib2FileContext) -> Array[String] {
+  // -pds_fcst_time: Forecast time in PDS units
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For analysis (anl), forecast time is 0
+    // Extract from the tail field
+    let fcst_time = if meta.tail == "anl" { 0 } else { 0 } // TODO: parse actual forecast time
+    lines.push(format_prefix(meta) + "pds_fcst_time1=" + fcst_time.to_string())
+  }
+  lines
+}
+
+///|
+fn type_reftime_description(code : Int) -> String {
+  match code {
+    0 => "Analysis"
+    1 => "start of forecast"
+    2 => "Verifying time of forecast"
+    3 => "Observation time"
+    4 => "Local time"
+    _ => "unknown"
+  }
+}
+
+///|
+pub fn wgrib2_type_reftime_lines(context : Grib2FileContext) -> Array[String] {
+  // -type_reftime: Type of reference time
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let desc = type_reftime_description(meta.section1_significance_of_ref_time)
+    lines.push(format_prefix(meta) + "type_reftime=" + desc)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_table_lines(context : Grib2FileContext) -> Array[String] {
+  // -table: Parameter table information
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "discipline=" +
+      meta.discipline.to_string() +
+      " master_table=" +
+      meta.section1_master_tables_version.to_string() +
+      " local_table=" +
+      meta.section1_local_tables_version.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+fn vector_dir_description(flags : Int) -> String {
+  // Check bit 5 (counting from 1) of resolution and component flags
+  // If bit 5 is 0, winds are relative to east/north (grid)
+  // If bit 5 is 1, winds are relative to the defined grid direction
+  let bit5 = (flags >> 3) & 1
+  if bit5 == 0 {
+    "winds(N/S)"
+  } else {
+    "winds(grid)"
+  }
+}
+
+///|
+pub fn wgrib2_vector_dir_lines(context : Grib2FileContext) -> Array[String] {
+  // -vector_dir: Grid or earth relative winds
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let desc = vector_dir_description(meta.section3_resolution_flags)
+    lines.push(format_prefix(meta) + desc)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_precision_lines(context : Grib2FileContext) -> Array[String] {
+  // -precision: Precision of packing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Format: encode i*2^bin_scale*10^-dec_scale
+    let bin = meta.section5_binary_scale_factor
+    let dec = -meta.section5_decimal_scale_factor // wgrib2 uses negated decimal scale
+    lines.push(
+      format_prefix(meta) +
+      "encode i*2^" +
+      bin.to_string() +
+      "*10^" +
+      dec.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_number_of_coordinate_values_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
+  // -number_of_coordinate_values_after_template
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "number_coordinates_values_in_pdt=" +
+      meta.section4_num_coord.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_N_ens_lines(context : Grib2FileContext) -> Array[String] {
+  // -N_ens: Number of ensemble members (only for ensemble templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_N_clusters_lines(context : Grib2FileContext) -> Array[String] {
+  // -N_clusters: Number of clusters
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_aerosol_size_lines(context : Grib2FileContext) -> Array[String] {
+  // -aerosol_size: Aerosol size (only for aerosol templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_aerosol_wavelength_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
+  // -aerosol_wavelength: Aerosol wavelength (only for aerosol templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_cluster_lines(context : Grib2FileContext) -> Array[String] {
+  // -cluster: Cluster identifier
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_cluster_info_lines(context : Grib2FileContext) -> Array[String] {
+  // -cluster_info: Cluster information
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_model_version_date_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
+  // -model_version_date: Model version date
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_percent_lines(context : Grib2FileContext) -> Array[String] {
+  // -percent: Percentage probability (only for probability templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_post_processing_lines(context : Grib2FileContext) -> Array[String] {
+  // -post_processing: Type of post-processing
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_spatial_proc_lines(context : Grib2FileContext) -> Array[String] {
+  // -spatial_proc: Spatial processing (pdt=4.15)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_spectral_bands_lines(context : Grib2FileContext) -> Array[String] {
+  // -spectral_bands: Spectral bands for satellite (pdt=4.31, 4.32)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_ctl_ens_lines(context : Grib2FileContext) -> Array[String] {
+  // -ctl_ens: Ensemble info for GrADS
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_warn_old_g2_lines(context : Grib2FileContext) -> Array[String] {
+  // -warn_old_g2: Warn if old g2lib would have problem
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_wave_partition_lines(context : Grib2FileContext) -> Array[String] {
+  // -wave_partition: Ocean surface wave partition (pdt=4.52)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_processid_lines(context : Grib2FileContext) -> Array[String] {
+  // -processid: Background and forecast generating process identifiers
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "background generating process=" +
+      meta.section4_background_process.to_string() +
+      " forecast generating process=" +
+      meta.section4_forecast_process.to_string(),
+    )
+  }
+  lines
+}
