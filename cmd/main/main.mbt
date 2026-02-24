@@ -84,6 +84,31 @@ fn print_usage() -> Unit {
   println("  -code_table_4.9  print probability type")
   println("  -code_table_4.10  print statistical processing type")
   println("  -code_table_4.11  print type of time intervals")
+  println("  -code_table_3.11  print regional/global thinned/reduced grid")
+  println("  -code_table_5.1  print type of original field values")
+  println("  -code_table_3.6  print spectral data representation type")
+  println("  -code_table_3.7  print spectral data representation mode")
+  println("  -code_table_3.8  print grid point position")
+  println("  -code_table_3.15  print physical meaning of vertical coordinate")
+  println("  -code_table_3.20  print type of horizontal line")
+  println("  -code_table_3.21  print vertical dimension coordinate values")
+  println("  -code_table_4.7  print derived forecast type")
+  println("  -code_table_4.8  print cluster mean type")
+  println("  -code_table_4.11s  print type of time intervals (all)")
+  println("  -code_table_4.15  print type of areal statistical processing")
+  println("  -code_table_4.16  print quality control value")
+  println("  -code_table_4.91  print type of interval")
+  println("  -code_table_4.91b  print type of interval (2nd)")
+  println("  -code_table_4.230  print chemical constituent type")
+  println("  -code_table_4.233  print aerosol type")
+  println("  -code_table_4.235  print wind-generated wave spectral description")
+  println("  -code_table_4.240  print type of distribution function")
+  println("  -code_table_4.241  print coverage attributes")
+  println("  -code_table_4.242  print tile classification")
+  println("  -code_table_5.4  print group splitting method")
+  println("  -code_table_5.5  print missing value management")
+  println("  -code_table_5.6  print spatial differencing")
+  println("  -code_table_5.7  print precision in IEEE packing")
 }
 
 ///|
@@ -349,6 +374,81 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-code_table_4.11" {
     return Some(InventoryCodeTable411)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.11" {
+    return Some(InventoryCodeTable311)
+  }
+  if args.length() == 1 && args[0] == "-code_table_5.1" {
+    return Some(InventoryCodeTable51)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.6" {
+    return Some(InventoryCodeTable36)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.7" {
+    return Some(InventoryCodeTable37)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.8" {
+    return Some(InventoryCodeTable38)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.15" {
+    return Some(InventoryCodeTable315)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.20" {
+    return Some(InventoryCodeTable320)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.21" {
+    return Some(InventoryCodeTable321)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.7" {
+    return Some(InventoryCodeTable47)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.8" {
+    return Some(InventoryCodeTable48)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.11s" {
+    return Some(InventoryCodeTable411s)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.15" {
+    return Some(InventoryCodeTable415)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.16" {
+    return Some(InventoryCodeTable416)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.91" {
+    return Some(InventoryCodeTable491)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.91b" {
+    return Some(InventoryCodeTable491b)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.230" {
+    return Some(InventoryCodeTable4230)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.233" {
+    return Some(InventoryCodeTable4233)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.235" {
+    return Some(InventoryCodeTable4235)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.240" {
+    return Some(InventoryCodeTable4240)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.241" {
+    return Some(InventoryCodeTable4241)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.242" {
+    return Some(InventoryCodeTable4242)
+  }
+  if args.length() == 1 && args[0] == "-code_table_5.4" {
+    return Some(InventoryCodeTable54)
+  }
+  if args.length() == 1 && args[0] == "-code_table_5.5" {
+    return Some(InventoryCodeTable55)
+  }
+  if args.length() == 1 && args[0] == "-code_table_5.6" {
+    return Some(InventoryCodeTable56)
+  }
+  if args.length() == 1 && args[0] == "-code_table_5.7" {
+    return Some(InventoryCodeTable57)
   }
   None
 }
