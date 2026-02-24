@@ -2866,26 +2866,45 @@ fn bytes_to_hex(bytes : BytesView) -> String {
 }
 
 ///|
-fn crc32_byte(crc : UInt, byte : Int) -> UInt {
-  // CRC-32 polynomial (IEEE 802.3)
-  let poly : UInt = 0xEDB88320
-  let mut c = crc ^ byte.to_uint()
-  for _ in 0..<8 {
-    if (c & 1) != 0 {
-      c = (c >> 1) ^ poly
-    } else {
-      c = c >> 1
+fn posix_cksum_table() -> FixedArray[UInt] {
+  // POSIX cksum CRC table (polynomial 0x04C11DB7, MSB first)
+  let table : FixedArray[UInt] = FixedArray::make(256, 0U)
+  for i in 0..<256 {
+    let mut c = i.to_uint() << 24
+    for _ in 0..<8 {
+      if (c & 0x80000000U) != 0 {
+        c = (c << 1) ^ 0x04C11DB7U
+      } else {
+        c = c << 1
+      }
     }
+    table[i] = c
   }
-  c
+  table
 }
 
 ///|
-fn compute_crc32(bytes : BytesView) -> UInt {
-  let mut crc : UInt = 0xFFFFFFFF
-  for i in 0..<bytes.length() {
-    crc = crc32_byte(crc, bytes[i].to_int())
+fn compute_posix_cksum(bytes : BytesView) -> UInt {
+  // POSIX cksum algorithm (same as wgrib2 -checksum)
+  let table = posix_cksum_table()
+  let mut crc : UInt = 0
+  let len = bytes.length()
+
+  // Process all bytes
+  for i in 0..<len {
+    let byte_val = bytes[i].to_uint().reinterpret_as_int()
+    let idx = ((crc >> 24) ^ byte_val.to_uint()) & 0xFF
+    crc = (crc << 8) ^ table[idx.reinterpret_as_int()]
   }
+
+  // Process length (POSIX cksum includes length in calculation)
+  let mut length = len.to_uint()
+  while length > 0 {
+    let idx = ((crc >> 24) ^ (length & 0xFF)) & 0xFF
+    crc = (crc << 8) ^ table[idx.reinterpret_as_int()]
+    length = length >> 8
+  }
+
   crc ^ 0xFFFFFFFF
 }
 
@@ -3080,7 +3099,7 @@ pub fn wgrib2_checksum0_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     let sec0 = get_section0_bytes(message)
-    let crc = compute_crc32(sec0)
+    let crc = compute_posix_cksum(sec0)
     for _ in message.submessages {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       lines.push(prefix + "sec0_cksum=" + crc.to_string())
@@ -3097,7 +3116,7 @@ pub fn wgrib2_checksum1_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     let sec1 = get_section1_bytes(message)
-    let crc = compute_crc32(sec1)
+    let crc = compute_posix_cksum(sec1)
     for _ in message.submessages {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       lines.push(prefix + "sec1_cksum=" + crc.to_string())
@@ -3117,7 +3136,7 @@ pub fn wgrib2_checksum3_lines(context : Grib2FileContext) -> Array[String] {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       match get_section_bytes(message, submessage, 3) {
         Some(sec) => {
-          let crc = compute_crc32(sec)
+          let crc = compute_posix_cksum(sec)
           lines.push(prefix + "sec3_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec3_cksum=0")
@@ -3138,7 +3157,7 @@ pub fn wgrib2_checksum4_lines(context : Grib2FileContext) -> Array[String] {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       match get_section_bytes(message, submessage, 4) {
         Some(sec) => {
-          let crc = compute_crc32(sec)
+          let crc = compute_posix_cksum(sec)
           lines.push(prefix + "sec4_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec4_cksum=0")
@@ -3159,7 +3178,7 @@ pub fn wgrib2_checksum5_lines(context : Grib2FileContext) -> Array[String] {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       match get_section_bytes(message, submessage, 5) {
         Some(sec) => {
-          let crc = compute_crc32(sec)
+          let crc = compute_posix_cksum(sec)
           lines.push(prefix + "sec5_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec5_cksum=0")
@@ -3180,7 +3199,7 @@ pub fn wgrib2_checksum6_lines(context : Grib2FileContext) -> Array[String] {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       match get_section_bytes(message, submessage, 6) {
         Some(sec) => {
-          let crc = compute_crc32(sec)
+          let crc = compute_posix_cksum(sec)
           lines.push(prefix + "sec6_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec6_cksum=0")
@@ -3201,7 +3220,7 @@ pub fn wgrib2_checksum7_lines(context : Grib2FileContext) -> Array[String] {
       let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
       match get_section_bytes(message, submessage, 7) {
         Some(sec) => {
-          let crc = compute_crc32(sec)
+          let crc = compute_posix_cksum(sec)
           lines.push(prefix + "sec7_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec7_cksum=0")
