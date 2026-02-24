@@ -86,10 +86,13 @@ pub(all) struct Grib2RecordMeta {
   message_total_length : Int
   reference_time : String
   reference_time_full : String
+  unix_rt : Int64
+  unix_vt : Int64
   discipline : Int
   edition : Int
   section1_center : Int
   section1_subcenter : Int
+  section1_significance_of_ref_time : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
   tail : String
@@ -220,6 +223,54 @@ fn pad4(value : Int) -> String {
 }
 
 ///|
+fn is_leap_year(year : Int) -> Bool {
+  (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+}
+
+///|
+fn days_in_month(year : Int, month : Int) -> Int {
+  match month {
+    1 => 31
+    2 => if is_leap_year(year) { 29 } else { 28 }
+    3 => 31
+    4 => 30
+    5 => 31
+    6 => 30
+    7 => 31
+    8 => 31
+    9 => 30
+    10 => 31
+    11 => 30
+    12 => 31
+    _ => 0
+  }
+}
+
+///|
+fn datetime_to_unix(
+  year : Int,
+  month : Int,
+  day : Int,
+  hour : Int,
+  minute : Int,
+  second : Int,
+) -> Int64 {
+  // Days from 1970-01-01 to the start of the year
+  let mut days : Int64 = 0L
+  for y in 1970..<year {
+    days += if is_leap_year(y) { 366L } else { 365L }
+  }
+  // Days in months before current month
+  for m in 1..<month {
+    days += days_in_month(year, m).to_int64()
+  }
+  // Days in current month
+  days += (day - 1).to_int64()
+  // Convert to seconds and add time
+  days * 86400L + hour.to_int64() * 3600L + minute.to_int64() * 60L + second.to_int64()
+}
+
+///|
 fn hex_digit(value : Int) -> String {
   match value {
     0 => "0"
@@ -308,6 +359,34 @@ fn format_ref_time_yyyymmddhhmmss(message : Grib2MessageContext) -> String {
       let minute = section1[17].to_uint().reinterpret_as_int()
       let second = section1[18].to_uint().reinterpret_as_int()
       pad4(year) + pad2(month) + pad2(day) + pad2(hour) + pad2(minute) + pad2(second)
+    }
+  }
+}
+
+///|
+fn compute_ref_time_unix(message : Grib2MessageContext) -> Int64 {
+  match decode_message_section1(message) {
+    Ok(section1) =>
+      datetime_to_unix(
+        section1.reference_year,
+        section1.reference_month,
+        section1.reference_day,
+        section1.reference_hour,
+        section1.reference_minute,
+        section1.reference_second,
+      )
+    Err(_) => {
+      let section1 = section_slice(message, message.section1)
+      if section1.length() < 20 {
+        return 0L
+      }
+      let year = read_u16_be_from(section1, 12)
+      let month = section1[14].to_uint().reinterpret_as_int()
+      let day = section1[15].to_uint().reinterpret_as_int()
+      let hour = section1[16].to_uint().reinterpret_as_int()
+      let minute = section1[17].to_uint().reinterpret_as_int()
+      let second = section1[18].to_uint().reinterpret_as_int()
+      datetime_to_unix(year, month, day, hour, minute, second)
     }
   }
 }
@@ -7461,6 +7540,7 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     let submessage_count = message.submessages.length()
     let record_time = format_ref_time_yyyymmddhh(message)
     let record_time_full = format_ref_time_yyyymmddhhmmss(message)
+    let record_unix_rt = compute_ref_time_unix(message)
     let section1 = section_slice(message, message.section1)
     let section1_center = if section1.length() >= 9 {
       read_u16_be_from(section1, 5)
@@ -7469,6 +7549,11 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     }
     let section1_subcenter = if section1.length() >= 11 {
       read_u16_be_from(section1, 7)
+    } else {
+      -1
+    }
+    let section1_significance_of_ref_time = if section1.length() >= 12 {
+      section1[11].to_uint().reinterpret_as_int()
     } else {
       -1
     }
@@ -7753,10 +7838,13 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         message_total_length: message.total_length,
         reference_time: record_time,
         reference_time_full: record_time_full,
+        unix_rt: record_unix_rt,
+        unix_vt: record_unix_rt, // TODO: add forecast time offset for actual verification time
         discipline: message.discipline,
         edition: message.edition,
         section1_center,
         section1_subcenter,
+        section1_significance_of_ref_time,
         parameter_name,
         level_name,
         tail: format_tail(time_unit, forecast_time),

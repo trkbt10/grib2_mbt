@@ -20,6 +20,14 @@ fn print_usage() -> Unit {
   println("  -VT     print verification time YYYYMMDDHHMMSS")
   println("  -YY     print reference year YYYY")
   println("  -MM     print reference month MM")
+  println("  -RT     print type of reference time")
+  println("  -start_ft  print forecast start time YYYYMMDDHH")
+  println("  -start_FT  print forecast start time YYYYMMDDHHMMSS")
+  println("  -end_ft  print forecast end time YYYYMMDDHH")
+  println("  -end_FT  print forecast end time YYYYMMDDHHMMSS")
+  println("  -S      print inventory with D=YYYYMMDDHHMMSS")
+  println("  -verf   print inventory using verification time")
+  println("  -unix_time  print unix timestamps")
   println("  -grid   print grid description lines")
   println("  -pdt    print product definition template numbers")
   println("  -process  print process type (code table 4.3)")
@@ -106,6 +114,30 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-MM" {
     return Some(InventoryMM)
+  }
+  if args.length() == 1 && args[0] == "-RT" {
+    return Some(InventoryRT)
+  }
+  if args.length() == 1 && args[0] == "-start_ft" {
+    return Some(InventoryStartFt)
+  }
+  if args.length() == 1 && args[0] == "-start_FT" {
+    return Some(InventoryStartFT)
+  }
+  if args.length() == 1 && args[0] == "-end_ft" {
+    return Some(InventoryEndFt)
+  }
+  if args.length() == 1 && args[0] == "-end_FT" {
+    return Some(InventoryEndFT)
+  }
+  if args.length() == 1 && args[0] == "-S" {
+    return Some(InventoryS)
+  }
+  if args.length() == 1 && args[0] == "-verf" {
+    return Some(InventoryVerf)
+  }
+  if args.length() == 1 && args[0] == "-unix_time" {
+    return Some(InventoryUnixTime)
   }
   if args.length() == 1 && args[0] == "-grid" {
     return Some(InventoryGrid)

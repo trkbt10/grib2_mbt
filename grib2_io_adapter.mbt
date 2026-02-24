@@ -19,6 +19,14 @@ pub(all) enum Grib2InventoryMode {
   InventoryVtFull
   InventoryYY
   InventoryMM
+  InventoryRT
+  InventoryStartFt
+  InventoryStartFT
+  InventoryEndFt
+  InventoryEndFT
+  InventoryS
+  InventoryVerf
+  InventoryUnixTime
   InventoryGrid
   InventoryPdt
   InventoryProcess
@@ -59,6 +67,14 @@ pub fn render_inventory_lines(
     InventoryVtFull => wgrib2_VT_lines(context)
     InventoryYY => wgrib2_YY_lines(context)
     InventoryMM => wgrib2_MM_lines(context)
+    InventoryRT => wgrib2_RT_lines(context)
+    InventoryStartFt => wgrib2_start_ft_lines(context)
+    InventoryStartFT => wgrib2_start_FT_lines(context)
+    InventoryEndFt => wgrib2_end_ft_lines(context)
+    InventoryEndFT => wgrib2_end_FT_lines(context)
+    InventoryS => wgrib2_S_lines(context)
+    InventoryVerf => wgrib2_verf_lines(context)
+    InventoryUnixTime => wgrib2_unix_time_lines(context)
     InventoryGrid => wgrib2_grid_lines(context)
     InventoryPdt => wgrib2_pdt_lines(context)
     InventoryProcess => wgrib2_process_lines(context)
