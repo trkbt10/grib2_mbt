@@ -372,6 +372,21 @@ fn rt_label(significance : Int) -> String {
 }
 
 ///|
+fn code_table_1_2_label(significance : Int) -> String {
+  match significance {
+    0 => "Analysis"
+    1 => "Start of forecast"
+    2 => "Verifying time of forecast"
+    3 => "Observation time"
+    4 => "Local Time"
+    5 => "Simulation Start"
+    6 => "Start of Data Assimilation"
+    255 => "Missing"
+    _ => ""
+  }
+}
+
+///|
 pub fn wgrib2_RT_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -856,4 +871,38 @@ pub fn inventory_lines(context : Grib2FileContext) -> Array[String] {
 ///|
 pub fn sec0_lines(context : Grib2FileContext) -> Array[String] {
   wgrib2_sec0_lines(context)
+}
+
+///|
+pub fn wgrib2_code_table_0_0_lines(context : Grib2FileContext) -> Array[String] {
+  // Same as -disc
+  wgrib2_disc_lines(context)
+}
+
+///|
+pub fn wgrib2_code_table_1_2_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section1_significance_of_ref_time
+    let label = code_table_1_2_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 1.2=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 1.2=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] {
+  // Same as -process
+  wgrib2_process_lines(context)
 }
