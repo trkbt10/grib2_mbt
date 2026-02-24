@@ -278,6 +278,10 @@ pub fn sec0_lines(Grib2FileContext) -> Array[String]
 
 pub fn sum(data~ : Array[Int], start? : Int, length? : Int) -> Int
 
+pub fn unpack_complex(Bytes, @section5.Grib2DataRepresentationTemplate52, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
+pub fn unpack_complex_spatial(Bytes, @section5.Grib2DataRepresentationTemplate53, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
 pub fn unpack_ieee(Bytes, @section5.Grib2DataRepresentationTemplate54, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
 
 pub fn unpack_jpeg2000(Bytes, @section5.Grib2DataRepresentationTemplate540, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
@@ -314,39 +318,301 @@ pub fn wasm_parse_grib2(Bytes) -> Int
 
 pub fn wasm_parse_grib2_string(String) -> Int
 
+pub fn wgrib2_0xSec0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec3_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_0xSec7_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_JMA_Nb_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_JMA_Nr_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_JMA_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_MM_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_N_clusters_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_N_ens_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_RT_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_S_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_T_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_VT_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_V_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_YY_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_aerosol_size_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_aerosol_wavelength_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_bitmap_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_center_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum3_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_checksum7_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_cluster_info_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_cluster_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_0_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_2_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_3_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_1_6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_11_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_15_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_20_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_21_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_2_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_7_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_3_8_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_10_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_11_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_11s_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_15_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_16_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_230_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_233_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_235_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_240_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_241_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_242_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_2_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_3_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_5a_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_5b_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_7_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_8_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_91_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_91b_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_4_9_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_6_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_5_7_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_code_table_6_0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_crlf_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ctl_ens_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_cyclic_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_default_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_disc_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_domain_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_end_FT_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_end_ft_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_ens_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ext_name_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_flag_table_3_10_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_flag_table_3_3_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_flag_table_3_4_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_flag_table_3_5_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_flag_table_3_9_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ftime1_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ftime2_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_ftime_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_ftn_api_fn0_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_full_name_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_geolocation_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_get_byte_lines(Grib2FileContext, Int, Int, Int) -> Array[String]
+
+pub fn wgrib2_get_hex_lines(Grib2FileContext, Int, Int, Int) -> Array[String]
+
+pub fn wgrib2_get_ieee_lines(Grib2FileContext, Int, Int, Int) -> Array[String]
+
+pub fn wgrib2_get_int2_lines(Grib2FileContext, Int, Int, Int) -> Array[String]
+
+pub fn wgrib2_get_int_lines(Grib2FileContext, Int, Int, Int) -> Array[String]
+
+pub fn wgrib2_grib_max_bits_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_grid_id_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_grid_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_hybrid_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_ij_lines(Grib2FileContext, Int, Int) -> Array[String]
+
+pub fn wgrib2_ijlat_lines(Grib2FileContext, Int, Int) -> Array[String]
+
+pub fn wgrib2_ilat_lines(Grib2FileContext, Int) -> Array[String]
+
+pub fn wgrib2_inv_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_lev0_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_lev_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_ll2i_lines(Grib2FileContext, Double, Double) -> Array[String]
+
+pub fn wgrib2_ll2ij_lines(Grib2FileContext, Double, Double) -> Array[String]
+
+pub fn wgrib2_lon_lines(Grib2FileContext, Double, Double) -> Array[String]
+
+pub fn wgrib2_match_inv_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_max_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_min_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_misc_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_model_version_date_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_n_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_nl_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_nlons_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_npts_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_number_of_coordinate_values_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_nxny_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_packing_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_pds_fcst_time_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_pdt_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_percent_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_post_processing_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_precision_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_prob_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_process_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_processid_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_radius_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_range_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_reset_delayed_error_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_s2_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_s_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_scale_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_scaling_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_scan_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_sec0_lines(Grib2FileContext) -> Array[String]
 
@@ -360,11 +626,41 @@ pub fn wgrib2_sec6_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_sec_len_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_spatial_proc_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_spectral_bands_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_start_FT_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_start_ft_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_stats_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_subcenter_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_t_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_table_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_type_reftime_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_unix_time_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_varX_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_var_lev_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_var_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_vector_dir_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_verf_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_vt_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_warn_old_g2_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_wave_partition_lines(Grib2FileContext) -> Array[String]
 
 pub fn write_with_io((String, Bytes) -> Result[Unit, String], String, Grib2FileContext, strict? : Bool) -> Result[Unit, Grib2IoAdapterError]
 
@@ -425,6 +721,20 @@ pub(all) enum Grib2InventoryMode {
   InventoryVar
   InventoryLev
   InventoryFtime
+  InventoryT
+  InventoryVt
+  InventoryTFull
+  InventoryVtFull
+  InventoryYY
+  InventoryMM
+  InventoryRT
+  InventoryStartFt
+  InventoryStartFT
+  InventoryEndFt
+  InventoryEndFT
+  InventoryS
+  InventoryVerf
+  InventoryUnixTime
   InventoryGrid
   InventoryPdt
   InventoryProcess
@@ -438,6 +748,138 @@ pub(all) enum Grib2InventoryMode {
   InventoryNxny
   InventoryNpts
   InventoryVarLev
+  InventoryCodeTable00
+  InventoryCodeTable10
+  InventoryCodeTable11
+  InventoryCodeTable12
+  InventoryCodeTable13
+  InventoryCodeTable14
+  InventoryCodeTable30
+  InventoryCodeTable31
+  InventoryCodeTable60
+  InventoryCodeTable40
+  InventoryCodeTable41
+  InventoryCodeTable42
+  InventoryCodeTable43
+  InventoryCodeTable44
+  InventoryCodeTable50
+  InventoryFlagTable33
+  InventoryFlagTable34
+  InventoryScan
+  InventoryExtName
+  InventoryFullName
+  InventoryLev0
+  InventoryCyclic
+  InventoryDomain
+  InventoryScale
+  InventoryScaling
+  InventoryRadius
+  InventoryVarX
+  InventoryGridId
+  InventoryNl
+  InventoryMisc
+  InventoryFlagTable35
+  InventoryFlagTable39
+  InventoryFlagTable310
+  InventoryMatchInv
+  InventoryCodeTable32
+  InventoryCodeTable45a
+  InventoryCodeTable45b
+  InventoryCodeTable15
+  InventoryCodeTable16
+  InventoryCodeTable46
+  InventoryCodeTable49
+  InventoryCodeTable410
+  InventoryCodeTable411
+  InventoryCodeTable311
+  InventoryCodeTable51
+  InventoryCodeTable36
+  InventoryCodeTable37
+  InventoryCodeTable38
+  InventoryCodeTable315
+  InventoryCodeTable320
+  InventoryCodeTable321
+  InventoryCodeTable47
+  InventoryCodeTable48
+  InventoryCodeTable411s
+  InventoryCodeTable415
+  InventoryCodeTable416
+  InventoryCodeTable491
+  InventoryCodeTable491b
+  InventoryCodeTable4230
+  InventoryCodeTable4233
+  InventoryCodeTable4235
+  InventoryCodeTable4240
+  InventoryCodeTable4241
+  InventoryCodeTable4242
+  InventoryCodeTable54
+  InventoryCodeTable55
+  InventoryCodeTable56
+  InventoryCodeTable57
+  InventoryFtime1
+  InventoryS2
+  InventoryPdsFcstTime
+  InventoryTypeReftime
+  InventoryTable
+  InventoryVectorDir
+  InventoryPrecision
+  InventoryNumCoordValues
+  InventoryNEns
+  InventoryNClusters
+  InventoryAerosolSize
+  InventoryAerosolWavelength
+  InventoryCluster
+  InventoryClusterInfo
+  InventoryModelVersionDate
+  InventoryPercent
+  InventoryPostProcessing
+  InventorySpatialProc
+  InventorySpectralBands
+  InventoryCtlEns
+  InventoryWarnOldG2
+  InventoryWavePartition
+  InventoryProcessId
+  InventoryFtime2
+  InventoryGeolocation
+  InventoryJMA
+  InventoryJMANb
+  InventoryJMANr
+  InventoryResetDelayedError
+  InventoryFtnApiFn0
+  InventoryGribMaxBits
+  InventoryHybrid
+  InventoryVerbose
+  InventoryCrlf
+  InventoryInv
+  Inventory0xSec0
+  Inventory0xSec1
+  Inventory0xSec3
+  Inventory0xSec4
+  Inventory0xSec5
+  Inventory0xSec6
+  Inventory0xSec7
+  InventoryChecksum0
+  InventoryChecksum1
+  InventoryChecksum3
+  InventoryChecksum4
+  InventoryChecksum5
+  InventoryChecksum6
+  InventoryChecksum7
+  InventoryGetByte(Int, Int, Int)
+  InventoryGetHex(Int, Int, Int)
+  InventoryGetInt(Int, Int, Int)
+  InventoryGetInt2(Int, Int, Int)
+  InventoryGetIeee(Int, Int, Int)
+  InventoryMin
+  InventoryMax
+  InventoryStats
+  InventoryNlons
+  InventoryIJ(Int, Int)
+  InventoryIJLat(Int, Int)
+  InventoryILat(Int)
+  InventoryLon(Double, Double)
+  InventoryLL2IJ(Double, Double)
+  InventoryLL2I(Double, Double)
 }
 pub impl Show for Grib2InventoryMode
 
@@ -467,10 +909,18 @@ pub(all) struct Grib2RecordMeta {
   message_offset : Int
   message_total_length : Int
   reference_time : String
+  reference_time_full : String
+  unix_rt : Int64
+  unix_vt : Int64
   discipline : Int
   edition : Int
   section1_center : Int
   section1_subcenter : Int
+  section1_master_tables_version : Int
+  section1_local_tables_version : Int
+  section1_significance_of_ref_time : Int
+  section1_production_status : Int
+  section1_data_type : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
   tail : String
@@ -493,8 +943,19 @@ pub(all) struct Grib2RecordMeta {
   section3_lon2_microdeg : Int
   section3_di_microdeg : Int
   section3_dj_microdeg : Int
+  section3_scanning_mode : Int
+  section3_shape_of_earth : Int
+  section3_scale_factor_radius : Int
+  section3_scaled_value_radius : Int
+  section3_scale_factor_major : Int
+  section3_scaled_value_major : Int
+  section3_scale_factor_minor : Int
+  section3_scaled_value_minor : Int
   section4_length : Int
   section4_num_coord : Int
+  section4_parameter_category : Int
+  section4_parameter_number : Int
+  section4_time_unit : Int
   section4_process_code : Int
   section4_ens_type : Int
   section4_ens_perturbation_number : Int
@@ -506,8 +967,16 @@ pub(all) struct Grib2RecordMeta {
   section4_prob_lower_value : Int
   section4_prob_upper_scale_factor : Int
   section4_prob_upper_value : Int
+  section4_first_surface_type : Int
+  section4_second_surface_type : Int
+  section4_background_process : Int
+  section4_forecast_process : Int
   section5_length : Int
   section5_num_defined_points : Int
+  section5_reference_value_ieee : Int
+  section5_binary_scale_factor : Int
+  section5_decimal_scale_factor : Int
+  section5_bits_per_value : Int
   section6_length : Int
   section6_bitmap_indicator : Int
   section6_undef_points : Int

@@ -12,6 +12,8 @@ pub using @typed {
   unpack_simple,
   unpack_jpeg2000,
   unpack_png,
+  unpack_complex,
+  unpack_complex_spatial,
 }
 
 ///|
@@ -61,17 +63,9 @@ pub fn unpack_submessage_data(
     DataRepresentationTemplate541(t541) =>
       unpack_png(raw_data, t541, section5.number_of_data_points)
     DataRepresentationTemplate52(t52) =>
-      Err(
-        UnsupportedTemplate(
-          "Complex Packing (Template 5.2) not yet implemented, groups=\{t52.number_of_groups}",
-        ),
-      )
+      unpack_complex(raw_data, t52, section5.number_of_data_points)
     DataRepresentationTemplate53(t53) =>
-      Err(
-        UnsupportedTemplate(
-          "Complex Packing with Spatial Differencing (Template 5.3) not yet implemented, order=\{t53.order_of_spatial_difference}",
-        ),
-      )
+      unpack_complex_spatial(raw_data, t53, section5.number_of_data_points)
     DataRepresentationTemplateUnknown(num, _) =>
       Err(UnsupportedTemplate("Unknown Data Representation Template: \{num}"))
     _ =>

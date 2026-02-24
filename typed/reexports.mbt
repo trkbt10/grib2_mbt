@@ -440,4 +440,7 @@ pub using @section7 {
   get_jpeg2000_params,
   unpack_png,
   get_png_raw_bytes,
+  // Complex packing unpackers
+  unpack_complex,
+  unpack_complex_spatial,
 }

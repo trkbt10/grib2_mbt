@@ -207,6 +207,62 @@ test "jpeg2000 reduced gaussian fixture all submessages unpack" {
 }
 
 ///|
+test "template 5.3 gfs pgrb2b first message unpacking" {
+  let context = parse_fixture_for_decode(
+    "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+  )
+  let parsed = match context {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  let message = parsed.messages[0]
+  let submessage = message.submessages[0]
+  match @lib.unpack_submessage_data(message, submessage) {
+    Ok(data) => {
+      inspect(data.num_points, content="65160")
+      inspect(data.values.length(), content="65160")
+      // wgrib2 reference: first=48426.8, min=44934.2, max=48633.5
+      inspect(
+        data.values[0],
+        content=(
+          #|48426.82
+        ),
+      )
+      inspect(
+        data.values[1],
+        content=(
+          #|48426.82
+        ),
+      )
+      let mut min_val = data.values[0]
+      let mut max_val = data.values[0]
+      for v in data.values {
+        if v < min_val {
+          min_val = v
+        }
+        if v > max_val {
+          max_val = v
+        }
+      }
+      // Note: these values match wgrib2's output (min=44934.2, max=48633.5)
+      inspect(
+        min_val,
+        content=(
+          #|44934.18
+        ),
+      )
+      inspect(
+        max_val,
+        content=(
+          #|48633.54
+        ),
+      )
+    }
+    Err(_) => fail("unpacking failed")
+  }
+}
+
+///|
 test "table lookup foundation: parameter and level known-unknown split" {
   inspect(
     @lib.decode_discipline_name(0).display(),

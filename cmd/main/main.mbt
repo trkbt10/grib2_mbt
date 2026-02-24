@@ -44,18 +44,24 @@ fn print_usage() -> Unit {
   println("  -code_table_0.0  print discipline (code table 0.0)")
   println("  -code_table_1.0  print master tables version (code table 1.0)")
   println("  -code_table_1.1  print local tables version (code table 1.1)")
-  println("  -code_table_1.2  print significance of reference time (code table 1.2)")
+  println(
+    "  -code_table_1.2  print significance of reference time (code table 1.2)",
+  )
   println("  -code_table_1.3  print production status (code table 1.3)")
   println("  -code_table_1.4  print type of data (code table 1.4)")
   println("  -code_table_3.0  print source of grid definition (code table 3.0)")
   println("  -code_table_3.1  print grid definition template (code table 3.1)")
   println("  -code_table_6.0  print bitmap indicator (code table 6.0)")
-  println("  -code_table_4.0  print product definition template (code table 4.0)")
+  println(
+    "  -code_table_4.0  print product definition template (code table 4.0)",
+  )
   println("  -code_table_4.1  print parameter category (code table 4.1)")
   println("  -code_table_4.2  print parameter number (code table 4.2)")
   println("  -code_table_4.3  print process type (code table 4.3)")
   println("  -code_table_4.4  print unit of time range (code table 4.4)")
-  println("  -code_table_5.0  print data representation template (code table 5.0)")
+  println(
+    "  -code_table_5.0  print data representation template (code table 5.0)",
+  )
   println("  -flag_table_3.3  print resolution and component flags")
   println("  -flag_table_3.4  print scanning mode")
   println("  -flag_table_3.5  print projection center flags")
@@ -75,7 +81,9 @@ fn print_usage() -> Unit {
   println("  -nl  add blank line after each record")
   println("  -misc  print miscellaneous inventory")
   println("  -Match_inv  print comprehensive match inventory")
-  println("  -match_inv  print comprehensive match inventory (same as -Match_inv)")
+  println(
+    "  -match_inv  print comprehensive match inventory (same as -Match_inv)",
+  )
   println("  -code_table_3.2  print earth shape (code table 3.2)")
   println("  -code_table_4.5a  print first surface type (code table 4.5)")
   println("  -code_table_4.5b  print second surface type (code table 4.5)")
@@ -117,7 +125,9 @@ fn print_usage() -> Unit {
   println("  -table  print parameter table info")
   println("  -vector_dir  print wind direction type")
   println("  -precision  print packing precision")
-  println("  -number_of_coordinate_values_after_template  print coordinate values count")
+  println(
+    "  -number_of_coordinate_values_after_template  print coordinate values count",
+  )
   println("  -N_ens  print number of ensemble members")
   println("  -N_clusters  print number of clusters")
   println("  -aerosol_size  print aerosol size")
@@ -147,11 +157,21 @@ fn print_usage() -> Unit {
   println("  -inv  print standard inventory")
   println("  -0xSec N  hex dump of section N (0,1,3,4,5,6,7)")
   println("  -checksum N  CRC checksum of section N (0,1,3,4,5,6,7)")
-  println("  -get_byte sec oct count  get count bytes from section sec at octet oct")
-  println("  -get_hex sec oct count  get count bytes as hex from section sec at octet oct")
-  println("  -get_int sec oct count  get count bytes as unsigned int from section sec at octet oct")
-  println("  -get_int2 sec oct count  get count bytes as signed int from section sec at octet oct")
-  println("  -get_ieee sec oct count  get count 4-byte IEEE floats from section sec at octet oct")
+  println(
+    "  -get_byte sec oct count  get count bytes from section sec at octet oct",
+  )
+  println(
+    "  -get_hex sec oct count  get count bytes as hex from section sec at octet oct",
+  )
+  println(
+    "  -get_int sec oct count  get count bytes as unsigned int from section sec at octet oct",
+  )
+  println(
+    "  -get_int2 sec oct count  get count bytes as signed int from section sec at octet oct",
+  )
+  println(
+    "  -get_ieee sec oct count  get count 4-byte IEEE floats from section sec at octet oct",
+  )
   println("  -min    print minimum data value")
   println("  -max    print maximum data value")
   println("  -stats  print data statistics (ndata, undef, mean, min, max)")
@@ -173,18 +193,14 @@ fn print_lines(lines : Array[String]) -> Unit {
 
 ///|
 fn parse_int_option(s : String) -> Int? {
-  try {
-    Some(@strconv.parse_int!(s))
-  } catch {
+  Some(@strconv.parse_int(s)) catch {
     _ => None
   }
 }
 
 ///|
 fn parse_double_option(s : String) -> Double? {
-  try {
-    Some(@strconv.parse_double!(s))
-  } catch {
+  Some(@strconv.parse_double(s)) catch {
     _ => None
   }
 }
@@ -548,7 +564,8 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-precision" {
     return Some(InventoryPrecision)
   }
-  if args.length() == 1 && args[0] == "-number_of_coordinate_values_after_template" {
+  if args.length() == 1 &&
+    args[0] == "-number_of_coordinate_values_after_template" {
     return Some(InventoryNumCoordValues)
   }
   if args.length() == 1 && args[0] == "-N_ens" {
@@ -727,32 +744,62 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   // get_byte, get_hex, get_int, get_int2 options (require 3 arguments each)
   if args.length() == 4 && args[0] == "-get_byte" {
-    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
-      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetByte(sec, oct, cnt))
+    match
+      (
+        parse_int_option(args[1]),
+        parse_int_option(args[2]),
+        parse_int_option(args[3]),
+      ) {
+      (Some(sec), Some(oct), Some(cnt)) =>
+        return Some(InventoryGetByte(sec, oct, cnt))
       _ => ()
     }
   }
   if args.length() == 4 && args[0] == "-get_hex" {
-    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
-      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetHex(sec, oct, cnt))
+    match
+      (
+        parse_int_option(args[1]),
+        parse_int_option(args[2]),
+        parse_int_option(args[3]),
+      ) {
+      (Some(sec), Some(oct), Some(cnt)) =>
+        return Some(InventoryGetHex(sec, oct, cnt))
       _ => ()
     }
   }
   if args.length() == 4 && args[0] == "-get_int" {
-    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
-      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetInt(sec, oct, cnt))
+    match
+      (
+        parse_int_option(args[1]),
+        parse_int_option(args[2]),
+        parse_int_option(args[3]),
+      ) {
+      (Some(sec), Some(oct), Some(cnt)) =>
+        return Some(InventoryGetInt(sec, oct, cnt))
       _ => ()
     }
   }
   if args.length() == 4 && args[0] == "-get_int2" {
-    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
-      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetInt2(sec, oct, cnt))
+    match
+      (
+        parse_int_option(args[1]),
+        parse_int_option(args[2]),
+        parse_int_option(args[3]),
+      ) {
+      (Some(sec), Some(oct), Some(cnt)) =>
+        return Some(InventoryGetInt2(sec, oct, cnt))
       _ => ()
     }
   }
   if args.length() == 4 && args[0] == "-get_ieee" {
-    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
-      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetIeee(sec, oct, cnt))
+    match
+      (
+        parse_int_option(args[1]),
+        parse_int_option(args[2]),
+        parse_int_option(args[3]),
+      ) {
+      (Some(sec), Some(oct), Some(cnt)) =>
+        return Some(InventoryGetIeee(sec, oct, cnt))
       _ => ()
     }
   }

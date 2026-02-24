@@ -340,7 +340,9 @@ pub fn wgrib2_YY_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   for meta in records {
     // reference_time is YYYYMMDDHH, extract first 4 chars
-    lines.push(format_prefix(meta) + "YY=" + meta.reference_time.substring(end=4))
+    lines.push(
+      format_prefix(meta) + "YY=" + meta.reference_time.substring(end=4),
+    )
   }
   lines
 }
@@ -351,7 +353,11 @@ pub fn wgrib2_MM_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   for meta in records {
     // reference_time is YYYYMMDDHH, extract chars 4-6
-    lines.push(format_prefix(meta) + "MM=" + meta.reference_time.substring(start=4, end=6))
+    lines.push(
+      format_prefix(meta) +
+      "MM=" +
+      meta.reference_time.substring(start=4, end=6),
+    )
   }
   lines
 }
@@ -391,7 +397,11 @@ pub fn wgrib2_RT_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
   for meta in records {
-    lines.push(format_prefix(meta) + "RT=" + rt_label(meta.section1_significance_of_ref_time))
+    lines.push(
+      format_prefix(meta) +
+      "RT=" +
+      rt_label(meta.section1_significance_of_ref_time),
+    )
   }
   lines
 }
@@ -1077,11 +1087,7 @@ pub fn wgrib2_flag_table_3_4_lines(context : Grib2FileContext) -> Array[String] 
     let mode = meta.section3_scanning_mode
     let label = scanning_mode_label(mode)
     lines.push(
-      format_prefix(meta) +
-      "flag table 3.4=" +
-      mode.to_string() +
-      " " +
-      label,
+      format_prefix(meta) + "flag table 3.4=" + mode.to_string() + " " + label,
     )
   }
   lines
@@ -1126,10 +1132,7 @@ pub fn wgrib2_full_name_lines(context : Grib2FileContext) -> Array[String] {
   for meta in records {
     let level = level_for_full_name(meta.level_name.display())
     lines.push(
-      format_prefix(meta) +
-      meta.parameter_name.display() +
-      "." +
-      level,
+      format_prefix(meta) + meta.parameter_name.display() + "." + level,
     )
   }
   lines
@@ -1179,7 +1182,8 @@ pub fn wgrib2_cyclic_lines(context : Grib2FileContext) -> Array[String] {
     // For lat-lon grid, check if (lon2 - lon1) + di >= 360
     let is_cyclic = if meta.section3_template.id() == 0 &&
       meta.section3_di_microdeg > 0 {
-      let lon_span = if meta.section3_lon2_microdeg >= meta.section3_lon1_microdeg {
+      let lon_span = if meta.section3_lon2_microdeg >=
+        meta.section3_lon1_microdeg {
         meta.section3_lon2_microdeg - meta.section3_lon1_microdeg
       } else {
         meta.section3_lon2_microdeg + 360000000 - meta.section3_lon1_microdeg
@@ -1474,7 +1478,7 @@ fn pow2(exp : Int) -> Double {
     result
   } else {
     let mut result = 1.0
-    for _ in 0..<(-exp) {
+    for _ in 0..<-exp {
       result /= 2.0
     }
     result
@@ -1538,7 +1542,7 @@ fn pow10_double(exp : Int) -> Double {
       result *= 10.0
     }
   } else {
-    for _ in 0..<(-exp) {
+    for _ in 0..<-exp {
       result /= 10.0
     }
   }
@@ -1570,7 +1574,8 @@ pub fn wgrib2_radius_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   for meta in records {
     let shape = meta.section3_shape_of_earth
-    let (radius_maj, radius_min, is_spherical) : (Double, Double, Int) = match shape {
+    let (radius_maj, radius_min, is_spherical) : (Double, Double, Int) = match
+      shape {
       0 => (6367470.0, 6367470.0, 1) // Spherical r=6367470m
       1 => {
         // Spherical with specified radius
@@ -1584,13 +1589,15 @@ pub fn wgrib2_radius_lines(context : Grib2FileContext) -> Array[String] {
       3 => {
         // Oblate spheroid with specified values (scaled in km)
         let a = apply_scale_factor(
-          meta.section3_scaled_value_major,
-          meta.section3_scale_factor_major,
-        ) * 1000.0
+            meta.section3_scaled_value_major,
+            meta.section3_scale_factor_major,
+          ) *
+          1000.0
         let b = apply_scale_factor(
-          meta.section3_scaled_value_minor,
-          meta.section3_scale_factor_minor,
-        ) * 1000.0
+            meta.section3_scaled_value_minor,
+            meta.section3_scale_factor_minor,
+          ) *
+          1000.0
         (a, b, 0)
       }
       4 => (6378137.0, 6356752.314, 0) // IAG-GRS80
@@ -1703,13 +1710,15 @@ pub fn wgrib2_grid_id_lines(context : Grib2FileContext) -> Array[String] {
       2 => (6378160.0, 6356775.0)
       3 => {
         let a = apply_scale_factor(
-          meta.section3_scaled_value_major,
-          meta.section3_scale_factor_major,
-        ) * 1000.0
+            meta.section3_scaled_value_major,
+            meta.section3_scale_factor_major,
+          ) *
+          1000.0
         let b = apply_scale_factor(
-          meta.section3_scaled_value_minor,
-          meta.section3_scale_factor_minor,
-        ) * 1000.0
+            meta.section3_scaled_value_minor,
+            meta.section3_scale_factor_minor,
+          ) *
+          1000.0
         (a, b)
       }
       4 => (6378137.0, 6356752.314)
@@ -1801,7 +1810,9 @@ pub fn wgrib2_flag_table_3_9_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
-pub fn wgrib2_flag_table_3_10_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_flag_table_3_10_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // flag_table_3.10 - scanning mode for one diamond (for HEALPix grids)
   // Only applicable to certain grid templates; outputs empty for lat/lon grids
   let records = decode_records(context)
@@ -1868,21 +1879,37 @@ pub fn wgrib2_match_inv_lines(context : Grib2FileContext) -> Array[String] {
     let vt_short = meta.reference_time
     // Field order matches wgrib2: d= early, D= after pdt=
     let line = format_prefix(meta) +
-      "d=" + meta.reference_time +
-      ":" + meta.parameter_name.display() +
-      ":" + meta.level_name.display() +
-      ":" + ftime_label +
-      "::" + meta.parameter_name.display() +
-      ":n=" + meta.record_id +
-      ":npts=" + meta.section3_npts.to_string() +
-      ":" + format_varX(meta) +
-      ":pdt=" + meta.section4_template.id().to_string() +
-      ":D=" + meta.reference_time_full +
-      ":start_FT=" + start_ft +
-      ":end_FT=" + end_ft +
-      ":" + format_scaling(meta) +
-      ":" + ftime_label +
-      ":vt=" + vt_short + ":"
+      "d=" +
+      meta.reference_time +
+      ":" +
+      meta.parameter_name.display() +
+      ":" +
+      meta.level_name.display() +
+      ":" +
+      ftime_label +
+      "::" +
+      meta.parameter_name.display() +
+      ":n=" +
+      meta.record_id +
+      ":npts=" +
+      meta.section3_npts.to_string() +
+      ":" +
+      format_varX(meta) +
+      ":pdt=" +
+      meta.section4_template.id().to_string() +
+      ":D=" +
+      meta.reference_time_full +
+      ":start_FT=" +
+      start_ft +
+      ":end_FT=" +
+      end_ft +
+      ":" +
+      format_scaling(meta) +
+      ":" +
+      ftime_label +
+      ":vt=" +
+      vt_short +
+      ":"
     lines.push(line)
   }
   lines
@@ -1894,11 +1921,13 @@ fn earth_shape_description(shape : Int) -> String {
     0 => "Earth assumed spherical with radius = 6367470.0 m"
     1 => "Earth assumed spherical with radius specified by data producer"
     2 => "Earth assumed oblate spheroid with size as determined by IAU in 1965"
-    3 => "Earth assumed oblate spheroid with major and minor axes specified by data producer"
+    3 =>
+      "Earth assumed oblate spheroid with major and minor axes specified by data producer"
     4 => "Earth assumed oblate spheroid as defined in IAG-GRS80 model"
     5 => "Earth assumed represented by WGS84"
     6 => "Earth assumed spherical with radius of 6371229.0 m"
-    7 => "Earth assumed oblate spheroid with major and minor axes specified by data producer in m"
+    7 =>
+      "Earth assumed oblate spheroid with major and minor axes specified by data producer in m"
     8 => "Earth model assumed spherical with radius 6371200 m"
     9 => "Earth represented by the OSGB 1936 Datum"
     _ => ""
@@ -1915,11 +1944,7 @@ pub fn wgrib2_code_table_3_2_lines(context : Grib2FileContext) -> Array[String] 
     let desc = earth_shape_description(shape)
     if desc.length() > 0 {
       lines.push(
-        format_prefix(meta) +
-        "code table 3.2=" +
-        shape.to_string() +
-        " " +
-        desc,
+        format_prefix(meta) + "code table 3.2=" + shape.to_string() + " " + desc,
       )
     } else {
       lines.push(format_prefix(meta) + "code table 3.2=" + shape.to_string())
@@ -1929,7 +1954,9 @@ pub fn wgrib2_code_table_3_2_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
-pub fn wgrib2_code_table_4_5a_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_5a_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.5a: First fixed surface type
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -1944,7 +1971,9 @@ pub fn wgrib2_code_table_4_5a_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_4_5b_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_5b_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.5b: Second fixed surface type
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2003,7 +2032,9 @@ pub fn wgrib2_code_table_4_9_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
-pub fn wgrib2_code_table_4_10_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_10_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.10: Statistical processing (only for time range templates)
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2014,7 +2045,9 @@ pub fn wgrib2_code_table_4_10_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_4_11_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_11_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.11: Type of time intervals (only for time range templates)
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2035,7 +2068,9 @@ fn code_table_3_11_description(value : Int) -> String {
 }
 
 ///|
-pub fn wgrib2_code_table_3_11_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_3_11_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_3.11: Interpretation of list of numbers defining number of points
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2081,11 +2116,7 @@ pub fn wgrib2_code_table_5_1_lines(context : Grib2FileContext) -> Array[String] 
     let desc = code_table_5_1_description(value)
     if desc.length() > 0 {
       lines.push(
-        format_prefix(meta) +
-        "code table 5.1=" +
-        value.to_string() +
-        " " +
-        desc,
+        format_prefix(meta) + "code table 5.1=" + value.to_string() + " " + desc,
       )
     } else {
       lines.push(format_prefix(meta) + "code table 5.1=" + value.to_string())
@@ -2128,7 +2159,9 @@ pub fn wgrib2_code_table_3_8_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
-pub fn wgrib2_code_table_3_15_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_3_15_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_3.15: Physical meaning of vertical coordinate
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2139,7 +2172,9 @@ pub fn wgrib2_code_table_3_15_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_3_20_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_3_20_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_3.20: Type of horizontal line
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2150,7 +2185,9 @@ pub fn wgrib2_code_table_3_20_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_3_21_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_3_21_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_3.21: Vertical dimension coordinate values definition
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2183,7 +2220,9 @@ pub fn wgrib2_code_table_4_8_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
-pub fn wgrib2_code_table_4_11s_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_11s_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.11s: Type of time intervals (all occurrences)
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2194,7 +2233,9 @@ pub fn wgrib2_code_table_4_11s_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_15_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_15_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.15: Type of areal statistical processing
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2205,7 +2246,9 @@ pub fn wgrib2_code_table_4_15_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_4_16_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_16_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.16: Quality control value
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2216,7 +2259,9 @@ pub fn wgrib2_code_table_4_16_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_4_91_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_91_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.91: Type of interval (first)
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2227,7 +2272,9 @@ pub fn wgrib2_code_table_4_91_lines(context : Grib2FileContext) -> Array[String]
 }
 
 ///|
-pub fn wgrib2_code_table_4_91b_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_91b_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.91b: Type of interval (second copy)
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2238,7 +2285,9 @@ pub fn wgrib2_code_table_4_91b_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_230_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_230_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.230: Chemical constituent type
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2249,7 +2298,9 @@ pub fn wgrib2_code_table_4_230_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_233_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_233_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.233: Aerosol type
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2260,7 +2311,9 @@ pub fn wgrib2_code_table_4_233_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_235_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_235_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.235: Wind-generated wave spectral description
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2271,7 +2324,9 @@ pub fn wgrib2_code_table_4_235_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_240_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_240_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.240: Type of distribution function
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2282,7 +2337,9 @@ pub fn wgrib2_code_table_4_240_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_241_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_241_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.241: Coverage attributes
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2293,7 +2350,9 @@ pub fn wgrib2_code_table_4_241_lines(context : Grib2FileContext) -> Array[String
 }
 
 ///|
-pub fn wgrib2_code_table_4_242_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_code_table_4_242_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -code_table_4.242: Tile classification
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2592,7 +2651,9 @@ pub fn wgrib2_percent_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
-pub fn wgrib2_post_processing_lines(context : Grib2FileContext) -> Array[String] {
+pub fn wgrib2_post_processing_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
   // -post_processing: Type of post-processing
   let records = decode_records(context)
   let lines : Array[String] = []
@@ -2789,7 +2850,9 @@ pub fn wgrib2_grib_max_bits_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   for meta in records {
     lines.push(
-      format_prefix(meta) + "grib_max_bits=" + meta.section5_bits_per_value.to_string(),
+      format_prefix(meta) +
+      "grib_max_bits=" +
+      meta.section5_bits_per_value.to_string(),
     )
   }
   lines
@@ -2957,7 +3020,10 @@ pub fn wgrib2_0xSec0_lines(context : Grib2FileContext) -> Array[String] {
     for _ in message.submessages {
       let sec0 = get_section0_bytes(message)
       let hex = bytes_to_hex(sec0)
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       lines.push(prefix + "Sec0(1..16)=" + hex)
       record_index += 1
     }
@@ -2975,7 +3041,10 @@ pub fn wgrib2_0xSec1_lines(context : Grib2FileContext) -> Array[String] {
     let hex = bytes_to_hex(sec1)
     let len = sec1.length()
     for _ in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       lines.push(prefix + "Sec1(1.." + len.to_string() + ")=" + hex)
       record_index += 1
     }
@@ -2990,7 +3059,10 @@ pub fn wgrib2_0xSec3_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 3) {
         Some(sec) => {
           let hex = bytes_to_hex(sec)
@@ -3012,7 +3084,10 @@ pub fn wgrib2_0xSec4_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 4) {
         Some(sec) => {
           let hex = bytes_to_hex(sec)
@@ -3034,7 +3109,10 @@ pub fn wgrib2_0xSec5_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 5) {
         Some(sec) => {
           let hex = bytes_to_hex(sec)
@@ -3056,7 +3134,10 @@ pub fn wgrib2_0xSec6_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 6) {
         Some(sec) => {
           let hex = bytes_to_hex(sec)
@@ -3078,7 +3159,10 @@ pub fn wgrib2_0xSec7_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 7) {
         Some(sec) => {
           let hex = bytes_to_hex(sec)
@@ -3102,7 +3186,10 @@ pub fn wgrib2_checksum0_lines(context : Grib2FileContext) -> Array[String] {
     let sec0 = get_section0_bytes(message)
     let crc = compute_posix_cksum(sec0)
     for _ in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       lines.push(prefix + "sec0_cksum=" + crc.to_string())
       record_index += 1
     }
@@ -3119,7 +3206,10 @@ pub fn wgrib2_checksum1_lines(context : Grib2FileContext) -> Array[String] {
     let sec1 = get_section1_bytes(message)
     let crc = compute_posix_cksum(sec1)
     for _ in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       lines.push(prefix + "sec1_cksum=" + crc.to_string())
       record_index += 1
     }
@@ -3134,7 +3224,10 @@ pub fn wgrib2_checksum3_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 3) {
         Some(sec) => {
           let crc = compute_posix_cksum(sec)
@@ -3155,7 +3248,10 @@ pub fn wgrib2_checksum4_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 4) {
         Some(sec) => {
           let crc = compute_posix_cksum(sec)
@@ -3176,7 +3272,10 @@ pub fn wgrib2_checksum5_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 5) {
         Some(sec) => {
           let crc = compute_posix_cksum(sec)
@@ -3197,7 +3296,10 @@ pub fn wgrib2_checksum6_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 6) {
         Some(sec) => {
           let crc = compute_posix_cksum(sec)
@@ -3218,7 +3320,10 @@ pub fn wgrib2_checksum7_lines(context : Grib2FileContext) -> Array[String] {
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
-      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
       match get_section_bytes(message, submessage, 7) {
         Some(sec) => {
           let crc = compute_posix_cksum(sec)
@@ -3870,7 +3975,9 @@ fn format_scientific(v : Double) -> String {
   let multiplier = 100000.0
   let rounded = round_to_nearest(mantissa * multiplier) / multiplier
   let int_part = rounded.to_int()
-  let frac_part = round_to_nearest((rounded - int_part.to_double()) * multiplier).to_int()
+  let frac_part = round_to_nearest(
+    (rounded - int_part.to_double()) * multiplier,
+  ).to_int()
   let mut frac_str = frac_part.to_string()
   while frac_str.length() < 5 {
     frac_str = "0" + frac_str
@@ -3881,7 +3988,11 @@ fn format_scientific(v : Double) -> String {
   }
   let exp_sign = if exp >= 0 { "+" } else { "-" }
   let exp_abs = if exp < 0 { -exp } else { exp }
-  let exp_str = if exp_abs < 10 { "0" + exp_abs.to_string() } else { exp_abs.to_string() }
+  let exp_str = if exp_abs < 10 {
+    "0" + exp_abs.to_string()
+  } else {
+    exp_abs.to_string()
+  }
   sign + int_part.to_string() + "." + frac_str + "e" + exp_sign + exp_str
 }
 
@@ -3903,17 +4014,18 @@ pub fn wgrib2_ij_lines(
       let meta = records[meta_idx]
       let prefix = format_prefix(meta)
       match unpack_submessage_data(message, submessage) {
-        Ok(data) => {
+        Ok(data) =>
           match grid_ij_to_index(meta, i, j) {
             Some(idx) =>
               if idx >= 0 && idx < data.values.length() {
-                lines.push(prefix + "val=" + format_grid_value(data.values[idx]))
+                lines.push(
+                  prefix + "val=" + format_grid_value(data.values[idx]),
+                )
               } else {
                 lines.push(prefix + "val=out_of_range")
               }
             None => lines.push(prefix + "val=invalid_ij")
           }
-        }
         Err(_) => lines.push(prefix + "val=error")
       }
       meta_idx += 1
@@ -3987,7 +4099,10 @@ fn format_coord(v : Double) -> String {
 }
 
 ///|
-pub fn wgrib2_ilat_lines(context : Grib2FileContext, idx : Int) -> Array[String] {
+pub fn wgrib2_ilat_lines(
+  context : Grib2FileContext,
+  idx : Int,
+) -> Array[String] {
   // -ilat X: lat,lon and grid value at Xth grid point (1-based, output coordinates)
   let lines : Array[String] = []
   let records = decode_records(context)
@@ -4006,7 +4121,12 @@ pub fn wgrib2_ilat_lines(context : Grib2FileContext, idx : Int) -> Array[String]
         let j = out_idx / ni + 1
         let i = out_idx % ni + 1
         // Get data index using grid_ij_to_index (handles coordinate conversion)
-        match (grid_ij_to_latlon(meta, i, j), grid_ij_to_index(meta, i, j), unpack_submessage_data(message, submessage)) {
+        match
+          (
+            grid_ij_to_latlon(meta, i, j),
+            grid_ij_to_index(meta, i, j),
+            unpack_submessage_data(message, submessage),
+          ) {
           (Some((lon, lat)), Some(data_idx), Ok(data)) =>
             if data_idx >= 0 && data_idx < data.values.length() {
               let val_str = format_grid_value(data.values[data_idx])
@@ -4054,7 +4174,11 @@ pub fn wgrib2_lon_lines(
       let prefix = format_prefix(meta)
       match latlon_to_grid_ij(meta, lon, lat) {
         Some((i, j)) =>
-          match (grid_ij_to_index(meta, i, j), unpack_submessage_data(message, submessage)) {
+          match
+            (
+              grid_ij_to_index(meta, i, j),
+              unpack_submessage_data(message, submessage),
+            ) {
             (Some(idx), Ok(data)) =>
               if idx >= 0 && idx < data.values.length() {
                 let val_str = format_grid_value(data.values[idx])
