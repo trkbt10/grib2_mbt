@@ -169,6 +169,8 @@ pub(all) enum Grib2InventoryMode {
   InventoryMin
   InventoryMax
   InventoryStats
+  // Grid information
+  InventoryNlons
 } derive(Show)
 
 ///|
@@ -351,6 +353,8 @@ pub fn render_inventory_lines(
     InventoryMin => wgrib2_min_lines(context)
     InventoryMax => wgrib2_max_lines(context)
     InventoryStats => wgrib2_stats_lines(context)
+    // Grid information
+    InventoryNlons => wgrib2_nlons_lines(context)
   }
 }
 
