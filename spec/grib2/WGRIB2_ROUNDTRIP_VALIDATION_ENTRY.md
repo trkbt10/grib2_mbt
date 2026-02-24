@@ -100,15 +100,23 @@ test "single file roundtrip: gfswave small" {
 | `-code_table_1.0` | [x] | [x] |
 | `-code_table_1.1` | [x] | [x] |
 | `-code_table_1.2` | [x] | [x] |
+| `-code_table_1.3` | [x] | [x] |
+| `-code_table_1.4` | [x] | [x] |
+| `-code_table_3.0` | [x] | [x] |
 | `-code_table_3.1` | [x] | [x] |
+| `-code_table_4.0` | [x] | [x] |
+| `-code_table_4.1` | [x] | [x] |
+| `-code_table_4.2` | [x] | [x] |
 | `-code_table_4.3` | [x] | [x] |
+| `-code_table_4.4` | [x] | [x] |
 | `-code_table_5.0` | [x] | [x] |
+| `-code_table_6.0` | [x] | [x] |
 
 ---
 
-## 未実装オプション (121個)
+## 未実装オプション (113個)
 
-wgrib2 inv カテゴリ 166個のうち、45個が実装済み。残り121個の内訳:
+wgrib2 inv カテゴリ 166個のうち、53個が実装済み。残り113個の内訳:
 
 ### 優先度 高 - 時刻系 (残り1個)
 
@@ -132,17 +140,18 @@ wgrib2 inv カテゴリ 166個のうち、45個が実装済み。残り121個の
 | `-verf` | inventory using verification time | [x] |
 | `-Match_inv` | match inventory with D=YYYYMMDDHHmmss | [ ] |
 
-### 優先度 中 - code_table系 (49個のうち7個実装済み)
+### 優先度 中 - code_table系 (49個のうち15個実装済み)
 
 コードテーブル値の詳細表示。IMPLEMENTATION_CHECKLIST.md の Code Tables 実装と連動。
 
 | カテゴリ | 数 | 実装済み | 例 |
 |----------|----|----|-------|
 | Section 0 | 1 | 1 | `-code_table_0.0` ✓ |
-| Section 1 | 7 | 3 | `-code_table_1.0` ✓, `-code_table_1.1` ✓, `-code_table_1.2` ✓ |
-| Section 3 | 10 | 1 | `-code_table_3.1` ✓ |
-| Section 4 | 25 | 1 | `-code_table_4.3` ✓ |
+| Section 1 | 7 | 5 | `-code_table_1.0~1.4` ✓ |
+| Section 3 | 10 | 2 | `-code_table_3.0` ✓, `-code_table_3.1` ✓ |
+| Section 4 | 25 | 5 | `-code_table_4.0~4.4` ✓ |
 | Section 5 | 6 | 1 | `-code_table_5.0` ✓ |
+| Section 6 | - | 1 | `-code_table_6.0` ✓ |
 
 ### 優先度 中 - flag_table系 (5個)
 
