@@ -171,6 +171,13 @@ pub(all) enum Grib2InventoryMode {
   InventoryStats
   // Grid information
   InventoryNlons
+  // Position/location options
+  InventoryIJ(Int, Int) // i, j
+  InventoryIJLat(Int, Int)
+  InventoryILat(Int) // linear index
+  InventoryLon(Double, Double) // lon, lat
+  InventoryLL2IJ(Double, Double)
+  InventoryLL2I(Double, Double)
 } derive(Show)
 
 ///|
@@ -355,6 +362,13 @@ pub fn render_inventory_lines(
     InventoryStats => wgrib2_stats_lines(context)
     // Grid information
     InventoryNlons => wgrib2_nlons_lines(context)
+    // Position/location options
+    InventoryIJ(i, j) => wgrib2_ij_lines(context, i, j)
+    InventoryIJLat(i, j) => wgrib2_ijlat_lines(context, i, j)
+    InventoryILat(idx) => wgrib2_ilat_lines(context, idx)
+    InventoryLon(lon, lat) => wgrib2_lon_lines(context, lon, lat)
+    InventoryLL2IJ(lon, lat) => wgrib2_ll2ij_lines(context, lon, lat)
+    InventoryLL2I(lon, lat) => wgrib2_ll2i_lines(context, lon, lat)
   }
 }
 
