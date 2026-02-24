@@ -30,6 +30,13 @@ const REQUIRED_EXPORTS = [
   'getGridData',
 ];
 
+// These APIs were removed due to performance and maintenance concerns.
+// Keep this list to prevent accidental reintroduction.
+const FORBIDDEN_EXPORTS = [
+  'decodeRecordGridJson',
+  'decodeRecordGridBase64',
+];
+
 async function runSmokeTest() {
   console.log('WASM Smoke Test');
   console.log('================');
@@ -91,6 +98,20 @@ async function runSmokeTest() {
 
   console.log('');
 
+  const forbiddenFound = [];
+  for (const name of FORBIDDEN_EXPORTS) {
+    if (exportMap.has(name)) {
+      forbiddenFound.push(name);
+      allPassed = false;
+      console.log(`  [FAIL] forbidden export found: ${name}`);
+    }
+  }
+
+  if (forbiddenFound.length === 0) {
+    console.log(`Forbidden export check: OK (${FORBIDDEN_EXPORTS.length} checked)`);
+  }
+  console.log('');
+
   // List any extra function exports
   const extraExports = moduleExports.filter(
     e => !REQUIRED_EXPORTS.includes(e.name) && e.kind === 'function'
@@ -113,7 +134,13 @@ async function runSmokeTest() {
     process.exit(0);
   } else {
     console.error('');
-    console.error(`Missing exports: ${missing.join(', ')}`);
+    if (missing.length > 0) {
+      console.error(`Missing exports: ${missing.join(', ')}`);
+    }
+    const forbiddenPresent = FORBIDDEN_EXPORTS.filter(name => exportMap.has(name));
+    if (forbiddenPresent.length > 0) {
+      console.error(`Forbidden exports present: ${forbiddenPresent.join(', ')}`);
+    }
     console.error('');
     console.error('Smoke test FAILED');
     console.error('');
