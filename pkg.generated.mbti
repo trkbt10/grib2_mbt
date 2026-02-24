@@ -290,17 +290,29 @@ pub fn unpack_submessage_data(Grib2MessageContext, Grib2SubmessageFrame) -> Resu
 
 pub fn validate_context_invariants(Grib2FileContext) -> Result[Unit, Grib2WriteError]
 
-pub fn wasm_decode_record_grid_json(Int, Int) -> String
+pub fn wasm_get_grid_data(Int, Int) -> String
 
-pub fn wasm_decode_records_json(Int) -> String
+pub fn wasm_get_latitudes(Int, Int) -> String
+
+pub fn wasm_get_longitudes(Int, Int) -> String
 
 pub fn wasm_get_message_count(Int) -> Int
 
 pub fn wasm_get_record_count(Int) -> Int
 
+pub fn wasm_get_section1(Int, Int) -> String
+
+pub fn wasm_get_section3(Int, Int) -> String
+
+pub fn wasm_get_section4(Int, Int) -> String
+
+pub fn wasm_get_section5(Int, Int) -> String
+
+pub fn wasm_get_section6(Int, Int) -> String
+
 pub fn wasm_parse_grib2(Bytes) -> Int
 
-pub fn wasm_render_inventory(Int, Int) -> String
+pub fn wasm_parse_grib2_string(String) -> Int
 
 pub fn wgrib2_bitmap_lines(Grib2FileContext) -> Array[String]
 

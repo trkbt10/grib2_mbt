@@ -55,12 +55,7 @@ fn process_label(value : Int) -> String {
     20 => "analysis increment"
     21 => "initialization increment for analysis"
     255 => "missing"
-    _ =>
-      if value >= 192 && value <= 254 {
-        "undefined"
-      } else {
-        ""
-      }
+    _ => if value >= 192 && value <= 254 { "undefined" } else { "" }
   }
 }
 
@@ -138,12 +133,7 @@ fn ens_label(meta : Grib2RecordMeta) -> String {
       7 => "25%-75% range"
       8 => "min all members"
       9 => "max all members"
-      _ =>
-        if meta.section4_ens_type >= 0 {
-          "unknown derived fcst"
-        } else {
-          ""
-        }
+      _ => if meta.section4_ens_type >= 0 { "unknown derived fcst" } else { "" }
     }
   } else {
     ""
@@ -166,7 +156,7 @@ fn prob_scale_divisor(scale_factor : Int) -> Int {
 fn prob_scaled_value(scale_factor : Int, raw_value : Int) -> String {
   if scale_factor <= 0 {
     let mut multiplier = 1
-    for _ in 0..<(-scale_factor) {
+    for _ in 0..<-scale_factor {
       multiplier *= 10
     }
     return (raw_value * multiplier).to_string()
@@ -514,7 +504,9 @@ pub fn wgrib2_pdt_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
   for meta in records {
-    lines.push(format_prefix(meta) + "pdt=" + meta.section4_template.id().to_string())
+    lines.push(
+      format_prefix(meta) + "pdt=" + meta.section4_template.id().to_string(),
+    )
   }
   lines
 }
@@ -588,7 +580,9 @@ pub fn wgrib2_center_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
   for meta in records {
-    lines.push(format_prefix(meta) + "center=" + meta.section1_center.to_string())
+    lines.push(
+      format_prefix(meta) + "center=" + meta.section1_center.to_string(),
+    )
   }
   lines
 }
@@ -638,7 +632,11 @@ pub fn wgrib2_nxny_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   for meta in records {
     let text = if meta.section3_ni >= 0 && meta.section3_nj >= 0 {
-      "(" + meta.section3_ni.to_string() + " x " + meta.section3_nj.to_string() + ")"
+      "(" +
+      meta.section3_ni.to_string() +
+      " x " +
+      meta.section3_nj.to_string() +
+      ")"
     } else {
       ""
     }
