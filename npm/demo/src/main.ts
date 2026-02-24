@@ -2,7 +2,7 @@
  * GRIB2 WASM Demo - Main Application
  */
 
-import type { LoadedFile, TimeSeriesFrame, GridData } from './types';
+import type { LoadedFile, TimeSeriesFrame } from './types';
 import { initBrowser, openGrib2 } from './grib2';
 import { renderGrid, drawColorScale, calculateStats } from './canvas-renderer';
 import { TimeSeriesManager, applyTemporalMovingAverage, getParameterName } from './time-series';
@@ -135,7 +135,7 @@ function updateParameterSelect(): void {
 
 function updateLevelSelect(): void {
   const param = paramSelect.value;
-  const levels = timeSeriesManager.getPressureLevels(param);
+  const levels = timeSeriesManager.getPressureLevelOptions(param);
 
   levelSelect.innerHTML = '';
 
@@ -147,17 +147,17 @@ function updateLevelSelect(): void {
 
   for (const level of levels) {
     const option = document.createElement('option');
-    option.value = String(level);
-    option.textContent = `${level} mb`;
+    option.value = level.key;
+    option.textContent = level.label;
     levelSelect.appendChild(option);
   }
 
   levelSelect.disabled = false;
 
   // Auto-select 500 hPa if available
-  const level500 = levels.find(l => l === 500);
+  const level500 = levels.find(l => Math.abs(l.hpa - 500) <= 1e-9);
   if (level500) {
-    levelSelect.value = '500';
+    levelSelect.value = level500.key;
   }
 
   updateTimeSeries();
@@ -165,15 +165,15 @@ function updateLevelSelect(): void {
 
 function updateTimeSeries(): void {
   const param = paramSelect.value;
-  const level = parseInt(levelSelect.value, 10);
+  const levelKey = levelSelect.value;
 
-  if (!param || isNaN(level)) {
+  if (!param || !levelKey) {
     currentFrames = [];
     enableTimelineControls(false);
     return;
   }
 
-  currentFrames = timeSeriesManager.buildTimeSeries(param, level);
+  currentFrames = timeSeriesManager.buildTimeSeriesByLevelKey(param, levelKey);
 
   if (currentFrames.length === 0) {
     enableTimelineControls(false);
