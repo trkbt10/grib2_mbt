@@ -9,3 +9,11 @@ target
 spec/grib2/_upstream/
 spec/grib2/markdown/
 spec/grib2/IMPLEMENTATION_CHECKLIST.md
+
+# Build artifacts
+npm/grib2.wasm
+
+# Debug scripts
+scripts/debug-*.mjs
+scripts/test-*.mjs
+scripts/verify-*.mjs
