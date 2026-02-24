@@ -144,6 +144,8 @@ fn print_usage() -> Unit {
   println("  -V  print diagnostic output")
   println("  -crlf  use CRLF line endings")
   println("  -inv  print standard inventory")
+  println("  -0xSec N  hex dump of section N (0,1,3,4,5,6,7)")
+  println("  -checksum N  CRC checksum of section N (0,1,3,4,5,6,7)")
 }
 
 ///|
@@ -590,6 +592,50 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-inv" {
     return Some(InventoryInv)
   }
+  // Hex dump options
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "0" {
+    return Some(Inventory0xSec0)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "1" {
+    return Some(Inventory0xSec1)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "3" {
+    return Some(Inventory0xSec3)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "4" {
+    return Some(Inventory0xSec4)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "5" {
+    return Some(Inventory0xSec5)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "6" {
+    return Some(Inventory0xSec6)
+  }
+  if args.length() == 2 && args[0] == "-0xSec" && args[1] == "7" {
+    return Some(Inventory0xSec7)
+  }
+  // Checksum options
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "0" {
+    return Some(InventoryChecksum0)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "1" {
+    return Some(InventoryChecksum1)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "3" {
+    return Some(InventoryChecksum3)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "4" {
+    return Some(InventoryChecksum4)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "5" {
+    return Some(InventoryChecksum5)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "6" {
+    return Some(InventoryChecksum6)
+  }
+  if args.length() == 2 && args[0] == "-checksum" && args[1] == "7" {
+    return Some(InventoryChecksum7)
+  }
   None
 }
 
@@ -599,7 +645,7 @@ fn run_cli(args : Array[String]) -> Int {
     print_usage()
     return 1
   }
-  if args.length() > 4 {
+  if args.length() > 5 {
     println("error: too many arguments")
     print_usage()
     return 1
