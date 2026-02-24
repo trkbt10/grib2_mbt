@@ -37,6 +37,18 @@ const FORBIDDEN_EXPORTS = [
   'decodeRecordGridBase64',
 ];
 
+const REQUIRE_RUNTIME = process.env.WASM_SMOKE_REQUIRE_RUNTIME === '1';
+
+function isRuntimeCapabilityError(err) {
+  const message = err && typeof err.message === 'string' ? err.message : String(err);
+  return (
+    message.includes('module="_"') ||
+    message.includes('module="wasm:js-string"') ||
+    message.includes('builtins') ||
+    message.includes('importedStringConstants')
+  );
+}
+
 async function runSmokeTest() {
   console.log('WASM Smoke Test');
   console.log('================');
@@ -128,7 +140,47 @@ async function runSmokeTest() {
   }
 
   if (allPassed) {
+    let runtimeChecked = false;
+    let runtimeSkipped = false;
+
+    console.log('Runtime smoke (optional):');
+    try {
+      const runtimeResult = await WebAssembly.instantiate(
+        wasmBuffer,
+        {},
+        {
+          builtins: ['js-string'],
+          importedStringConstants: '_',
+        }
+      );
+      const runtimeExports = runtimeResult.instance.exports;
+      if (typeof runtimeExports.parseGrib2 !== 'function') {
+        throw new Error('parseGrib2 is not callable at runtime');
+      }
+      runtimeChecked = true;
+      console.log('  [OK] instantiated and parseGrib2 is callable');
+    } catch (err) {
+      if (isRuntimeCapabilityError(err)) {
+        runtimeSkipped = true;
+        console.log(`  [SKIP] runtime instantiation unsupported in this Node runtime: ${err.message}`);
+      } else {
+        console.error(`  [FAIL] runtime instantiation failed: ${err.message}`);
+        process.exit(1);
+      }
+    }
+    console.log('');
+
+    if (REQUIRE_RUNTIME && runtimeSkipped) {
+      console.error('Runtime smoke required but skipped. Set up a runtime with wasm js-string builtins support.');
+      process.exit(1);
+    }
+
     console.log(`All ${REQUIRED_EXPORTS.length} required exports found!`);
+    if (runtimeChecked) {
+      console.log('Runtime smoke PASSED');
+    } else {
+      console.log('Runtime smoke SKIPPED');
+    }
     console.log('');
     console.log('Smoke test PASSED');
     process.exit(0);
