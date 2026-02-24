@@ -85,6 +85,7 @@ pub(all) struct Grib2RecordMeta {
   message_offset : Int
   message_total_length : Int
   reference_time : String
+  reference_time_full : String
   discipline : Int
   edition : Int
   section1_center : Int
@@ -281,6 +282,32 @@ fn format_ref_time_yyyymmddhh(message : Grib2MessageContext) -> String {
       let day = section1[15].to_uint().reinterpret_as_int()
       let hour = section1[16].to_uint().reinterpret_as_int()
       pad4(year) + pad2(month) + pad2(day) + pad2(hour)
+    }
+  }
+}
+
+///|
+fn format_ref_time_yyyymmddhhmmss(message : Grib2MessageContext) -> String {
+  match decode_message_section1(message) {
+    Ok(section1) =>
+      pad4(section1.reference_year) +
+      pad2(section1.reference_month) +
+      pad2(section1.reference_day) +
+      pad2(section1.reference_hour) +
+      pad2(section1.reference_minute) +
+      pad2(section1.reference_second)
+    Err(_) => {
+      let section1 = section_slice(message, message.section1)
+      if section1.length() < 20 {
+        return "00000000000000"
+      }
+      let year = read_u16_be_from(section1, 12)
+      let month = section1[14].to_uint().reinterpret_as_int()
+      let day = section1[15].to_uint().reinterpret_as_int()
+      let hour = section1[16].to_uint().reinterpret_as_int()
+      let minute = section1[17].to_uint().reinterpret_as_int()
+      let second = section1[18].to_uint().reinterpret_as_int()
+      pad4(year) + pad2(month) + pad2(day) + pad2(hour) + pad2(minute) + pad2(second)
     }
   }
 }
@@ -7433,6 +7460,7 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     let message = context.messages[message_index]
     let submessage_count = message.submessages.length()
     let record_time = format_ref_time_yyyymmddhh(message)
+    let record_time_full = format_ref_time_yyyymmddhhmmss(message)
     let section1 = section_slice(message, message.section1)
     let section1_center = if section1.length() >= 9 {
       read_u16_be_from(section1, 5)
@@ -7724,6 +7752,7 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         message_offset: message.offset,
         message_total_length: message.total_length,
         reference_time: record_time,
+        reference_time_full: record_time_full,
         discipline: message.discipline,
         edition: message.edition,
         section1_center,

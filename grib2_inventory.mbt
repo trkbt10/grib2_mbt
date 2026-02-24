@@ -314,6 +314,49 @@ pub fn wgrib2_vt_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+pub fn wgrib2_T_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "D=" + meta.reference_time_full)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_VT_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // TODO: add forecast_time to reference_time for proper verification time
+    lines.push(format_prefix(meta) + "vt=" + meta.reference_time_full)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_YY_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // reference_time is YYYYMMDDHH, extract first 4 chars
+    lines.push(format_prefix(meta) + "YY=" + meta.reference_time.substring(end=4))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_MM_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // reference_time is YYYYMMDDHH, extract chars 4-6
+    lines.push(format_prefix(meta) + "MM=" + meta.reference_time.substring(start=4, end=6))
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_n_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
