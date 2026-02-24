@@ -95,6 +95,8 @@ pub(all) struct Grib2RecordMeta {
   section1_master_tables_version : Int
   section1_local_tables_version : Int
   section1_significance_of_ref_time : Int
+  section1_production_status : Int
+  section1_data_type : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
   tail : String
@@ -7572,6 +7574,16 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     } else {
       -1
     }
+    let section1_production_status = if section1.length() >= 20 {
+      section1[19].to_uint().reinterpret_as_int()
+    } else {
+      -1
+    }
+    let section1_data_type = if section1.length() >= 21 {
+      section1[20].to_uint().reinterpret_as_int()
+    } else {
+      -1
+    }
     let section0_reserved = "0x" +
       hex_byte(message.raw[4]) +
       hex_byte(message.raw[5])
@@ -7862,6 +7874,8 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section1_master_tables_version,
         section1_local_tables_version,
         section1_significance_of_ref_time,
+        section1_production_status,
+        section1_data_type,
         parameter_name,
         level_name,
         tail: format_tail(time_unit, forecast_time),
