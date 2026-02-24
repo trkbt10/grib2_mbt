@@ -155,6 +155,7 @@ fn print_usage() -> Unit {
   println("  -min    print minimum data value")
   println("  -max    print maximum data value")
   println("  -stats  print data statistics (ndata, undef, mean, min, max)")
+  println("  -nlons  print number of longitudes for each latitude")
 }
 
 ///|
@@ -624,6 +625,9 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-stats" {
     return Some(InventoryStats)
+  }
+  if args.length() == 1 && args[0] == "-nlons" {
+    return Some(InventoryNlons)
   }
   // Hex dump options
   if args.length() == 2 && args[0] == "-0xSec" && args[1] == "0" {

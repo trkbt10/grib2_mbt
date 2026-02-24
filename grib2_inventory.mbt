@@ -3642,3 +3642,26 @@ pub fn wgrib2_stats_lines(context : Grib2FileContext) -> Array[String] {
   }
   lines
 }
+
+///|
+pub fn wgrib2_nlons_lines(context : Grib2FileContext) -> Array[String] {
+  // -nlons: number of longitudes for each latitude (S/N order)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let ni = meta.section3_ni
+    let nj = meta.section3_nj
+    // For regular grids, output ni repeated nj times
+    let nlons_str = if ni > 0 && nj > 0 {
+      let parts : Array[String] = []
+      for _ in 0..<nj {
+        parts.push(ni.to_string())
+      }
+      "nlon (S/N)=" + parts.join(" ")
+    } else {
+      "nlon (S/N)=undefined"
+    }
+    lines.push(format_prefix(meta) + nlons_str)
+  }
+  lines
+}
