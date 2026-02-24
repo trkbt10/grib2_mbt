@@ -145,6 +145,8 @@ pub(all) struct Grib2RecordMeta {
   section4_prob_upper_value : Int
   section4_first_surface_type : Int
   section4_second_surface_type : Int
+  section4_background_process : Int
+  section4_forecast_process : Int
   section5_length : Int
   section5_num_defined_points : Int
   section5_reference_value_ieee : Int
@@ -7758,6 +7760,16 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         -1
       }
+      let section4_background_process = if section4.length() >= 13 {
+        section4[12].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section4_forecast_process = if section4.length() >= 14 {
+        section4[13].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
       let category = if section4.length() >= 11 {
         section4[9].to_uint().reinterpret_as_int()
       } else {
@@ -8015,6 +8027,8 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section4_prob_upper_value,
         section4_first_surface_type: l1t,
         section4_second_surface_type: l2t,
+        section4_background_process,
+        section4_forecast_process,
         section5_length: submessage.section5.length,
         section5_num_defined_points,
         section5_reference_value_ieee,

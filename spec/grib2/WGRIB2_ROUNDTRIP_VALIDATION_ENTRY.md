@@ -164,12 +164,35 @@ test "single file roundtrip: gfswave small" {
 | `-code_table_5.5` | [x] | [x] |
 | `-code_table_5.6` | [x] | [x] |
 | `-code_table_5.7` | [x] | [x] |
+| `-ftime1` | [x] | [x] |
+| `-s2` | [x] | [x] |
+| `-pds_fcst_time` | [x] | [x] |
+| `-type_reftime` | [x] | [x] |
+| `-table` | [x] | [x] |
+| `-vector_dir` | [x] | [x] |
+| `-precision` | [x] | [x] |
+| `-number_of_coordinate_values_after_template` | [x] | [x] |
+| `-N_ens` | [x] | [x] |
+| `-N_clusters` | [x] | [x] |
+| `-aerosol_size` | [x] | [x] |
+| `-aerosol_wavelength` | [x] | [x] |
+| `-cluster` | [x] | [x] |
+| `-cluster_info` | [x] | [x] |
+| `-model_version_date` | [x] | [x] |
+| `-percent` | [x] | [x] |
+| `-post_processing` | [x] | [x] |
+| `-spatial_proc` | [x] | [x] |
+| `-spectral_bands` | [x] | [x] |
+| `-ctl_ens` | [x] | [x] |
+| `-warn_old_g2` | [x] | [x] |
+| `-wave_partition` | [x] | [x] |
+| `-processid` | [x] | [x] |
 
 ---
 
-## 未実装オプション (60個)
+## 未実装オプション (37個)
 
-wgrib2 inv カテゴリ 166個のうち、106個が実装済み。残り60個の内訳:
+wgrib2 inv カテゴリ 166個のうち、129個が実装済み。残り37個の内訳:
 
 ### 優先度 高 - 時刻系 (全15個実装完了)
 

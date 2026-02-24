@@ -109,6 +109,29 @@ fn print_usage() -> Unit {
   println("  -code_table_5.5  print missing value management")
   println("  -code_table_5.6  print spatial differencing")
   println("  -code_table_5.7  print precision in IEEE packing")
+  println("  -ftime1  print forecast time (same as -ftime)")
+  println("  -s2  print simple inventory")
+  println("  -pds_fcst_time  print forecast time in PDS units")
+  println("  -type_reftime  print type of reference time")
+  println("  -table  print parameter table info")
+  println("  -vector_dir  print wind direction type")
+  println("  -precision  print packing precision")
+  println("  -number_of_coordinate_values_after_template  print coordinate values count")
+  println("  -N_ens  print number of ensemble members")
+  println("  -N_clusters  print number of clusters")
+  println("  -aerosol_size  print aerosol size")
+  println("  -aerosol_wavelength  print aerosol wavelength")
+  println("  -cluster  print cluster identifier")
+  println("  -cluster_info  print cluster information")
+  println("  -model_version_date  print model version date")
+  println("  -percent  print percentage probability")
+  println("  -post_processing  print post-processing type")
+  println("  -spatial_proc  print spatial processing")
+  println("  -spectral_bands  print spectral bands")
+  println("  -ctl_ens  print ensemble info for GrADS")
+  println("  -warn_old_g2  print old g2lib warnings")
+  println("  -wave_partition  print wave partition")
+  println("  -processid  print process identifiers")
 }
 
 ///|
@@ -449,6 +472,75 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-code_table_5.7" {
     return Some(InventoryCodeTable57)
+  }
+  if args.length() == 1 && args[0] == "-ftime1" {
+    return Some(InventoryFtime1)
+  }
+  if args.length() == 1 && args[0] == "-s2" {
+    return Some(InventoryS2)
+  }
+  if args.length() == 1 && args[0] == "-pds_fcst_time" {
+    return Some(InventoryPdsFcstTime)
+  }
+  if args.length() == 1 && args[0] == "-type_reftime" {
+    return Some(InventoryTypeReftime)
+  }
+  if args.length() == 1 && args[0] == "-table" {
+    return Some(InventoryTable)
+  }
+  if args.length() == 1 && args[0] == "-vector_dir" {
+    return Some(InventoryVectorDir)
+  }
+  if args.length() == 1 && args[0] == "-precision" {
+    return Some(InventoryPrecision)
+  }
+  if args.length() == 1 && args[0] == "-number_of_coordinate_values_after_template" {
+    return Some(InventoryNumCoordValues)
+  }
+  if args.length() == 1 && args[0] == "-N_ens" {
+    return Some(InventoryNEns)
+  }
+  if args.length() == 1 && args[0] == "-N_clusters" {
+    return Some(InventoryNClusters)
+  }
+  if args.length() == 1 && args[0] == "-aerosol_size" {
+    return Some(InventoryAerosolSize)
+  }
+  if args.length() == 1 && args[0] == "-aerosol_wavelength" {
+    return Some(InventoryAerosolWavelength)
+  }
+  if args.length() == 1 && args[0] == "-cluster" {
+    return Some(InventoryCluster)
+  }
+  if args.length() == 1 && args[0] == "-cluster_info" {
+    return Some(InventoryClusterInfo)
+  }
+  if args.length() == 1 && args[0] == "-model_version_date" {
+    return Some(InventoryModelVersionDate)
+  }
+  if args.length() == 1 && args[0] == "-percent" {
+    return Some(InventoryPercent)
+  }
+  if args.length() == 1 && args[0] == "-post_processing" {
+    return Some(InventoryPostProcessing)
+  }
+  if args.length() == 1 && args[0] == "-spatial_proc" {
+    return Some(InventorySpatialProc)
+  }
+  if args.length() == 1 && args[0] == "-spectral_bands" {
+    return Some(InventorySpectralBands)
+  }
+  if args.length() == 1 && args[0] == "-ctl_ens" {
+    return Some(InventoryCtlEns)
+  }
+  if args.length() == 1 && args[0] == "-warn_old_g2" {
+    return Some(InventoryWarnOldG2)
+  }
+  if args.length() == 1 && args[0] == "-wave_partition" {
+    return Some(InventoryWavePartition)
+  }
+  if args.length() == 1 && args[0] == "-processid" {
+    return Some(InventoryProcessId)
   }
   None
 }

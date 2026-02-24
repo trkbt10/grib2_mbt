@@ -108,6 +108,29 @@ pub(all) enum Grib2InventoryMode {
   InventoryCodeTable55
   InventoryCodeTable56
   InventoryCodeTable57
+  InventoryFtime1
+  InventoryS2
+  InventoryPdsFcstTime
+  InventoryTypeReftime
+  InventoryTable
+  InventoryVectorDir
+  InventoryPrecision
+  InventoryNumCoordValues
+  InventoryNEns
+  InventoryNClusters
+  InventoryAerosolSize
+  InventoryAerosolWavelength
+  InventoryCluster
+  InventoryClusterInfo
+  InventoryModelVersionDate
+  InventoryPercent
+  InventoryPostProcessing
+  InventorySpatialProc
+  InventorySpectralBands
+  InventoryCtlEns
+  InventoryWarnOldG2
+  InventoryWavePartition
+  InventoryProcessId
 } derive(Show)
 
 ///|
@@ -224,6 +247,29 @@ pub fn render_inventory_lines(
     InventoryCodeTable55 => wgrib2_code_table_5_5_lines(context)
     InventoryCodeTable56 => wgrib2_code_table_5_6_lines(context)
     InventoryCodeTable57 => wgrib2_code_table_5_7_lines(context)
+    InventoryFtime1 => wgrib2_ftime1_lines(context)
+    InventoryS2 => wgrib2_s2_lines(context)
+    InventoryPdsFcstTime => wgrib2_pds_fcst_time_lines(context)
+    InventoryTypeReftime => wgrib2_type_reftime_lines(context)
+    InventoryTable => wgrib2_table_lines(context)
+    InventoryVectorDir => wgrib2_vector_dir_lines(context)
+    InventoryPrecision => wgrib2_precision_lines(context)
+    InventoryNumCoordValues => wgrib2_number_of_coordinate_values_lines(context)
+    InventoryNEns => wgrib2_N_ens_lines(context)
+    InventoryNClusters => wgrib2_N_clusters_lines(context)
+    InventoryAerosolSize => wgrib2_aerosol_size_lines(context)
+    InventoryAerosolWavelength => wgrib2_aerosol_wavelength_lines(context)
+    InventoryCluster => wgrib2_cluster_lines(context)
+    InventoryClusterInfo => wgrib2_cluster_info_lines(context)
+    InventoryModelVersionDate => wgrib2_model_version_date_lines(context)
+    InventoryPercent => wgrib2_percent_lines(context)
+    InventoryPostProcessing => wgrib2_post_processing_lines(context)
+    InventorySpatialProc => wgrib2_spatial_proc_lines(context)
+    InventorySpectralBands => wgrib2_spectral_bands_lines(context)
+    InventoryCtlEns => wgrib2_ctl_ens_lines(context)
+    InventoryWarnOldG2 => wgrib2_warn_old_g2_lines(context)
+    InventoryWavePartition => wgrib2_wave_partition_lines(context)
+    InventoryProcessId => wgrib2_processid_lines(context)
   }
 }
 
