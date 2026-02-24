@@ -40,6 +40,8 @@ pub fn encode_section6_bytes(@section6.Grib2Section6Decoded) -> Bytes
 
 pub fn encode_section7_bytes(@section7.Grib2Section7Decoded) -> Bytes
 
+pub fn generate_coordinates_from_section3(@section3.Grib2Section3TemplateData) -> @section3.CoordinateGrid?
+
 pub fn generate_latlon_coordinates(@section3.Grib2GridTemplate30) -> @section3.CoordinateGrid
 
 pub fn generate_rotated_latlon_coordinates(@section3.Grib2GridTemplate31) -> @section3.CoordinateGrid
@@ -49,6 +51,14 @@ pub fn get_jpeg2000_params(@section5.Grib2DataRepresentationTemplate540) -> (Int
 pub fn get_jpeg2000_raw_bytes(Bytes) -> Bytes
 
 pub fn get_png_raw_bytes(Bytes) -> Bytes
+
+pub fn get_section3_grid_info(@section3.Grib2Section3TemplateData) -> Section3GridInfo
+
+pub fn get_section3_template_id(@section3.Grib2Section3TemplateData) -> Int
+
+pub fn get_section4_product_info(@section4.Grib2Section4TemplateData) -> Section4ProductInfo
+
+pub fn get_section5_data_info(@section5.Grib2Section5TemplateData) -> Section5DataInfo
 
 pub fn ieee754_single_to_double(Int) -> Double
 
@@ -69,11 +79,73 @@ pub fn unpack_simple(Bytes, Int, Int, Int, Int, Int) -> Result[@section7.Unpacke
 // Errors
 
 // Types and methods
+pub(all) struct Section3GridInfo {
+  template_id : Int
+  ni : Int
+  nj : Int
+  la1 : Int
+  lo1 : Int
+  la2 : Int
+  lo2 : Int
+  di : Int
+  dj : Int
+  scan_mode : Int
+  res_flags : Int
+}
+
+pub(all) struct Section4ProductInfo {
+  template_id : Int
+  param_cat : Int
+  param_num : Int
+  gen_process : Int
+  time_unit : Int
+  forecast_time : Int
+  first_surface_type : Int
+  first_surface_scale : Int
+  first_surface_value : Int
+  second_surface_type : Int
+  second_surface_scale : Int
+  second_surface_value : Int
+  ensemble_type : Int
+  perturb_num : Int
+  ensemble_members : Int
+  prob_type : Int
+}
+
+pub(all) struct Section5DataInfo {
+  template_id : Int
+  reference_value_ieee : Int
+  binary_scale : Int
+  decimal_scale : Int
+  bits_per_value : Int
+}
 
 // Type aliases
 pub using @section7 {type BitReader}
 
 pub using @section3 {type CoordinateGrid}
+
+pub using @section5 {type Grib2DataRepresentationTemplate50}
+
+pub using @section5 {type Grib2DataRepresentationTemplate52}
+
+pub using @section5 {type Grib2DataRepresentationTemplate53}
+
+pub using @section5 {type Grib2DataRepresentationTemplate540}
+
+pub using @section3 {type Grib2GridTemplate30}
+
+pub using @section3 {type Grib2GridTemplate31}
+
+pub using @section4 {type Grib2ProductTemplate40}
+
+pub using @section4 {type Grib2ProductTemplate41}
+
+pub using @section4 {type Grib2ProductTemplate411}
+
+pub using @section4 {type Grib2ProductTemplate45}
+
+pub using @section4 {type Grib2ProductTemplate48}
 
 pub using @section1 {type Grib2Section1Decoded}
 
@@ -81,9 +153,15 @@ pub using @section2 {type Grib2Section2Decoded}
 
 pub using @section3 {type Grib2Section3Decoded}
 
+pub using @section3 {type Grib2Section3TemplateData}
+
 pub using @section4 {type Grib2Section4Decoded}
 
+pub using @section4 {type Grib2Section4TemplateData}
+
 pub using @section5 {type Grib2Section5Decoded}
+
+pub using @section5 {type Grib2Section5TemplateData}
 
 pub using @section6 {type Grib2Section6Decoded}
 

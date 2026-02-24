@@ -30,7 +30,11 @@ pub fn BitReader::read_bits(self : BitReader, count : Int) -> UInt {
     let byte_index = self.bit_position / 8
     let bit_offset = self.bit_position % 8
     let bits_in_byte = 8 - bit_offset
-    let bits_to_read = if remaining < bits_in_byte { remaining } else { bits_in_byte }
+    let bits_to_read = if remaining < bits_in_byte {
+      remaining
+    } else {
+      bits_in_byte
+    }
     let mask = (1 << bits_to_read) - 1
     let byte_val = self.data[byte_index].to_int()
     let shift = bits_in_byte - bits_to_read

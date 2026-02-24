@@ -42,12 +42,15 @@ pub fn parse_scanning_mode(mode : Int) -> ScanningMode {
 ///
 /// Returns array of latitudes and longitudes for each grid point.
 /// The arrays are in the order defined by the scanning mode.
-pub fn generate_latlon_coordinates(grid : Grib2GridTemplate30) -> CoordinateGrid {
+pub fn generate_latlon_coordinates(
+  grid : Grib2GridTemplate30,
+) -> CoordinateGrid {
   let ni = grid.ni
   let nj = grid.nj
   // Calculate basic angle unit
   // If basic_angle is 0 or missing, default to 1/1000000 degrees (microdegrees)
-  let angle_unit = if grid.basic_angle == 0 || grid.subdivisions_of_basic_angle == 0 {
+  let angle_unit = if grid.basic_angle == 0 ||
+    grid.subdivisions_of_basic_angle == 0 {
     1.0 / 1000000.0 // microdegrees
   } else {
     grid.basic_angle.to_double() /
@@ -110,14 +113,22 @@ fn normalize_longitude(lon : Double) -> Double {
 
 ///|
 /// Get latitude at specific grid point (i, j).
-pub fn CoordinateGrid::get_lat(self : CoordinateGrid, i : Int, j : Int) -> Double {
+pub fn CoordinateGrid::get_lat(
+  self : CoordinateGrid,
+  i : Int,
+  j : Int,
+) -> Double {
   let idx = j * self.ni + i
   self.latitudes[idx]
 }
 
 ///|
 /// Get longitude at specific grid point (i, j).
-pub fn CoordinateGrid::get_lon(self : CoordinateGrid, i : Int, j : Int) -> Double {
+pub fn CoordinateGrid::get_lon(
+  self : CoordinateGrid,
+  i : Int,
+  j : Int,
+) -> Double {
   let idx = j * self.ni + i
   self.longitudes[idx]
 }

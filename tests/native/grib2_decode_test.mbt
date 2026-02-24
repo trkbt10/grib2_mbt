@@ -30,6 +30,35 @@ fn all_records_have_section5_template(
 }
 
 ///|
+fn unpack_all_submessages(
+  context : @lib.Grib2FileContext,
+) -> Result[Int, String] {
+  let mut ok_count = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      match @lib.unpack_submessage_data(message, submessage) {
+        Ok(unpacked) => {
+          if unpacked.values.length() <= 0 || unpacked.num_points <= 0 {
+            return Err("unexpected empty unpacked result")
+          }
+          ok_count += 1
+        }
+        Err(error) =>
+          match error {
+            @lib.UnpackError::UnsupportedTemplate(s) =>
+              return Err("UnsupportedTemplate: " + s)
+            @lib.UnpackError::InsufficientData(s) =>
+              return Err("InsufficientData: " + s)
+            @lib.UnpackError::InvalidBitsPerValue(s) =>
+              return Err("InvalidBitsPerValue: " + s)
+          }
+      }
+    }
+  }
+  Ok(ok_count)
+}
+
+///|
 test "decode records exposes context fields" {
   let context = match
     parse_fixture_for_decode(
@@ -108,7 +137,7 @@ test "template dispatch foundation: eccodes jpeg2000 all records are template40"
 }
 
 ///|
-test "jpeg2000 fixture unpack path currently returns error" {
+test "jpeg2000 fixture unpack path succeeds" {
   let context = parse_fixture_for_decode(
     "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
   )
@@ -119,8 +148,61 @@ test "jpeg2000 fixture unpack path currently returns error" {
   let message = parsed.messages[0]
   let submessage = message.submessages[0]
   match @lib.unpack_submessage_data(message, submessage) {
-    Ok(_) => fail("unexpected success")
-    Err(_) => inspect(true, content="true")
+    Ok(v) => {
+      inspect(v.num_points > 0, content="true")
+      inspect(v.values.length() > 0, content="true")
+    }
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
+test "jpeg2000 reduced gaussian fixture unpack path succeeds" {
+  let context = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
+  )
+  let parsed = match context {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  let message = parsed.messages[0]
+  let submessage = message.submessages[0]
+  match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => {
+      inspect(v.num_points > 0, content="true")
+      inspect(v.values.length() > 0, content="true")
+    }
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
+test "jpeg2000 eccodes fixture all submessages unpack" {
+  let context = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
+  )
+  let parsed = match context {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  match unpack_all_submessages(parsed) {
+    Ok(count) => inspect(count > 0, content="true")
+    Err(msg) => fail(msg)
+  }
+}
+
+///|
+test "jpeg2000 reduced gaussian fixture all submessages unpack" {
+  let context = parse_fixture_for_decode(
+    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
+  )
+  let parsed = match context {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  match unpack_all_submessages(parsed) {
+    Ok(count) => inspect(count > 0, content="true")
+    Err(msg) => fail(msg)
   }
 }
 

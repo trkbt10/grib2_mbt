@@ -1,0 +1,9 @@
+import {
+  "trkbt10/grib2_mbt" @lib,
+  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/sys" @sys,
+}
+
+options(
+  "is-main": true,
+)

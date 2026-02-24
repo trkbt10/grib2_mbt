@@ -185,8 +185,8 @@ fn count_bitmap_undefined_points(section6 : BytesView, npts : Int) -> Int {
   let limit = if npts < available_bits { npts } else { available_bits }
   let mut undefined_points = 0
   for bit_index in 0..<limit {
-    let byte_index = 6 + (bit_index / 8)
-    let bit_offset = 7 - (bit_index % 8)
+    let byte_index = 6 + bit_index / 8
+    let bit_offset = 7 - bit_index % 8
     let mask = 1 << bit_offset
     let value = section6[byte_index].to_uint().reinterpret_as_int()
     if (value & mask) == 0 {
@@ -7602,67 +7602,88 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         -1
       }
-      let section4_ens_type = if (section4_template_id == 1 ||
-        section4_template_id == 11 ||
-        section4_template_id == 2 ||
-        section4_template_id == 12) && section4.length() >= 35 {
+      let section4_ens_type = if (
+          section4_template_id == 1 ||
+          section4_template_id == 11 ||
+          section4_template_id == 2 ||
+          section4_template_id == 12
+        ) &&
+        section4.length() >= 35 {
         section4[34].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_ens_perturbation_number = if (section4_template_id == 1 ||
-        section4_template_id == 11) && section4.length() >= 36 {
+      let section4_ens_perturbation_number = if (
+          section4_template_id == 1 || section4_template_id == 11
+        ) &&
+        section4.length() >= 36 {
         section4[35].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_ens_member_count = if (section4_template_id == 1 ||
-        section4_template_id == 11) && section4.length() >= 37 {
+      let section4_ens_member_count = if (
+          section4_template_id == 1 || section4_template_id == 11
+        ) &&
+        section4.length() >= 37 {
         section4[36].to_uint().reinterpret_as_int()
-      } else if (section4_template_id == 2 ||
-        section4_template_id == 12) && section4.length() >= 36 {
+      } else if (section4_template_id == 2 || section4_template_id == 12) &&
+        section4.length() >= 36 {
         section4[35].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_prob_forecast_index = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 35 {
+      let section4_prob_forecast_index = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 35 {
         section4[34].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_prob_total_forecasts = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 36 {
+      let section4_prob_total_forecasts = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 36 {
         section4[35].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_prob_type = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 37 {
+      let section4_prob_type = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 37 {
         section4[36].to_uint().reinterpret_as_int()
       } else {
         -1
       }
-      let section4_prob_lower_scale_factor = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 38 {
+      let section4_prob_lower_scale_factor = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 38 {
         read_signed_byte_from(section4, 37)
       } else {
         0
       }
-      let section4_prob_lower_value = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 42 {
+      let section4_prob_lower_value = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 42 {
         read_i32_sign_magnitude_from(section4, 38)
       } else {
         -1
       }
-      let section4_prob_upper_scale_factor = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 43 {
+      let section4_prob_upper_scale_factor = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 43 {
         read_signed_byte_from(section4, 42)
       } else {
         0
       }
-      let section4_prob_upper_value = if (section4_template_id == 5 ||
-        section4_template_id == 9) && section4.length() >= 47 {
+      let section4_prob_upper_value = if (
+          section4_template_id == 5 || section4_template_id == 9
+        ) &&
+        section4.length() >= 47 {
         read_i32_sign_magnitude_from(section4, 43)
       } else {
         -1
