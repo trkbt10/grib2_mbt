@@ -41,6 +41,8 @@ pub(all) enum Grib2InventoryMode {
   InventoryNpts
   InventoryVarLev
   InventoryCodeTable00
+  InventoryCodeTable10
+  InventoryCodeTable11
   InventoryCodeTable12
   InventoryCodeTable31
   InventoryCodeTable43
@@ -94,6 +96,8 @@ pub fn render_inventory_lines(
     InventoryNpts => wgrib2_npts_lines(context)
     InventoryVarLev => wgrib2_var_lev_lines(context)
     InventoryCodeTable00 => wgrib2_code_table_0_0_lines(context)
+    InventoryCodeTable10 => wgrib2_code_table_1_0_lines(context)
+    InventoryCodeTable11 => wgrib2_code_table_1_1_lines(context)
     InventoryCodeTable12 => wgrib2_code_table_1_2_lines(context)
     InventoryCodeTable31 => wgrib2_code_table_3_1_lines(context)
     InventoryCodeTable43 => wgrib2_code_table_4_3_lines(context)

@@ -92,6 +92,8 @@ pub(all) struct Grib2RecordMeta {
   edition : Int
   section1_center : Int
   section1_subcenter : Int
+  section1_master_tables_version : Int
+  section1_local_tables_version : Int
   section1_significance_of_ref_time : Int
   parameter_name : Grib2NameLookup
   level_name : Grib2NameLookup
@@ -7552,6 +7554,16 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
     } else {
       -1
     }
+    let section1_master_tables_version = if section1.length() >= 10 {
+      section1[9].to_uint().reinterpret_as_int()
+    } else {
+      -1
+    }
+    let section1_local_tables_version = if section1.length() >= 11 {
+      section1[10].to_uint().reinterpret_as_int()
+    } else {
+      -1
+    }
     let section1_significance_of_ref_time = if section1.length() >= 12 {
       section1[11].to_uint().reinterpret_as_int()
     } else {
@@ -7844,6 +7856,8 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         edition: message.edition,
         section1_center,
         section1_subcenter,
+        section1_master_tables_version,
+        section1_local_tables_version,
         section1_significance_of_ref_time,
         parameter_name,
         level_name,

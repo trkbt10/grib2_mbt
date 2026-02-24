@@ -42,6 +42,8 @@ fn print_usage() -> Unit {
   println("  -npts   print total grid points")
   println("  -var -lev  print variable and level lines")
   println("  -code_table_0.0  print discipline (code table 0.0)")
+  println("  -code_table_1.0  print master tables version (code table 1.0)")
+  println("  -code_table_1.1  print local tables version (code table 1.1)")
   println("  -code_table_1.2  print significance of reference time (code table 1.2)")
   println("  -code_table_3.1  print grid definition template (code table 3.1)")
   println("  -code_table_4.3  print process type (code table 4.3)")
@@ -185,6 +187,12 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-code_table_0.0" {
     return Some(InventoryCodeTable00)
+  }
+  if args.length() == 1 && args[0] == "-code_table_1.0" {
+    return Some(InventoryCodeTable10)
+  }
+  if args.length() == 1 && args[0] == "-code_table_1.1" {
+    return Some(InventoryCodeTable11)
   }
   if args.length() == 1 && args[0] == "-code_table_1.2" {
     return Some(InventoryCodeTable12)

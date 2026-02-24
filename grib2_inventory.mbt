@@ -880,6 +880,34 @@ pub fn wgrib2_code_table_0_0_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
+pub fn wgrib2_code_table_1_0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 1.0=" +
+      meta.section1_master_tables_version.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_1_1_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 1.1=" +
+      meta.section1_local_tables_version.to_string(),
+    )
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_code_table_1_2_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
