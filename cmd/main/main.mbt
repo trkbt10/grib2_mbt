@@ -46,7 +46,11 @@ fn print_usage() -> Unit {
   println("  -code_table_1.1  print local tables version (code table 1.1)")
   println("  -code_table_1.2  print significance of reference time (code table 1.2)")
   println("  -code_table_3.1  print grid definition template (code table 3.1)")
+  println("  -code_table_4.0  print product definition template (code table 4.0)")
+  println("  -code_table_4.1  print parameter category (code table 4.1)")
+  println("  -code_table_4.2  print parameter number (code table 4.2)")
   println("  -code_table_4.3  print process type (code table 4.3)")
+  println("  -code_table_4.4  print unit of time range (code table 4.4)")
   println("  -code_table_5.0  print data representation template (code table 5.0)")
 }
 
@@ -200,8 +204,20 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-code_table_3.1" {
     return Some(InventoryCodeTable31)
   }
+  if args.length() == 1 && args[0] == "-code_table_4.0" {
+    return Some(InventoryCodeTable40)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.1" {
+    return Some(InventoryCodeTable41)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.2" {
+    return Some(InventoryCodeTable42)
+  }
   if args.length() == 1 && args[0] == "-code_table_4.3" {
     return Some(InventoryCodeTable43)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.4" {
+    return Some(InventoryCodeTable44)
   }
   if args.length() == 1 && args[0] == "-code_table_5.0" {
     return Some(InventoryCodeTable50)

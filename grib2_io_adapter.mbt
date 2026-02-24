@@ -45,7 +45,11 @@ pub(all) enum Grib2InventoryMode {
   InventoryCodeTable11
   InventoryCodeTable12
   InventoryCodeTable31
+  InventoryCodeTable40
+  InventoryCodeTable41
+  InventoryCodeTable42
   InventoryCodeTable43
+  InventoryCodeTable44
   InventoryCodeTable50
 } derive(Show)
 
@@ -100,7 +104,11 @@ pub fn render_inventory_lines(
     InventoryCodeTable11 => wgrib2_code_table_1_1_lines(context)
     InventoryCodeTable12 => wgrib2_code_table_1_2_lines(context)
     InventoryCodeTable31 => wgrib2_code_table_3_1_lines(context)
+    InventoryCodeTable40 => wgrib2_code_table_4_0_lines(context)
+    InventoryCodeTable41 => wgrib2_code_table_4_1_lines(context)
+    InventoryCodeTable42 => wgrib2_code_table_4_2_lines(context)
     InventoryCodeTable43 => wgrib2_code_table_4_3_lines(context)
+    InventoryCodeTable44 => wgrib2_code_table_4_4_lines(context)
     InventoryCodeTable50 => wgrib2_code_table_5_0_lines(context)
   }
 }
