@@ -120,6 +120,13 @@ pub(all) struct Grib2RecordMeta {
   section3_di_microdeg : Int
   section3_dj_microdeg : Int
   section3_scanning_mode : Int
+  section3_shape_of_earth : Int
+  section3_scale_factor_radius : Int
+  section3_scaled_value_radius : Int
+  section3_scale_factor_major : Int
+  section3_scaled_value_major : Int
+  section3_scale_factor_minor : Int
+  section3_scaled_value_minor : Int
   section4_length : Int
   section4_num_coord : Int
   section4_parameter_category : Int
@@ -136,8 +143,14 @@ pub(all) struct Grib2RecordMeta {
   section4_prob_lower_value : Int
   section4_prob_upper_scale_factor : Int
   section4_prob_upper_value : Int
+  section4_first_surface_type : Int
+  section4_second_surface_type : Int
   section5_length : Int
   section5_num_defined_points : Int
+  section5_reference_value_ieee : Int
+  section5_binary_scale_factor : Int
+  section5_decimal_scale_factor : Int
+  section5_bits_per_value : Int
   section6_length : Int
   section6_bitmap_indicator : Int
   section6_undef_points : Int
@@ -162,6 +175,16 @@ fn read_u16_be_from(bytes : BytesView, index : Int) -> Int {
 ///|
 fn read_u32_be_from(bytes : BytesView, index : Int) -> Int {
   bytes.unsafe_read_uint32_be(index).reinterpret_as_int()
+}
+
+///|
+fn read_i16_be_from(bytes : BytesView, index : Int) -> Int {
+  let unsigned = bytes.unsafe_read_uint16_be(index).to_uint().reinterpret_as_int()
+  if unsigned >= 0x8000 {
+    unsigned - 0x10000
+  } else {
+    unsigned
+  }
 }
 
 ///|
@@ -7684,6 +7707,42 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         -1
       }
+      // Earth shape parameters from template payload (template 3.0 and similar)
+      let section3_shape_of_earth = if section3.length() >= 15 {
+        section3[14].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
+      let section3_scale_factor_radius = if section3.length() >= 16 {
+        section3[15].to_uint().reinterpret_as_int()
+      } else {
+        0
+      }
+      let section3_scaled_value_radius = if section3.length() >= 20 {
+        read_u32_be_from(section3, 16)
+      } else {
+        0
+      }
+      let section3_scale_factor_major = if section3.length() >= 21 {
+        section3[20].to_uint().reinterpret_as_int()
+      } else {
+        0
+      }
+      let section3_scaled_value_major = if section3.length() >= 25 {
+        read_u32_be_from(section3, 21)
+      } else {
+        0
+      }
+      let section3_scale_factor_minor = if section3.length() >= 26 {
+        section3[25].to_uint().reinterpret_as_int()
+      } else {
+        0
+      }
+      let section3_scaled_value_minor = if section3.length() >= 30 {
+        read_u32_be_from(section3, 26)
+      } else {
+        0
+      }
       let section4_template_id = if section4.length() >= 9 {
         read_u16_be_from(section4, 7)
       } else {
@@ -7845,6 +7904,31 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         0
       }
+      // Section 5 scaling parameters (for templates 50, 51, 52, 53, 540, 541, 542, etc.)
+      // Bytes 12-15: Reference value (IEEE 754 float stored as 4-byte int)
+      // Bytes 16-17: Binary scale factor (signed 16-bit)
+      // Bytes 18-19: Decimal scale factor (signed 16-bit)
+      // Byte 20: Number of bits per value
+      let section5_reference_value_ieee = if section5.length() >= 15 {
+        read_u32_be_from(section5, 11)
+      } else {
+        0
+      }
+      let section5_binary_scale_factor = if section5.length() >= 17 {
+        read_i16_be_from(section5, 15)
+      } else {
+        0
+      }
+      let section5_decimal_scale_factor = if section5.length() >= 19 {
+        read_i16_be_from(section5, 17)
+      } else {
+        0
+      }
+      let section5_bits_per_value = if section5.length() >= 20 {
+        section5[19].to_uint().reinterpret_as_int()
+      } else {
+        0
+      }
       let section6_bitmap_indicator = if section6.length() >= 6 {
         section6[5].to_uint().reinterpret_as_int()
       } else {
@@ -7906,6 +7990,13 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section3_di_microdeg,
         section3_dj_microdeg,
         section3_scanning_mode,
+        section3_shape_of_earth,
+        section3_scale_factor_radius,
+        section3_scaled_value_radius,
+        section3_scale_factor_major,
+        section3_scaled_value_major,
+        section3_scale_factor_minor,
+        section3_scaled_value_minor,
         section4_length: submessage.section4.length,
         section4_num_coord,
         section4_parameter_category: category,
@@ -7922,8 +8013,14 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section4_prob_lower_value,
         section4_prob_upper_scale_factor,
         section4_prob_upper_value,
+        section4_first_surface_type: l1t,
+        section4_second_surface_type: l2t,
         section5_length: submessage.section5.length,
         section5_num_defined_points,
+        section5_reference_value_ieee,
+        section5_binary_scale_factor,
+        section5_decimal_scale_factor,
+        section5_bits_per_value,
         section6_length: submessage.section6.length,
         section6_bitmap_indicator,
         section6_undef_points,

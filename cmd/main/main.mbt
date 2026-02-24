@@ -58,11 +58,32 @@ fn print_usage() -> Unit {
   println("  -code_table_5.0  print data representation template (code table 5.0)")
   println("  -flag_table_3.3  print resolution and component flags")
   println("  -flag_table_3.4  print scanning mode")
+  println("  -flag_table_3.5  print projection center flags")
+  println("  -flag_table_3.9  print numbering order of diamonds")
+  println("  -flag_table_3.10  print scanning mode for one diamond")
   println("  -scan   print scanning mode with input/output")
   println("  -ext_name  print extended parameter name")
   println("  -full_name  print VAR.LEVEL format")
   println("  -lev0   print simple level name")
   println("  -cyclic  print grid cyclic status")
+  println("  -domain  print N/S/W/E grid bounds")
+  println("  -scale  print decimal/binary scale factors")
+  println("  -scaling  print scaling parameters")
+  println("  -radius  print earth radius information")
+  println("  -varX  print extended variable identifier")
+  println("  -grid_id  print grid identification")
+  println("  -nl  add blank line after each record")
+  println("  -misc  print miscellaneous inventory")
+  println("  -Match_inv  print comprehensive match inventory")
+  println("  -code_table_3.2  print earth shape (code table 3.2)")
+  println("  -code_table_4.5a  print first surface type (code table 4.5)")
+  println("  -code_table_4.5b  print second surface type (code table 4.5)")
+  println("  -code_table_1.5  print identification template number")
+  println("  -code_table_1.6  print calendar")
+  println("  -code_table_4.6  print ensemble type")
+  println("  -code_table_4.9  print probability type")
+  println("  -code_table_4.10  print statistical processing type")
+  println("  -code_table_4.11  print type of time intervals")
 }
 
 ///|
@@ -251,6 +272,15 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-flag_table_3.4" {
     return Some(InventoryFlagTable34)
   }
+  if args.length() == 1 && args[0] == "-flag_table_3.5" {
+    return Some(InventoryFlagTable35)
+  }
+  if args.length() == 1 && args[0] == "-flag_table_3.9" {
+    return Some(InventoryFlagTable39)
+  }
+  if args.length() == 1 && args[0] == "-flag_table_3.10" {
+    return Some(InventoryFlagTable310)
+  }
   if args.length() == 1 && args[0] == "-scan" {
     return Some(InventoryScan)
   }
@@ -265,6 +295,60 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-cyclic" {
     return Some(InventoryCyclic)
+  }
+  if args.length() == 1 && args[0] == "-domain" {
+    return Some(InventoryDomain)
+  }
+  if args.length() == 1 && args[0] == "-scale" {
+    return Some(InventoryScale)
+  }
+  if args.length() == 1 && args[0] == "-scaling" {
+    return Some(InventoryScaling)
+  }
+  if args.length() == 1 && args[0] == "-radius" {
+    return Some(InventoryRadius)
+  }
+  if args.length() == 1 && args[0] == "-varX" {
+    return Some(InventoryVarX)
+  }
+  if args.length() == 1 && args[0] == "-grid_id" {
+    return Some(InventoryGridId)
+  }
+  if args.length() == 1 && args[0] == "-nl" {
+    return Some(InventoryNl)
+  }
+  if args.length() == 1 && args[0] == "-misc" {
+    return Some(InventoryMisc)
+  }
+  if args.length() == 1 && args[0] == "-Match_inv" {
+    return Some(InventoryMatchInv)
+  }
+  if args.length() == 1 && args[0] == "-code_table_3.2" {
+    return Some(InventoryCodeTable32)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.5a" {
+    return Some(InventoryCodeTable45a)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.5b" {
+    return Some(InventoryCodeTable45b)
+  }
+  if args.length() == 1 && args[0] == "-code_table_1.5" {
+    return Some(InventoryCodeTable15)
+  }
+  if args.length() == 1 && args[0] == "-code_table_1.6" {
+    return Some(InventoryCodeTable16)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.6" {
+    return Some(InventoryCodeTable46)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.9" {
+    return Some(InventoryCodeTable49)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.10" {
+    return Some(InventoryCodeTable410)
+  }
+  if args.length() == 1 && args[0] == "-code_table_4.11" {
+    return Some(InventoryCodeTable411)
   }
   None
 }

@@ -62,6 +62,27 @@ pub(all) enum Grib2InventoryMode {
   InventoryFullName
   InventoryLev0
   InventoryCyclic
+  InventoryDomain
+  InventoryScale
+  InventoryScaling
+  InventoryRadius
+  InventoryVarX
+  InventoryGridId
+  InventoryNl
+  InventoryMisc
+  InventoryFlagTable35
+  InventoryFlagTable39
+  InventoryFlagTable310
+  InventoryMatchInv
+  InventoryCodeTable32
+  InventoryCodeTable45a
+  InventoryCodeTable45b
+  InventoryCodeTable15
+  InventoryCodeTable16
+  InventoryCodeTable46
+  InventoryCodeTable49
+  InventoryCodeTable410
+  InventoryCodeTable411
 } derive(Show)
 
 ///|
@@ -132,6 +153,27 @@ pub fn render_inventory_lines(
     InventoryFullName => wgrib2_full_name_lines(context)
     InventoryLev0 => wgrib2_lev0_lines(context)
     InventoryCyclic => wgrib2_cyclic_lines(context)
+    InventoryDomain => wgrib2_domain_lines(context)
+    InventoryScale => wgrib2_scale_lines(context)
+    InventoryScaling => wgrib2_scaling_lines(context)
+    InventoryRadius => wgrib2_radius_lines(context)
+    InventoryVarX => wgrib2_varX_lines(context)
+    InventoryGridId => wgrib2_grid_id_lines(context)
+    InventoryNl => wgrib2_nl_lines(context)
+    InventoryMisc => wgrib2_misc_lines(context)
+    InventoryFlagTable35 => wgrib2_flag_table_3_5_lines(context)
+    InventoryFlagTable39 => wgrib2_flag_table_3_9_lines(context)
+    InventoryFlagTable310 => wgrib2_flag_table_3_10_lines(context)
+    InventoryMatchInv => wgrib2_match_inv_lines(context)
+    InventoryCodeTable32 => wgrib2_code_table_3_2_lines(context)
+    InventoryCodeTable45a => wgrib2_code_table_4_5a_lines(context)
+    InventoryCodeTable45b => wgrib2_code_table_4_5b_lines(context)
+    InventoryCodeTable15 => wgrib2_code_table_1_5_lines(context)
+    InventoryCodeTable16 => wgrib2_code_table_1_6_lines(context)
+    InventoryCodeTable46 => wgrib2_code_table_4_6_lines(context)
+    InventoryCodeTable49 => wgrib2_code_table_4_9_lines(context)
+    InventoryCodeTable410 => wgrib2_code_table_4_10_lines(context)
+    InventoryCodeTable411 => wgrib2_code_table_4_11_lines(context)
   }
 }
 

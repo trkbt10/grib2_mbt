@@ -1195,6 +1195,50 @@ pub fn wgrib2_cyclic_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+fn format_degrees(microdeg : Int) -> String {
+  let sign = if microdeg < 0 { "-" } else { "" }
+  let abs_val = if microdeg < 0 { -microdeg } else { microdeg }
+  let integer = abs_val / 1000000
+  let fraction = abs_val % 1000000
+  // Format as X.NNNNNN
+  sign + integer.to_string() + "." + pad6(fraction)
+}
+
+///|
+pub fn wgrib2_domain_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    if meta.section3_template.id() == 0 {
+      // For lat-lon grid, determine N/S/W/E
+      let lat1 = meta.section3_lat1_microdeg
+      let lat2 = meta.section3_lat2_microdeg
+      let lon1 = meta.section3_lon1_microdeg
+      let lon2 = meta.section3_lon2_microdeg
+      let n = if lat1 > lat2 { lat1 } else { lat2 }
+      let s = if lat1 < lat2 { lat1 } else { lat2 }
+      // Convert longitude to -180 to 180 range for display
+      let w = if lon1 > 180000000 { lon1 - 360000000 } else { lon1 }
+      let e = if lon2 > 180000000 { lon2 - 360000000 } else { lon2 }
+      lines.push(
+        format_prefix(meta) +
+        "N=" +
+        format_degrees(n) +
+        " S=" +
+        format_degrees(s) +
+        " W=" +
+        format_degrees(w) +
+        " E=" +
+        format_degrees(e),
+      )
+    } else {
+      lines.push(format_prefix(meta) + "domain not available")
+    }
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] {
   // Same as -process
   wgrib2_process_lines(context)
@@ -1399,6 +1443,582 @@ pub fn wgrib2_code_table_5_0_lines(context : Grib2FileContext) -> Array[String] 
         label,
       )
     }
+  }
+  lines
+}
+
+///|
+fn ieee_to_int(ieee : Int) -> Int {
+  // Convert IEEE 754 binary32 to integer (truncated)
+  // IEEE 754 format: sign(1) exponent(8) mantissa(23)
+  let sign = if ((ieee >> 31) & 1) != 0 { -1 } else { 1 }
+  let exp = (ieee >> 23) & 0xff
+  let mantissa = ieee & 0x7fffff
+  if exp == 0 && mantissa == 0 {
+    return 0
+  }
+  // Normal number: value = (-1)^sign * 2^(exp-127) * (1 + mantissa/2^23)
+  let exponent = exp - 127
+  let frac = 1.0 + mantissa.to_double() / 8388608.0 // 2^23 = 8388608
+  let value = sign.to_double() * frac * pow2(exponent)
+  value.to_int()
+}
+
+///|
+fn pow2(exp : Int) -> Double {
+  if exp >= 0 {
+    let mut result = 1.0
+    for _ in 0..<exp {
+      result *= 2.0
+    }
+    result
+  } else {
+    let mut result = 1.0
+    for _ in 0..<(-exp) {
+      result /= 2.0
+    }
+    result
+  }
+}
+
+///|
+pub fn wgrib2_scale_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // wgrib2 outputs negated decimal scale (multiplication form, not division)
+    let dec = -meta.section5_decimal_scale_factor
+    let bin = meta.section5_binary_scale_factor
+    lines.push(
+      format_prefix(meta) + "scale=" + dec.to_string() + "," + bin.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_scaling_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let ref = ieee_to_int(meta.section5_reference_value_ieee)
+    // wgrib2 outputs negated decimal scale (multiplication form)
+    let dec = -meta.section5_decimal_scale_factor
+    let bin = meta.section5_binary_scale_factor
+    let nbits = meta.section5_bits_per_value
+    lines.push(
+      format_prefix(meta) +
+      "scaling ref=" +
+      ref.to_string() +
+      " dec_scale=" +
+      dec.to_string() +
+      " bin_scale=" +
+      bin.to_string() +
+      " nbits=" +
+      nbits.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+fn apply_scale_factor(scaled_value : Int, scale_factor : Int) -> Double {
+  if scale_factor == 0 {
+    scaled_value.to_double()
+  } else {
+    scaled_value.to_double() / pow10_double(scale_factor)
+  }
+}
+
+///|
+fn pow10_double(exp : Int) -> Double {
+  let mut result = 1.0
+  if exp >= 0 {
+    for _ in 0..<exp {
+      result *= 10.0
+    }
+  } else {
+    for _ in 0..<(-exp) {
+      result /= 10.0
+    }
+  }
+  result
+}
+
+///|
+fn format_radius(value : Double) -> String {
+  // Format as "%.6f" - 6 decimal places
+  let int_part = value.to_int64()
+  let frac_part = ((value - int_part.to_double()) * 1000000.0 + 0.5).to_int64()
+  let frac_str = frac_part.to_string()
+  // Pad fraction to 6 digits
+  let padded_frac = if frac_str.length() < 6 {
+    let mut s = ""
+    for _ in 0..<(6 - frac_str.length()) {
+      s = s + "0"
+    }
+    s + frac_str
+  } else {
+    frac_str
+  }
+  int_part.to_string() + "." + padded_frac
+}
+
+///|
+pub fn wgrib2_radius_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let shape = meta.section3_shape_of_earth
+    let (radius_maj, radius_min, is_spherical) : (Double, Double, Int) = match shape {
+      0 => (6367470.0, 6367470.0, 1) // Spherical r=6367470m
+      1 => {
+        // Spherical with specified radius
+        let r = apply_scale_factor(
+          meta.section3_scaled_value_radius,
+          meta.section3_scale_factor_radius,
+        )
+        (r, r, 1)
+      }
+      2 => (6378160.0, 6356775.0, 0) // IAU 1965 oblate spheroid
+      3 => {
+        // Oblate spheroid with specified values (scaled in km)
+        let a = apply_scale_factor(
+          meta.section3_scaled_value_major,
+          meta.section3_scale_factor_major,
+        ) * 1000.0
+        let b = apply_scale_factor(
+          meta.section3_scaled_value_minor,
+          meta.section3_scale_factor_minor,
+        ) * 1000.0
+        (a, b, 0)
+      }
+      4 => (6378137.0, 6356752.314, 0) // IAG-GRS80
+      5 => (6378137.0, 6356752.3142, 0) // WGS84
+      6 => (6371229.0, 6371229.0, 1) // Spherical r=6371229m
+      7 => {
+        // Oblate spheroid with specified values in meters
+        let a = apply_scale_factor(
+          meta.section3_scaled_value_major,
+          meta.section3_scale_factor_major,
+        )
+        let b = apply_scale_factor(
+          meta.section3_scaled_value_minor,
+          meta.section3_scale_factor_minor,
+        )
+        (a, b, 0)
+      }
+      8 => (6371200.0, 6371200.0, 1) // Spherical r=6371200m
+      9 => (6377563.396, 6356256.909, 0) // OSGB 1936 Airy 1830
+      _ => (6371229.0, 6371229.0, 1) // Default to code 6
+    }
+    lines.push(
+      format_prefix(meta) +
+      "code3.2=" +
+      shape.to_string() +
+      " radius_maj=" +
+      format_radius(radius_maj) +
+      " radiusmin=" +
+      format_radius(radius_min) +
+      " is_spherical=" +
+      is_spherical.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_varX_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Format: var<disc>_<master>_<local>_<center>_<category>_<parameter>
+    let disc = meta.discipline
+    let master = meta.section1_master_tables_version
+    let local = meta.section1_local_tables_version
+    let center = meta.section1_center
+    let cat = meta.section4_parameter_category
+    let param = meta.section4_parameter_number
+    lines.push(
+      format_prefix(meta) +
+      "var" +
+      disc.to_string() +
+      "_" +
+      master.to_string() +
+      "_" +
+      local.to_string() +
+      "_" +
+      center.to_string() +
+      "_" +
+      cat.to_string() +
+      "_" +
+      param.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+fn format_radius_1(value : Double) -> String {
+  // Format as "%.1f" - 1 decimal place
+  let int_part = value.to_int64()
+  let frac_part = ((value - int_part.to_double()) * 10.0 + 0.5).to_int64()
+  if frac_part >= 10 {
+    (int_part + 1L).to_string() + ".0"
+  } else {
+    int_part.to_string() + "." + frac_part.to_string()
+  }
+}
+
+///|
+fn get_proj_id(template_id : Int) -> Int {
+  // Map grid definition template number to projection ID
+  match template_id {
+    0 => 1 // Latitude/longitude
+    1 => 1 // Rotated lat/lon
+    10 => 2 // Mercator
+    20 => 3 // Polar Stereographic
+    30 => 4 // Lambert Conformal
+    40 => 5 // Gaussian lat/lon
+    90 => 6 // Space View
+    _ => 0 // Unknown
+  }
+}
+
+///|
+pub fn wgrib2_grid_id_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let shape = meta.section3_shape_of_earth
+    let (radius_maj, radius_min) : (Double, Double) = match shape {
+      0 => (6367470.0, 6367470.0)
+      1 => {
+        let r = apply_scale_factor(
+          meta.section3_scaled_value_radius,
+          meta.section3_scale_factor_radius,
+        )
+        (r, r)
+      }
+      2 => (6378160.0, 6356775.0)
+      3 => {
+        let a = apply_scale_factor(
+          meta.section3_scaled_value_major,
+          meta.section3_scale_factor_major,
+        ) * 1000.0
+        let b = apply_scale_factor(
+          meta.section3_scaled_value_minor,
+          meta.section3_scale_factor_minor,
+        ) * 1000.0
+        (a, b)
+      }
+      4 => (6378137.0, 6356752.314)
+      5 => (6378137.0, 6356752.3142)
+      6 => (6371229.0, 6371229.0)
+      7 => {
+        let a = apply_scale_factor(
+          meta.section3_scaled_value_major,
+          meta.section3_scale_factor_major,
+        )
+        let b = apply_scale_factor(
+          meta.section3_scaled_value_minor,
+          meta.section3_scale_factor_minor,
+        )
+        (a, b)
+      }
+      8 => (6371200.0, 6371200.0)
+      9 => (6377563.396, 6356256.909)
+      _ => (6371229.0, 6371229.0)
+    }
+    let proj_id = get_proj_id(meta.section3_template.id())
+    let n = meta.section3_npts
+    let nx = meta.section3_ni
+    let ny = meta.section3_nj
+    lines.push(
+      format_prefix(meta) +
+      "grid_id err=0 r_major=" +
+      format_radius_1(radius_maj) +
+      " m r_minor=" +
+      format_radius_1(radius_min) +
+      " m proj_id=" +
+      proj_id.to_string() +
+      " n=" +
+      n.to_string() +
+      " nx=" +
+      nx.to_string() +
+      " ny=" +
+      ny.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_nl_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Output just the prefix followed by an empty line
+    lines.push(format_prefix(meta))
+    lines.push("")
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_misc_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // -misc outputs just the prefix with empty content
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_flag_table_3_5_lines(context : Grib2FileContext) -> Array[String] {
+  // flag_table_3.5 - projection center flags (for polar stereographic, etc.)
+  // Only applicable to certain grid templates; outputs empty for lat/lon grids
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_flag_table_3_9_lines(context : Grib2FileContext) -> Array[String] {
+  // flag_table_3.9 - numbering order of diamonds (for HEALPix grids)
+  // Only applicable to certain grid templates; outputs empty for lat/lon grids
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_flag_table_3_10_lines(context : Grib2FileContext) -> Array[String] {
+  // flag_table_3.10 - scanning mode for one diamond (for HEALPix grids)
+  // Only applicable to certain grid templates; outputs empty for lat/lon grids
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+fn format_varX(meta : Grib2RecordMeta) -> String {
+  // Format: var<disc>_<master>_<local>_<center>_<category>_<parameter>
+  let disc = meta.discipline
+  let master = meta.section1_master_tables_version
+  let local_tables = meta.section1_local_tables_version
+  let center = meta.section1_center
+  let cat = meta.section4_parameter_category
+  let param = meta.section4_parameter_number
+  "var" +
+  disc.to_string() +
+  "_" +
+  master.to_string() +
+  "_" +
+  local_tables.to_string() +
+  "_" +
+  center.to_string() +
+  "_" +
+  cat.to_string() +
+  "_" +
+  param.to_string()
+}
+
+///|
+fn format_scaling(meta : Grib2RecordMeta) -> String {
+  let ref_val = ieee_to_int(meta.section5_reference_value_ieee)
+  // wgrib2 outputs negated decimal scale (multiplication form)
+  let dec = -meta.section5_decimal_scale_factor
+  let bin = meta.section5_binary_scale_factor
+  let nbits = meta.section5_bits_per_value
+  "scaling ref=" +
+  ref_val.to_string() +
+  " dec_scale=" +
+  dec.to_string() +
+  " bin_scale=" +
+  bin.to_string() +
+  " nbits=" +
+  nbits.to_string()
+}
+
+///|
+pub fn wgrib2_match_inv_lines(context : Grib2FileContext) -> Array[String] {
+  // -Match_inv: comprehensive inventory for matching
+  // Format: n:offset:D=YYYYMMDDHHmmss:VAR:LEVEL:FTIME::VAR:n=N:npts=NPTS:varX:pdt=N:d=YYYYMMDDHH:start_FT=YYYYMMDDHHmmss:end_FT=YYYYMMDDHHmmss:scaling:FTIME:vt=YYYYMMDDHH:
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Use meta.tail which contains the formatted forecast time label (anl, 0 hour fcst, etc.)
+    let ftime_label = meta.tail
+    // For instantaneous data (anl), start_FT and end_FT equal reference_time_full
+    let start_ft = meta.reference_time_full
+    let end_ft = meta.reference_time_full
+    // vt (verification time) equals reference_time for anl data
+    let vt_short = meta.reference_time
+    let line = format_prefix(meta) +
+      "D=" + meta.reference_time_full +
+      ":" + meta.parameter_name.display() +
+      ":" + meta.level_name.display() +
+      ":" + ftime_label +
+      "::" + meta.parameter_name.display() +
+      ":n=" + meta.record_id +
+      ":npts=" + meta.section3_npts.to_string() +
+      ":" + format_varX(meta) +
+      ":pdt=" + meta.section4_template.id().to_string() +
+      ":d=" + meta.reference_time +
+      ":start_FT=" + start_ft +
+      ":end_FT=" + end_ft +
+      ":" + format_scaling(meta) +
+      ":" + ftime_label +
+      ":vt=" + vt_short + ":"
+    lines.push(line)
+  }
+  lines
+}
+
+///|
+fn earth_shape_description(shape : Int) -> String {
+  match shape {
+    0 => "Earth assumed spherical with radius = 6367470.0 m"
+    1 => "Earth assumed spherical with radius specified by data producer"
+    2 => "Earth assumed oblate spheroid with size as determined by IAU in 1965"
+    3 => "Earth assumed oblate spheroid with major and minor axes specified by data producer"
+    4 => "Earth assumed oblate spheroid as defined in IAG-GRS80 model"
+    5 => "Earth assumed represented by WGS84"
+    6 => "Earth assumed spherical with radius of 6371229.0 m"
+    7 => "Earth assumed oblate spheroid with major and minor axes specified by data producer in m"
+    8 => "Earth model assumed spherical with radius 6371200 m"
+    9 => "Earth represented by the OSGB 1936 Datum"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_3_2_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_3.2: Shape of the Earth
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let shape = meta.section3_shape_of_earth
+    let desc = earth_shape_description(shape)
+    if desc.length() > 0 {
+      lines.push(
+        format_prefix(meta) +
+        "code table 3.2=" +
+        shape.to_string() +
+        " " +
+        desc,
+      )
+    } else {
+      lines.push(format_prefix(meta) + "code table 3.2=" + shape.to_string())
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_5a_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.5a: First fixed surface type
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 4.5a=" +
+      meta.section4_first_surface_type.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_5b_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.5b: Second fixed surface type
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 4.5b=" +
+      meta.section4_second_surface_type.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_1_5_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_1.5: Identification template number (only in some messages)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_1_6_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_1.6: Calendar (only in some messages)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_6_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.6: Ensemble type (only for ensemble templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_9_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.9: Probability type (only for probability templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_10_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.10: Statistical processing (only for time range templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_11_lines(context : Grib2FileContext) -> Array[String] {
+  // -code_table_4.11: Type of time intervals (only for time range templates)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
   }
   lines
 }
