@@ -936,6 +936,119 @@ pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
+fn code_table_4_0_label(template_id : Int) -> String {
+  match template_id {
+    0 =>
+      "Analysis or forecast at a horizontal level or in a horizontal layer at a point in time"
+    1 => "Individual ensemble forecast"
+    2 => "Derived forecasts from ensemble"
+    5 => "Probability forecasts"
+    6 => "Percentile forecasts"
+    7 => "Analysis or forecast error"
+    8 => "Average, accumulation, or extreme values"
+    9 => "Probability forecasts with time interval"
+    10 => "Percentile forecasts with time interval"
+    11 => "Individual ensemble forecast with time interval"
+    12 => "Derived forecasts from ensemble with time interval"
+    15 => "Spatial cluster analysis"
+    40 => "Analysis or forecast at a horizontal level with JPEG 2000"
+    41 => "Analysis or forecast at a horizontal level with PNG"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_4_0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section4_template.id()
+    let label = code_table_4_0_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 4.0=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 4.0=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_1_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 4.1=" +
+      meta.section4_parameter_category.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_4_2_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 4.2=" +
+      meta.section4_parameter_number.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+fn code_table_4_4_label(time_unit : Int) -> String {
+  match time_unit {
+    0 => "(Minute)"
+    1 => "(Hour)"
+    2 => "(Day)"
+    3 => "(Month)"
+    4 => "(Year)"
+    5 => "(Decade)"
+    6 => "(Normal (30 years))"
+    7 => "(Century)"
+    10 => "(3 hours)"
+    11 => "(6 hours)"
+    12 => "(12 hours)"
+    13 => "(Second)"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_4_4_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section4_time_unit
+    let label = code_table_4_4_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 4.4=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 4.4=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
 fn code_table_3_1_label(template_id : Int) -> String {
   match template_id {
     0 => "Latitude/longitude"

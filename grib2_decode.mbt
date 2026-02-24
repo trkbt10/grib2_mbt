@@ -119,6 +119,9 @@ pub(all) struct Grib2RecordMeta {
   section3_dj_microdeg : Int
   section4_length : Int
   section4_num_coord : Int
+  section4_parameter_category : Int
+  section4_parameter_number : Int
+  section4_time_unit : Int
   section4_process_code : Int
   section4_ens_type : Int
   section4_ens_perturbation_number : Int
@@ -7883,6 +7886,9 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section3_dj_microdeg,
         section4_length: submessage.section4.length,
         section4_num_coord,
+        section4_parameter_category: category,
+        section4_parameter_number: parameter,
+        section4_time_unit: time_unit,
         section4_process_code,
         section4_ens_type,
         section4_ens_perturbation_number,
