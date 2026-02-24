@@ -2835,3 +2835,379 @@ pub fn wgrib2_inv_lines(context : Grib2FileContext) -> Array[String] {
   // -inv: Standard inventory (same as default -s)
   wgrib2_s_lines(context)
 }
+
+///|
+fn nibble_to_hex_char(n : Int) -> Char {
+  if n < 10 {
+    Char::from_int('0'.to_int() + n)
+  } else {
+    Char::from_int('a'.to_int() + n - 10)
+  }
+}
+
+///|
+fn byte_to_hex(b : Int) -> String {
+  let high = (b >> 4) & 0x0F
+  let low = b & 0x0F
+  let high_char = nibble_to_hex_char(high)
+  let low_char = nibble_to_hex_char(low)
+  String::make(1, high_char) + String::make(1, low_char)
+}
+
+///|
+fn bytes_to_hex(bytes : BytesView) -> String {
+  let mut result = "0x"
+  for i in 0..<bytes.length() {
+    // Use same pattern as decode functions: to_uint().reinterpret_as_int()
+    let byte_val = bytes[i].to_uint().reinterpret_as_int()
+    result = result + byte_to_hex(byte_val)
+  }
+  result
+}
+
+///|
+fn crc32_byte(crc : UInt, byte : Int) -> UInt {
+  // CRC-32 polynomial (IEEE 802.3)
+  let poly : UInt = 0xEDB88320
+  let mut c = crc ^ byte.to_uint()
+  for _ in 0..<8 {
+    if (c & 1) != 0 {
+      c = (c >> 1) ^ poly
+    } else {
+      c = c >> 1
+    }
+  }
+  c
+}
+
+///|
+fn compute_crc32(bytes : BytesView) -> UInt {
+  let mut crc : UInt = 0xFFFFFFFF
+  for i in 0..<bytes.length() {
+    crc = crc32_byte(crc, bytes[i].to_int())
+  }
+  crc ^ 0xFFFFFFFF
+}
+
+///|
+fn get_section0_bytes(message : Grib2MessageContext) -> BytesView {
+  // Section 0 is always 16 bytes at the start
+  let start = 0
+  let end = 16
+  message.raw.sub(start~, end~)
+}
+
+///|
+fn get_section1_bytes(message : Grib2MessageContext) -> BytesView {
+  let start = message.section1.start - message.offset
+  let end = message.section1.end_offset() - message.offset
+  message.raw.sub(start~, end~)
+}
+
+///|
+fn get_section_bytes(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+  section_num : Int,
+) -> BytesView? {
+  let frame = match section_num {
+    2 =>
+      match submessage.section2 {
+        Some(f) => f
+        None => return None
+      }
+    3 => submessage.section3
+    4 => submessage.section4
+    5 => submessage.section5
+    6 => submessage.section6
+    7 => submessage.section7
+    _ => return None
+  }
+  let start = frame.start - message.offset
+  let end = frame.end_offset() - message.offset
+  Some(message.raw.sub(start~, end~))
+}
+
+///|
+pub fn wgrib2_0xSec0_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 0: Hex dump of section 0
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for _ in message.submessages {
+      let sec0 = get_section0_bytes(message)
+      let hex = bytes_to_hex(sec0)
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      lines.push(prefix + "Sec0(1..16)=" + hex)
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec1_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 1: Hex dump of section 1
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    let sec1 = get_section1_bytes(message)
+    let hex = bytes_to_hex(sec1)
+    let len = sec1.length()
+    for _ in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      lines.push(prefix + "Sec1(1.." + len.to_string() + ")=" + hex)
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec3_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 3: Hex dump of section 3
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 3) {
+        Some(sec) => {
+          let hex = bytes_to_hex(sec)
+          let len = sec.length()
+          lines.push(prefix + "Sec3(1.." + len.to_string() + ")=" + hex)
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec4_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 4: Hex dump of section 4
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 4) {
+        Some(sec) => {
+          let hex = bytes_to_hex(sec)
+          let len = sec.length()
+          lines.push(prefix + "Sec4(1.." + len.to_string() + ")=" + hex)
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec5_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 5: Hex dump of section 5
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 5) {
+        Some(sec) => {
+          let hex = bytes_to_hex(sec)
+          let len = sec.length()
+          lines.push(prefix + "Sec5(1.." + len.to_string() + ")=" + hex)
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec6_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 6: Hex dump of section 6
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 6) {
+        Some(sec) => {
+          let hex = bytes_to_hex(sec)
+          let len = sec.length()
+          lines.push(prefix + "Sec6(1.." + len.to_string() + ")=" + hex)
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_0xSec7_lines(context : Grib2FileContext) -> Array[String] {
+  // -0xSec 7: Hex dump of section 7
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 7) {
+        Some(sec) => {
+          let hex = bytes_to_hex(sec)
+          let len = sec.length()
+          lines.push(prefix + "Sec7(1.." + len.to_string() + ")=" + hex)
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum0_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 0: CRC checksum of section 0
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    let sec0 = get_section0_bytes(message)
+    let crc = compute_crc32(sec0)
+    for _ in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      lines.push(prefix + "sec0_cksum=" + crc.to_string())
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum1_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 1: CRC checksum of section 1
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    let sec1 = get_section1_bytes(message)
+    let crc = compute_crc32(sec1)
+    for _ in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      lines.push(prefix + "sec1_cksum=" + crc.to_string())
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum3_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 3: CRC checksum of section 3
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 3) {
+        Some(sec) => {
+          let crc = compute_crc32(sec)
+          lines.push(prefix + "sec3_cksum=" + crc.to_string())
+        }
+        None => lines.push(prefix + "sec3_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum4_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 4: CRC checksum of section 4
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 4) {
+        Some(sec) => {
+          let crc = compute_crc32(sec)
+          lines.push(prefix + "sec4_cksum=" + crc.to_string())
+        }
+        None => lines.push(prefix + "sec4_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum5_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 5: CRC checksum of section 5
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 5) {
+        Some(sec) => {
+          let crc = compute_crc32(sec)
+          lines.push(prefix + "sec5_cksum=" + crc.to_string())
+        }
+        None => lines.push(prefix + "sec5_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum6_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 6: CRC checksum of section 6
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 6) {
+        Some(sec) => {
+          let crc = compute_crc32(sec)
+          lines.push(prefix + "sec6_cksum=" + crc.to_string())
+        }
+        None => lines.push(prefix + "sec6_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_checksum7_lines(context : Grib2FileContext) -> Array[String] {
+  // -checksum 7: CRC checksum of section 7
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() + ":" + (message.offset).to_string() + ":"
+      match get_section_bytes(message, submessage, 7) {
+        Some(sec) => {
+          let crc = compute_crc32(sec)
+          lines.push(prefix + "sec7_cksum=" + crc.to_string())
+        }
+        None => lines.push(prefix + "sec7_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}

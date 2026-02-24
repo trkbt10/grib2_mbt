@@ -143,6 +143,22 @@ pub(all) enum Grib2InventoryMode {
   InventoryVerbose
   InventoryCrlf
   InventoryInv
+  // Hex dump options
+  Inventory0xSec0
+  Inventory0xSec1
+  Inventory0xSec3
+  Inventory0xSec4
+  Inventory0xSec5
+  Inventory0xSec6
+  Inventory0xSec7
+  // Checksum options
+  InventoryChecksum0
+  InventoryChecksum1
+  InventoryChecksum3
+  InventoryChecksum4
+  InventoryChecksum5
+  InventoryChecksum6
+  InventoryChecksum7
 } derive(Show)
 
 ///|
@@ -294,6 +310,22 @@ pub fn render_inventory_lines(
     InventoryVerbose => wgrib2_V_lines(context)
     InventoryCrlf => wgrib2_crlf_lines(context)
     InventoryInv => wgrib2_inv_lines(context)
+    // Hex dump options
+    Inventory0xSec0 => wgrib2_0xSec0_lines(context)
+    Inventory0xSec1 => wgrib2_0xSec1_lines(context)
+    Inventory0xSec3 => wgrib2_0xSec3_lines(context)
+    Inventory0xSec4 => wgrib2_0xSec4_lines(context)
+    Inventory0xSec5 => wgrib2_0xSec5_lines(context)
+    Inventory0xSec6 => wgrib2_0xSec6_lines(context)
+    Inventory0xSec7 => wgrib2_0xSec7_lines(context)
+    // Checksum options
+    InventoryChecksum0 => wgrib2_checksum0_lines(context)
+    InventoryChecksum1 => wgrib2_checksum1_lines(context)
+    InventoryChecksum3 => wgrib2_checksum3_lines(context)
+    InventoryChecksum4 => wgrib2_checksum4_lines(context)
+    InventoryChecksum5 => wgrib2_checksum5_lines(context)
+    InventoryChecksum6 => wgrib2_checksum6_lines(context)
+    InventoryChecksum7 => wgrib2_checksum7_lines(context)
   }
 }
 
