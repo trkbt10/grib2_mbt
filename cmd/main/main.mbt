@@ -56,6 +56,9 @@ fn print_usage() -> Unit {
   println("  -code_table_4.3  print process type (code table 4.3)")
   println("  -code_table_4.4  print unit of time range (code table 4.4)")
   println("  -code_table_5.0  print data representation template (code table 5.0)")
+  println("  -flag_table_3.3  print resolution and component flags")
+  println("  -flag_table_3.4  print scanning mode")
+  println("  -scan   print scanning mode with input/output")
 }
 
 ///|
@@ -237,6 +240,15 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-code_table_5.0" {
     return Some(InventoryCodeTable50)
+  }
+  if args.length() == 1 && args[0] == "-flag_table_3.3" {
+    return Some(InventoryFlagTable33)
+  }
+  if args.length() == 1 && args[0] == "-flag_table_3.4" {
+    return Some(InventoryFlagTable34)
+  }
+  if args.length() == 1 && args[0] == "-scan" {
+    return Some(InventoryScan)
   }
   None
 }
