@@ -85,6 +85,83 @@ test "single file roundtrip: gfswave small" {
 
 ---
 
+## 未実装オプション (142個)
+
+wgrib2 inv カテゴリ 166個のうち、24個が実装済み。残り142個の内訳:
+
+### 優先度 高 - 時刻系 (15個)
+
+基本的なインベントリ機能として需要が高い。
+
+| オプション | 説明 | 状態 |
+|------------|------|------|
+| `-t` | reference time YYYYMMDDHH | [x] |
+| `-T` | reference time YYYYMMDDHHMMSS | [ ] |
+| `-vt` | verf time (YYYYMMDDHH) | [x] |
+| `-VT` | verf time (YYYYMMDDHHMMSS) | [ ] |
+| `-start_ft` | forecast start time | [ ] |
+| `-start_FT` | forecast start time (full) | [ ] |
+| `-end_ft` | forecast end time | [ ] |
+| `-end_FT` | forecast end time (full) | [ ] |
+| `-MM` | reference time MM | [ ] |
+| `-YY` | reference time YYYY | [ ] |
+| `-RT` | type of reference Time | [ ] |
+| `-S` | simple inventory with minutes/seconds | [ ] |
+| `-unix_time` | print unix timestamp | [ ] |
+| `-verf` | inventory using verification time | [ ] |
+| `-Match_inv` | match inventory with D=YYYYMMDDHHmmss | [ ] |
+
+### 優先度 中 - code_table系 (49個)
+
+コードテーブル値の詳細表示。IMPLEMENTATION_CHECKLIST.md の Code Tables 実装と連動。
+
+| カテゴリ | 数 | 例 |
+|----------|----|----|
+| Section 0 | 1 | `-code_table_0.0` |
+| Section 1 | 7 | `-code_table_1.0` ~ `-code_table_1.6` |
+| Section 3 | 10 | `-code_table_3.0`, `-code_table_3.1` など |
+| Section 4 | 25 | `-code_table_4.0` ~ `-code_table_4.242` |
+| Section 5 | 6 | `-code_table_5.0` ~ `-code_table_5.7` |
+
+### 優先度 中 - flag_table系 (5個)
+
+| オプション | 説明 | 状態 |
+|------------|------|------|
+| `-flag_table_3.3` | resolution and component flags | [ ] |
+| `-flag_table_3.4` | scanning mode | [ ] |
+| `-flag_table_3.5` | projection center | [ ] |
+| `-flag_table_3.9` | numbering order of diamonds | [ ] |
+| `-flag_table_3.10` | scanning mode for one diamond | [ ] |
+
+### 優先度 低 - データアクセス系 (8個)
+
+Section 7 のデータデコードが必要。
+
+| オプション | 説明 | 状態 |
+|------------|------|------|
+| `-max` | print maximum value | [ ] |
+| `-min` | print minimum value | [ ] |
+| `-stats` | statistical summary | [ ] |
+| `-ij` | value at grid(X,Y) | [ ] |
+| `-ijlat` | lat,lon,value at grid(X,Y) | [ ] |
+| `-ilat` | lat,lon,value at Xth grid point | [ ] |
+| `-lon` | value at nearest lon/lat | [ ] |
+| `-nlons` | number of longitudes per latitude | [ ] |
+
+### 優先度 低 - JMA専用 (3個)
+
+| オプション | 説明 | 状態 |
+|------------|------|------|
+| `-JMA` | inventory for JMA locally defined PDT | [ ] |
+| `-JMA_Nb` | value of JMA Nb | [ ] |
+| `-JMA_Nr` | value of JMA Nr | [ ] |
+
+### 優先度 低 - その他 (62個)
+
+特殊用途、GrADS互換、低レベルアクセスなど。
+
+---
+
 ## 関連ドキュメント
 
 | ドキュメント | 役割 |

@@ -293,6 +293,27 @@ pub fn wgrib2_ftime_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+pub fn wgrib2_t_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "d=" + meta.reference_time)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_vt_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // TODO: add forecast_time to reference_time for proper verification time
+    lines.push(format_prefix(meta) + "vt=" + meta.reference_time)
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_n_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
