@@ -111,12 +111,19 @@ test "single file roundtrip: gfswave small" {
 | `-code_table_4.4` | [x] | [x] |
 | `-code_table_5.0` | [x] | [x] |
 | `-code_table_6.0` | [x] | [x] |
+| `-flag_table_3.3` | [x] | [x] |
+| `-flag_table_3.4` | [x] | [x] |
+| `-scan` | [x] | [x] |
+| `-ext_name` | [x] | [x] |
+| `-full_name` | [x] | [x] |
+| `-lev0` | [x] | [x] |
+| `-cyclic` | [x] | [x] |
 
 ---
 
-## 未実装オプション (113個)
+## 未実装オプション (106個)
 
-wgrib2 inv カテゴリ 166個のうち、53個が実装済み。残り113個の内訳:
+wgrib2 inv カテゴリ 166個のうち、60個が実装済み。残り106個の内訳:
 
 ### 優先度 高 - 時刻系 (残り1個)
 
@@ -153,12 +160,12 @@ wgrib2 inv カテゴリ 166個のうち、53個が実装済み。残り113個の
 | Section 5 | 6 | 1 | `-code_table_5.0` ✓ |
 | Section 6 | - | 1 | `-code_table_6.0` ✓ |
 
-### 優先度 中 - flag_table系 (5個)
+### 優先度 中 - flag_table系 (5個のうち2個実装済み)
 
 | オプション | 説明 | 状態 |
 |------------|------|------|
-| `-flag_table_3.3` | resolution and component flags | [ ] |
-| `-flag_table_3.4` | scanning mode | [ ] |
+| `-flag_table_3.3` | resolution and component flags | [x] |
+| `-flag_table_3.4` | scanning mode | [x] |
 | `-flag_table_3.5` | projection center | [ ] |
 | `-flag_table_3.9` | numbering order of diamonds | [ ] |
 | `-flag_table_3.10` | scanning mode for one diamond | [ ] |
