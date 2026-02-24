@@ -156,6 +156,12 @@ fn print_usage() -> Unit {
   println("  -max    print maximum data value")
   println("  -stats  print data statistics (ndata, undef, mean, min, max)")
   println("  -nlons  print number of longitudes for each latitude")
+  println("  -ij X Y  print value at grid point (X,Y)")
+  println("  -ijlat X Y  print lat,lon,value at grid point (X,Y)")
+  println("  -ilat X  print lat,lon,value at Xth grid point")
+  println("  -lon X Y  print value at nearest grid point to lon=X lat=Y")
+  println("  -ll2ij X Y  convert lon=X lat=Y to grid indices (i,j)")
+  println("  -ll2i X Y  convert lon=X lat=Y to linear index")
 }
 
 ///|
@@ -169,6 +175,15 @@ fn print_lines(lines : Array[String]) -> Unit {
 fn parse_int_option(s : String) -> Int? {
   try {
     Some(@strconv.parse_int!(s))
+  } catch {
+    _ => None
+  }
+}
+
+///|
+fn parse_double_option(s : String) -> Double? {
+  try {
+    Some(@strconv.parse_double!(s))
   } catch {
     _ => None
   }
@@ -628,6 +643,43 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-nlons" {
     return Some(InventoryNlons)
+  }
+  // Position/location options
+  if args.length() == 3 && args[0] == "-ij" {
+    match (parse_int_option(args[1]), parse_int_option(args[2])) {
+      (Some(i), Some(j)) => return Some(InventoryIJ(i, j))
+      _ => ()
+    }
+  }
+  if args.length() == 3 && args[0] == "-ijlat" {
+    match (parse_int_option(args[1]), parse_int_option(args[2])) {
+      (Some(i), Some(j)) => return Some(InventoryIJLat(i, j))
+      _ => ()
+    }
+  }
+  if args.length() == 2 && args[0] == "-ilat" {
+    match parse_int_option(args[1]) {
+      Some(idx) => return Some(InventoryILat(idx))
+      _ => ()
+    }
+  }
+  if args.length() == 3 && args[0] == "-lon" {
+    match (parse_double_option(args[1]), parse_double_option(args[2])) {
+      (Some(lon), Some(lat)) => return Some(InventoryLon(lon, lat))
+      _ => ()
+    }
+  }
+  if args.length() == 3 && args[0] == "-ll2ij" {
+    match (parse_double_option(args[1]), parse_double_option(args[2])) {
+      (Some(lon), Some(lat)) => return Some(InventoryLL2IJ(lon, lat))
+      _ => ()
+    }
+  }
+  if args.length() == 3 && args[0] == "-ll2i" {
+    match (parse_double_option(args[1]), parse_double_option(args[2])) {
+      (Some(lon), Some(lat)) => return Some(InventoryLL2I(lon, lat))
+      _ => ()
+    }
   }
   // Hex dump options
   if args.length() == 2 && args[0] == "-0xSec" && args[1] == "0" {

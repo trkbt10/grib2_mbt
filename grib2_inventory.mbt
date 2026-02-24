@@ -3665,3 +3665,496 @@ pub fn wgrib2_nlons_lines(context : Grib2FileContext) -> Array[String] {
   }
   lines
 }
+
+///|
+/// Calculate lat/lon from grid indices (i, j) for a regular lat/lon grid.
+/// Uses wgrib2's output convention where j=1 is the southernmost latitude.
+/// i: 1..ni, j: 1..nj
+/// Returns (lon, lat) in degrees.
+fn grid_ij_to_latlon(
+  meta : Grib2RecordMeta,
+  i : Int,
+  j : Int,
+) -> (Double, Double)? {
+  let ni = meta.section3_ni
+  let nj = meta.section3_nj
+  if i < 1 || i > ni || j < 1 || j > nj {
+    return None
+  }
+  // Get grid parameters (in microdegrees)
+  let lat1 = meta.section3_lat1_microdeg.to_double() / 1000000.0
+  let lon1 = meta.section3_lon1_microdeg.to_double() / 1000000.0
+  let di = meta.section3_di_microdeg.to_double() / 1000000.0
+  let dj = meta.section3_dj_microdeg.to_double() / 1000000.0
+  let scan = meta.section3_scanning_mode
+  // wgrib2 uses output convention WE:SN (j=1 is south)
+  // For input WE:NS (scan bit 2 = 0), flip j coordinate
+  let j_data = if (scan & 0x40) == 0 { nj - j + 1 } else { j }
+  // Scanning mode bit 1: 0 = +i direction (W to E), 1 = -i direction
+  // Scanning mode bit 2: 0 = -j direction (N to S), 1 = +j direction
+  let i_inc = if (scan & 0x80) == 0 { di } else { -di }
+  let j_inc = if (scan & 0x40) == 0 { -dj } else { dj }
+  let lon = lon1 + (i - 1).to_double() * i_inc
+  let lat = lat1 + (j_data - 1).to_double() * j_inc
+  Some((lon, lat))
+}
+
+///|
+/// Convert lat/lon to grid indices (i, j) for a regular lat/lon grid.
+/// Uses wgrib2's output convention where j=1 is the southernmost latitude.
+/// Returns (i, j) where i: 1..ni, j: 1..nj, or None if outside grid.
+fn latlon_to_grid_ij(
+  meta : Grib2RecordMeta,
+  lon : Double,
+  lat : Double,
+) -> (Int, Int)? {
+  let ni = meta.section3_ni
+  let nj = meta.section3_nj
+  if ni <= 0 || nj <= 0 {
+    return None
+  }
+  let lat1 = meta.section3_lat1_microdeg.to_double() / 1000000.0
+  let lon1 = meta.section3_lon1_microdeg.to_double() / 1000000.0
+  let di = meta.section3_di_microdeg.to_double() / 1000000.0
+  let dj = meta.section3_dj_microdeg.to_double() / 1000000.0
+  let scan = meta.section3_scanning_mode
+  let i_inc = if (scan & 0x80) == 0 { di } else { -di }
+  let j_inc = if (scan & 0x40) == 0 { -dj } else { dj }
+  // Calculate grid indices (in data coordinates)
+  let i_float = (lon - lon1) / i_inc + 1.0
+  let j_data_float = (lat - lat1) / j_inc + 1.0
+  // Round to nearest integer
+  let i = (i_float + 0.5).to_int()
+  let j_data = (j_data_float + 0.5).to_int()
+  // Convert data j to wgrib2 output j (flip for NS input)
+  let j = if (scan & 0x40) == 0 { nj - j_data + 1 } else { j_data }
+  if i < 1 || i > ni || j < 1 || j > nj {
+    return None
+  }
+  Some((i, j))
+}
+
+///|
+/// Get grid index from (i, j) coordinates.
+/// Uses wgrib2's output convention where j=1 is the southernmost latitude.
+/// For row-major scanning (most common): index = (j_data-1) * ni + (i-1)
+fn grid_ij_to_index(meta : Grib2RecordMeta, i : Int, j : Int) -> Int? {
+  let ni = meta.section3_ni
+  let nj = meta.section3_nj
+  if i < 1 || i > ni || j < 1 || j > nj {
+    return None
+  }
+  let scan = meta.section3_scanning_mode
+  // wgrib2 uses output convention WE:SN (j=1 is south)
+  // For input WE:NS (scan bit 2 = 0), flip j coordinate to get data index
+  let j_data = if (scan & 0x40) == 0 { nj - j + 1 } else { j }
+  // Bit 4 (0x10): 0 = row-major (i varies fastest), 1 = column-major
+  if (scan & 0x10) == 0 {
+    // Row-major: index = (j_data-1) * ni + (i-1)
+    Some((j_data - 1) * ni + (i - 1))
+  } else {
+    // Column-major: index = (i-1) * nj + (j_data-1)
+    Some((i - 1) * nj + (j_data - 1))
+  }
+}
+
+///|
+/// Format a value for output like wgrib2.
+/// Uses up to 6 significant figures, removes trailing zeros.
+fn format_grid_value(v : Double) -> String {
+  if is_nan(v) || v > 9.99e19 {
+    return "9.999e+20"
+  }
+  // For very large or very small values, use scientific notation
+  let abs_v = if v < 0.0 { -v } else { v }
+  if abs_v >= 1.0e10 || (abs_v < 1.0e-4 && abs_v != 0.0) {
+    // Scientific notation
+    return format_scientific(v)
+  }
+  // Round to 6 significant figures
+  let formatted = format_with_precision(v, 6)
+  formatted
+}
+
+///|
+/// Format number with N significant figures, removing trailing zeros.
+fn format_with_precision(v : Double, sig_figs : Int) -> String {
+  if v == 0.0 {
+    return "0"
+  }
+  let sign = if v < 0.0 { "-" } else { "" }
+  let abs_v = if v < 0.0 { -v } else { v }
+  // Calculate the order of magnitude
+  let mut order = 0
+  let mut temp = abs_v
+  if temp >= 10.0 {
+    while temp >= 10.0 {
+      temp = temp / 10.0
+      order += 1
+    }
+  } else if temp < 1.0 && temp > 0.0 {
+    while temp < 1.0 {
+      temp = temp * 10.0
+      order -= 1
+    }
+  }
+  // Calculate decimal places needed
+  let decimal_places = sig_figs - order - 1
+  if decimal_places <= 0 {
+    // Integer output
+    let rounded = round_to_nearest(abs_v)
+    return sign + rounded.to_int().to_string()
+  }
+  // Format with decimal places
+  let multiplier = pow10_positive(decimal_places)
+  let rounded = round_to_nearest(abs_v * multiplier) / multiplier
+  let int_part = rounded.to_int()
+  let frac_part = (rounded - int_part.to_double()) * multiplier
+  let frac_int = round_to_nearest(frac_part).to_int()
+  if frac_int == 0 {
+    return sign + int_part.to_string()
+  }
+  // Format fraction with leading zeros
+  let mut frac_str = frac_int.to_string()
+  while frac_str.length() < decimal_places {
+    frac_str = "0" + frac_str
+  }
+  // Remove trailing zeros
+  while frac_str.length() > 1 && frac_str[frac_str.length() - 1] == '0' {
+    frac_str = frac_str.substring(end=frac_str.length() - 1)
+  }
+  sign + int_part.to_string() + "." + frac_str
+}
+
+///|
+fn round_to_nearest(v : Double) -> Double {
+  let floor_val = v.to_int().to_double()
+  if v - floor_val >= 0.5 {
+    floor_val + 1.0
+  } else {
+    floor_val
+  }
+}
+
+///|
+fn pow10_positive(n : Int) -> Double {
+  let mut result = 1.0
+  for i = 0; i < n; i = i + 1 {
+    result = result * 10.0
+  }
+  result
+}
+
+///|
+fn format_scientific(v : Double) -> String {
+  if v == 0.0 {
+    return "0"
+  }
+  let sign = if v < 0.0 { "-" } else { "" }
+  let abs_v = if v < 0.0 { -v } else { v }
+  // Find exponent
+  let mut exp = 0
+  let mut mantissa = abs_v
+  if mantissa >= 10.0 {
+    while mantissa >= 10.0 {
+      mantissa = mantissa / 10.0
+      exp += 1
+    }
+  } else if mantissa < 1.0 {
+    while mantissa < 1.0 {
+      mantissa = mantissa * 10.0
+      exp -= 1
+    }
+  }
+  // Format mantissa with 5 decimal places (6 sig figs total)
+  let multiplier = 100000.0
+  let rounded = round_to_nearest(mantissa * multiplier) / multiplier
+  let int_part = rounded.to_int()
+  let frac_part = round_to_nearest((rounded - int_part.to_double()) * multiplier).to_int()
+  let mut frac_str = frac_part.to_string()
+  while frac_str.length() < 5 {
+    frac_str = "0" + frac_str
+  }
+  // Remove trailing zeros
+  while frac_str.length() > 1 && frac_str[frac_str.length() - 1] == '0' {
+    frac_str = frac_str.substring(end=frac_str.length() - 1)
+  }
+  let exp_sign = if exp >= 0 { "+" } else { "-" }
+  let exp_abs = if exp < 0 { -exp } else { exp }
+  let exp_str = if exp_abs < 10 { "0" + exp_abs.to_string() } else { exp_abs.to_string() }
+  sign + int_part.to_string() + "." + frac_str + "e" + exp_sign + exp_str
+}
+
+///|
+pub fn wgrib2_ij_lines(
+  context : Grib2FileContext,
+  i : Int,
+  j : Int,
+) -> Array[String] {
+  // -ij X Y: value of field at grid(X,Y)
+  let lines : Array[String] = []
+  let records = decode_records(context)
+  let mut meta_idx = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      if meta_idx >= records.length() {
+        break
+      }
+      let meta = records[meta_idx]
+      let prefix = format_prefix(meta)
+      match unpack_submessage_data(message, submessage) {
+        Ok(data) => {
+          match grid_ij_to_index(meta, i, j) {
+            Some(idx) =>
+              if idx >= 0 && idx < data.values.length() {
+                lines.push(prefix + "val=" + format_grid_value(data.values[idx]))
+              } else {
+                lines.push(prefix + "val=out_of_range")
+              }
+            None => lines.push(prefix + "val=invalid_ij")
+          }
+        }
+        Err(_) => lines.push(prefix + "val=error")
+      }
+      meta_idx += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_ijlat_lines(
+  context : Grib2FileContext,
+  i : Int,
+  j : Int,
+) -> Array[String] {
+  // -ijlat X Y: lat,lon and grid value at grid(X,Y)
+  let lines : Array[String] = []
+  let records = decode_records(context)
+  let mut meta_idx = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      if meta_idx >= records.length() {
+        break
+      }
+      let meta = records[meta_idx]
+      let prefix = format_prefix(meta)
+      match (grid_ij_to_latlon(meta, i, j), grid_ij_to_index(meta, i, j)) {
+        (Some((lon, lat)), Some(idx)) =>
+          match unpack_submessage_data(message, submessage) {
+            Ok(data) =>
+              if idx >= 0 && idx < data.values.length() {
+                let val_str = format_grid_value(data.values[idx])
+                lines.push(
+                  prefix +
+                  "(" +
+                  i.to_string() +
+                  "," +
+                  j.to_string() +
+                  "),lon=" +
+                  format_coord(lon) +
+                  ",lat=" +
+                  format_coord(lat) +
+                  ",val=" +
+                  val_str,
+                )
+              } else {
+                lines.push(prefix + "out_of_range")
+              }
+            Err(_) => lines.push(prefix + "error")
+          }
+        _ => lines.push(prefix + "invalid_ij")
+      }
+      meta_idx += 1
+    }
+  }
+  lines
+}
+
+///|
+fn format_coord(v : Double) -> String {
+  // Format coordinate with 6 decimal places like wgrib2
+  let int_part = v.to_int()
+  let frac_part = (v - int_part.to_double()).abs() * 1000000.0
+  let frac_int = frac_part.to_int()
+  let frac_str = frac_int.to_string()
+  let padding = "0".repeat(6 - frac_str.length())
+  if v < 0.0 && int_part == 0 {
+    "-0." + padding + frac_str
+  } else {
+    int_part.to_string() + "." + padding + frac_str
+  }
+}
+
+///|
+pub fn wgrib2_ilat_lines(context : Grib2FileContext, idx : Int) -> Array[String] {
+  // -ilat X: lat,lon and grid value at Xth grid point (1-based, output coordinates)
+  let lines : Array[String] = []
+  let records = decode_records(context)
+  let mut meta_idx = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      if meta_idx >= records.length() {
+        break
+      }
+      let meta = records[meta_idx]
+      let prefix = format_prefix(meta)
+      let ni = meta.section3_ni
+      let out_idx = idx - 1 // Convert 1-based to 0-based output index
+      if ni > 0 && out_idx >= 0 {
+        // Convert output linear index to (i, j) in output coordinates
+        let j = out_idx / ni + 1
+        let i = out_idx % ni + 1
+        // Get data index using grid_ij_to_index (handles coordinate conversion)
+        match (grid_ij_to_latlon(meta, i, j), grid_ij_to_index(meta, i, j), unpack_submessage_data(message, submessage)) {
+          (Some((lon, lat)), Some(data_idx), Ok(data)) =>
+            if data_idx >= 0 && data_idx < data.values.length() {
+              let val_str = format_grid_value(data.values[data_idx])
+              lines.push(
+                prefix +
+                "grid pt " +
+                idx.to_string() +
+                ",lon=" +
+                format_coord(lon) +
+                ",lat=" +
+                format_coord(lat) +
+                ",val=" +
+                val_str,
+              )
+            } else {
+              lines.push(prefix + "out_of_range")
+            }
+          _ => lines.push(prefix + "error")
+        }
+      } else {
+        lines.push(prefix + "invalid_index")
+      }
+      meta_idx += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_lon_lines(
+  context : Grib2FileContext,
+  lon : Double,
+  lat : Double,
+) -> Array[String] {
+  // -lon X Y: value at grid point nearest lon=X lat=Y
+  let lines : Array[String] = []
+  let records = decode_records(context)
+  let mut meta_idx = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      if meta_idx >= records.length() {
+        break
+      }
+      let meta = records[meta_idx]
+      let prefix = format_prefix(meta)
+      match latlon_to_grid_ij(meta, lon, lat) {
+        Some((i, j)) =>
+          match (grid_ij_to_index(meta, i, j), unpack_submessage_data(message, submessage)) {
+            (Some(idx), Ok(data)) =>
+              if idx >= 0 && idx < data.values.length() {
+                let val_str = format_grid_value(data.values[idx])
+                // Get the actual lat/lon of the grid point
+                match grid_ij_to_latlon(meta, i, j) {
+                  Some((actual_lon, actual_lat)) =>
+                    lines.push(
+                      prefix +
+                      "lon=" +
+                      format_coord(actual_lon) +
+                      ",lat=" +
+                      format_coord(actual_lat) +
+                      ",val=" +
+                      val_str,
+                    )
+                  None => lines.push(prefix + "error")
+                }
+              } else {
+                lines.push(prefix + "out_of_range")
+              }
+            _ => lines.push(prefix + "error")
+          }
+        None => lines.push(prefix + "outside_grid")
+      }
+      meta_idx += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_ll2ij_lines(
+  context : Grib2FileContext,
+  lon : Double,
+  lat : Double,
+) -> Array[String] {
+  // -ll2ij X Y: converts lon-lat to (i,j)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    match latlon_to_grid_ij(meta, lon, lat) {
+      Some((i, j)) =>
+        lines.push(
+          format_prefix(meta) +
+          format_coord(lon) +
+          " " +
+          format_coord(lat) +
+          " -> (" +
+          i.to_string() +
+          ".000000," +
+          j.to_string() +
+          ".000000)",
+        )
+      None =>
+        lines.push(
+          format_prefix(meta) +
+          format_coord(lon) +
+          " " +
+          format_coord(lat) +
+          " -> outside_grid",
+        )
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_ll2i_lines(
+  context : Grib2FileContext,
+  lon : Double,
+  lat : Double,
+) -> Array[String] {
+  // -ll2i X Y: converts lon-lat to output linear index (1-based)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    match latlon_to_grid_ij(meta, lon, lat) {
+      Some((i, j)) => {
+        // Calculate output linear index (1-based)
+        let ni = meta.section3_ni
+        let out_idx = (j - 1) * ni + i
+        lines.push(
+          format_prefix(meta) +
+          format_coord(lon) +
+          " " +
+          format_coord(lat) +
+          " -> (" +
+          out_idx.to_string() +
+          ")",
+        )
+      }
+      None =>
+        lines.push(
+          format_prefix(meta) +
+          format_coord(lon) +
+          " " +
+          format_coord(lat) +
+          " -> outside_grid",
+        )
+    }
+  }
+  lines
+}
