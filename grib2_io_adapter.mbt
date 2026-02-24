@@ -58,6 +58,10 @@ pub(all) enum Grib2InventoryMode {
   InventoryFlagTable33
   InventoryFlagTable34
   InventoryScan
+  InventoryExtName
+  InventoryFullName
+  InventoryLev0
+  InventoryCyclic
 } derive(Show)
 
 ///|
@@ -124,6 +128,10 @@ pub fn render_inventory_lines(
     InventoryFlagTable33 => wgrib2_flag_table_3_3_lines(context)
     InventoryFlagTable34 => wgrib2_flag_table_3_4_lines(context)
     InventoryScan => wgrib2_scan_lines(context)
+    InventoryExtName => wgrib2_ext_name_lines(context)
+    InventoryFullName => wgrib2_full_name_lines(context)
+    InventoryLev0 => wgrib2_lev0_lines(context)
+    InventoryCyclic => wgrib2_cyclic_lines(context)
   }
 }
 

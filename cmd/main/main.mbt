@@ -59,6 +59,10 @@ fn print_usage() -> Unit {
   println("  -flag_table_3.3  print resolution and component flags")
   println("  -flag_table_3.4  print scanning mode")
   println("  -scan   print scanning mode with input/output")
+  println("  -ext_name  print extended parameter name")
+  println("  -full_name  print VAR.LEVEL format")
+  println("  -lev0   print simple level name")
+  println("  -cyclic  print grid cyclic status")
 }
 
 ///|
@@ -249,6 +253,18 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-scan" {
     return Some(InventoryScan)
+  }
+  if args.length() == 1 && args[0] == "-ext_name" {
+    return Some(InventoryExtName)
+  }
+  if args.length() == 1 && args[0] == "-full_name" {
+    return Some(InventoryFullName)
+  }
+  if args.length() == 1 && args[0] == "-lev0" {
+    return Some(InventoryLev0)
+  }
+  if args.length() == 1 && args[0] == "-cyclic" {
+    return Some(InventoryCyclic)
   }
   None
 }
