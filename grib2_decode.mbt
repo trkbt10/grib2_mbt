@@ -7545,6 +7545,46 @@ pub fn decode_level_name(
     }
     return NameKnown("PV=" + pv_label + " (Km^2/kg/s) surface")
   }
+  // Type 105: Hybrid level
+  if l1t == 105 && l2t == 255 {
+    return NameKnown(l1v.to_string() + " hybrid level")
+  }
+  // Type 10: Entire atmosphere (considered as a single layer)
+  if l1t == 10 && l2t == 255 {
+    return NameKnown("entire atmosphere")
+  }
+  // Type 8: Nominal top of atmosphere
+  if l1t == 8 && l2t == 255 {
+    return NameKnown("top of atmosphere")
+  }
+  // Type 200: Entire atmosphere (considered as a single layer)
+  if l1t == 200 && l2t == 255 {
+    return NameKnown("entire atmosphere (considered as a single layer)")
+  }
+  // Type 220: Planetary boundary layer
+  if l1t == 220 && l2t == 255 {
+    return NameKnown("planetary boundary layer")
+  }
+  // Type 2: Cloud base level
+  if l1t == 2 && l2t == 255 {
+    return NameKnown("cloud base")
+  }
+  // Type 3: Cloud top level
+  if l1t == 3 && l2t == 255 {
+    return NameKnown("cloud top")
+  }
+  // Type 6: Maximum wind level
+  if l1t == 6 && l2t == 255 {
+    return NameKnown("max wind")
+  }
+  // Type 7: Tropopause
+  if l1t == 7 && l2t == 255 {
+    return NameKnown("tropopause")
+  }
+  // Type 4: Level of 0°C isotherm
+  if l1t == 4 && l2t == 255 {
+    return NameKnown("0C isotherm")
+  }
   if l2t == 255 {
     return NameUnknown("type" + l1t.to_string())
   }
