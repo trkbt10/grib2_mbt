@@ -159,6 +159,16 @@ pub(all) enum Grib2InventoryMode {
   InventoryChecksum5
   InventoryChecksum6
   InventoryChecksum7
+  // Parameterized byte access options
+  InventoryGetByte(Int, Int, Int) // section, octet, count
+  InventoryGetHex(Int, Int, Int)
+  InventoryGetInt(Int, Int, Int)
+  InventoryGetInt2(Int, Int, Int)
+  InventoryGetIeee(Int, Int, Int)
+  // Data statistics options
+  InventoryMin
+  InventoryMax
+  InventoryStats
 } derive(Show)
 
 ///|
@@ -326,6 +336,21 @@ pub fn render_inventory_lines(
     InventoryChecksum5 => wgrib2_checksum5_lines(context)
     InventoryChecksum6 => wgrib2_checksum6_lines(context)
     InventoryChecksum7 => wgrib2_checksum7_lines(context)
+    // Parameterized byte access options
+    InventoryGetByte(sec, oct, cnt) =>
+      wgrib2_get_byte_lines(context, sec, oct, cnt)
+    InventoryGetHex(sec, oct, cnt) =>
+      wgrib2_get_hex_lines(context, sec, oct, cnt)
+    InventoryGetInt(sec, oct, cnt) =>
+      wgrib2_get_int_lines(context, sec, oct, cnt)
+    InventoryGetInt2(sec, oct, cnt) =>
+      wgrib2_get_int2_lines(context, sec, oct, cnt)
+    InventoryGetIeee(sec, oct, cnt) =>
+      wgrib2_get_ieee_lines(context, sec, oct, cnt)
+    // Data statistics options
+    InventoryMin => wgrib2_min_lines(context)
+    InventoryMax => wgrib2_max_lines(context)
+    InventoryStats => wgrib2_stats_lines(context)
   }
 }
 
