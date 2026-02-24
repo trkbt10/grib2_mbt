@@ -96,15 +96,15 @@ wgrib2 inv カテゴリ 166個のうち、24個が実装済み。残り142個の
 | オプション | 説明 | 状態 |
 |------------|------|------|
 | `-t` | reference time YYYYMMDDHH | [x] |
-| `-T` | reference time YYYYMMDDHHMMSS | [ ] |
+| `-T` | reference time YYYYMMDDHHMMSS | [x] |
 | `-vt` | verf time (YYYYMMDDHH) | [x] |
-| `-VT` | verf time (YYYYMMDDHHMMSS) | [ ] |
+| `-VT` | verf time (YYYYMMDDHHMMSS) | [x] |
 | `-start_ft` | forecast start time | [ ] |
 | `-start_FT` | forecast start time (full) | [ ] |
 | `-end_ft` | forecast end time | [ ] |
 | `-end_FT` | forecast end time (full) | [ ] |
-| `-MM` | reference time MM | [ ] |
-| `-YY` | reference time YYYY | [ ] |
+| `-MM` | reference time MM | [x] |
+| `-YY` | reference time YYYY | [x] |
 | `-RT` | type of reference Time | [ ] |
 | `-S` | simple inventory with minutes/seconds | [ ] |
 | `-unix_time` | print unix timestamp | [ ] |

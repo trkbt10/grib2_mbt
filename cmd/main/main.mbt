@@ -15,7 +15,11 @@ fn print_usage() -> Unit {
   println("  -lev    print level names")
   println("  -ftime  print forecast time labels")
   println("  -t      print reference time YYYYMMDDHH")
+  println("  -T      print reference time YYYYMMDDHHMMSS")
   println("  -vt     print verification time YYYYMMDDHH")
+  println("  -VT     print verification time YYYYMMDDHHMMSS")
+  println("  -YY     print reference year YYYY")
+  println("  -MM     print reference month MM")
   println("  -grid   print grid description lines")
   println("  -pdt    print product definition template numbers")
   println("  -process  print process type (code table 4.3)")
@@ -91,6 +95,18 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-vt" {
     return Some(InventoryVt)
   }
+  if args.length() == 1 && args[0] == "-T" {
+    return Some(InventoryTFull)
+  }
+  if args.length() == 1 && args[0] == "-VT" {
+    return Some(InventoryVtFull)
+  }
+  if args.length() == 1 && args[0] == "-YY" {
+    return Some(InventoryYY)
+  }
+  if args.length() == 1 && args[0] == "-MM" {
+    return Some(InventoryMM)
+  }
   if args.length() == 1 && args[0] == "-grid" {
     return Some(InventoryGrid)
   }
@@ -151,7 +167,7 @@ fn run_cli(args : Array[String]) -> Int {
     None => {
       println("error: unsupported option")
       println(
-        "supported options: -s, -Sec0, -Sec3, -Sec4, -Sec5, -Sec6, -Sec_len, -n, -range, -var, -lev, -ftime, -t, -vt, -grid, -pdt, -process, -ens, -prob, -disc, -center, -subcenter, -packing, -bitmap, -nxny, -npts, -var -lev",
+        "supported options: -s, -Sec0, -Sec3, -Sec4, -Sec5, -Sec6, -Sec_len, -n, -range, -var, -lev, -ftime, -t, -T, -vt, -VT, -YY, -MM, -grid, -pdt, -process, -ens, -prob, -disc, -center, -subcenter, -packing, -bitmap, -nxny, -npts, -var -lev",
       )
       return 3
     }
