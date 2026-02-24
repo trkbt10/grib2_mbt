@@ -930,6 +930,111 @@ pub fn wgrib2_code_table_1_2_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
+fn code_table_1_3_label(status : Int) -> String {
+  match status {
+    0 => "Operational Products"
+    1 => "Operational Test Products"
+    2 => "Research Products"
+    3 => "Re-Analysis Products"
+    4 => "THORPEX Interactive Grand Global Ensemble (TIGGE)"
+    5 => "THORPEX Interactive Grand Global Ensemble (TIGGE) test"
+    6 => "S2S Operational Products"
+    7 => "S2S Test Products"
+    255 => "Missing"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_1_3_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section1_production_status
+    let label = code_table_1_3_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 1.3=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 1.3=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
+fn code_table_1_4_label(data_type : Int) -> String {
+  match data_type {
+    0 => "Analysis Products"
+    1 => "Forecast Products"
+    2 => "Analysis and Forecast Products"
+    3 => "Control Forecast Products"
+    4 => "Perturbed Forecast Products"
+    5 => "Control and Perturbed Forecast Products"
+    6 => "Processed Satellite Observations"
+    7 => "Processed Radar Observations"
+    8 => "Event Probability"
+    255 => "Missing"
+    _ => ""
+  }
+}
+
+///|
+pub fn wgrib2_code_table_1_4_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let value = meta.section1_data_type
+    let label = code_table_1_4_label(value)
+    if label == "" {
+      lines.push(format_prefix(meta) + "code table 1.4=" + value.to_string())
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "code table 1.4=" +
+        value.to_string() +
+        " " +
+        label,
+      )
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_3_0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 3.0=" +
+      meta.section3_gdef_source.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_code_table_6_0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "code table 6.0=" +
+      meta.section6_bitmap_indicator.to_string(),
+    )
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] {
   // Same as -process
   wgrib2_process_lines(context)
