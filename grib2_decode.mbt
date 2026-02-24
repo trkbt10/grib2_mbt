@@ -181,7 +181,10 @@ fn read_u32_be_from(bytes : BytesView, index : Int) -> Int {
 
 ///|
 fn read_i16_be_from(bytes : BytesView, index : Int) -> Int {
-  let unsigned = bytes.unsafe_read_uint16_be(index).to_uint().reinterpret_as_int()
+  let unsigned = bytes
+    .unsafe_read_uint16_be(index)
+    .to_uint()
+    .reinterpret_as_int()
   if unsigned >= 0x8000 {
     unsigned - 0x10000
   } else {
@@ -300,7 +303,10 @@ fn datetime_to_unix(
   // Days in current month
   days += (day - 1).to_int64()
   // Convert to seconds and add time
-  days * 86400L + hour.to_int64() * 3600L + minute.to_int64() * 60L + second.to_int64()
+  days * 86400L +
+  hour.to_int64() * 3600L +
+  minute.to_int64() * 60L +
+  second.to_int64()
 }
 
 ///|
@@ -391,7 +397,12 @@ fn format_ref_time_yyyymmddhhmmss(message : Grib2MessageContext) -> String {
       let hour = section1[16].to_uint().reinterpret_as_int()
       let minute = section1[17].to_uint().reinterpret_as_int()
       let second = section1[18].to_uint().reinterpret_as_int()
-      pad4(year) + pad2(month) + pad2(day) + pad2(hour) + pad2(minute) + pad2(second)
+      pad4(year) +
+      pad2(month) +
+      pad2(day) +
+      pad2(hour) +
+      pad2(minute) +
+      pad2(second)
     }
   }
 }

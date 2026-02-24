@@ -66,6 +66,10 @@ pub fn parse_scanning_mode(Int) -> @section3.ScanningMode
 
 pub fn u16_to_i16(Int) -> Int
 
+pub fn unpack_complex(Bytes, @section5.Grib2DataRepresentationTemplate52, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
+pub fn unpack_complex_spatial(Bytes, @section5.Grib2DataRepresentationTemplate53, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
+
 pub fn unpack_ieee(Bytes, @section5.Grib2DataRepresentationTemplate54, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]
 
 pub fn unpack_jpeg2000(Bytes, @section5.Grib2DataRepresentationTemplate540, Int) -> Result[@section7.UnpackedGridData, @section7.UnpackError]

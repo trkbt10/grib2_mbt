@@ -1,0 +1,347 @@
+1:0:no bitmap
+2:69626:no bitmap
+3:138392:no bitmap
+4:138602:no bitmap
+5:188031:no bitmap
+6:233630:no bitmap
+7:285403:no bitmap
+8:375390:no bitmap
+9:443584:no bitmap
+10:513713:no bitmap
+11:513923:no bitmap
+12:563445:no bitmap
+13:609578:no bitmap
+14:660449:no bitmap
+15:752438:no bitmap
+16:819558:no bitmap
+17:888395:no bitmap
+18:888605:no bitmap
+19:936732:no bitmap
+20:981590:no bitmap
+21:1031703:no bitmap
+22:1122143:no bitmap
+23:1187098:no bitmap
+24:1256315:no bitmap
+25:1256650:no bitmap
+26:1305441:no bitmap
+27:1351219:no bitmap
+28:1404390:no bitmap
+29:1491984:no bitmap
+30:1556321:no bitmap
+31:1623519:no bitmap
+32:1625357:no bitmap
+33:1673176:no bitmap
+34:1719037:no bitmap
+35:1774686:no bitmap
+36:1846702:no bitmap
+37:1847150:no bitmap
+38:1847329:no bitmap
+39:1847990:no bitmap
+40:1942104:no bitmap
+41:2029793:no bitmap
+42:2124812:no bitmap
+43:2189996:no bitmap
+44:2255834:no bitmap
+45:2300518:no bitmap
+46:2313359:no bitmap
+47:2404436:no bitmap
+48:2486503:no bitmap
+49:2564625:no bitmap
+50:2641895:no bitmap
+51:2709570:no bitmap
+52:2709951:no bitmap
+53:2718313:no bitmap
+54:2804499:no bitmap
+55:2804928:no bitmap
+56:2805265:no bitmap
+57:2869939:no bitmap
+58:2936122:no bitmap
+59:2990668:no bitmap
+60:3009291:no bitmap
+61:3086205:no bitmap
+62:3161079:no bitmap
+63:3213884:no bitmap
+64:3266550:no bitmap
+65:3335967:no bitmap
+66:3338395:no bitmap
+67:3355305:no bitmap
+68:3438090:no bitmap
+69:3441111:no bitmap
+70:3441657:no bitmap
+71:3506075:no bitmap
+72:3570621:no bitmap
+73:3635387:no bitmap
+74:3666940:no bitmap
+75:3746546:no bitmap
+76:3821208:no bitmap
+77:3873810:no bitmap
+78:3926343:no bitmap
+79:3996035:no bitmap
+80:3996262:no bitmap
+81:4025266:no bitmap
+82:4100803:no bitmap
+83:4108579:no bitmap
+84:4109394:no bitmap
+85:4174432:no bitmap
+86:4239129:no bitmap
+87:4311639:no bitmap
+88:4352794:no bitmap
+89:4435276:no bitmap
+90:4510647:no bitmap
+91:4564026:no bitmap
+92:4618631:no bitmap
+93:4691036:no bitmap
+94:4691321:no bitmap
+95:4727748:no bitmap
+96:4805976:no bitmap
+97:4816938:no bitmap
+98:4818183:no bitmap
+99:4883331:no bitmap
+100:4947282:no bitmap
+101:5021816:no bitmap
+102:5067106:no bitmap
+103:5151791:no bitmap
+104:5227622:no bitmap
+105:5281422:no bitmap
+106:5337436:no bitmap
+107:5411875:no bitmap
+108:5412213:no bitmap
+109:5448659:no bitmap
+110:5508494:no bitmap
+111:5521790:no bitmap
+112:5523687:no bitmap
+113:5588222:no bitmap
+114:5652194:no bitmap
+115:5726732:no bitmap
+116:5771668:no bitmap
+117:5857434:no bitmap
+118:5933127:no bitmap
+119:5986660:no bitmap
+120:6042849:no bitmap
+121:6117257:no bitmap
+122:6117821:no bitmap
+123:6158921:no bitmap
+124:6200718:no bitmap
+125:6216073:no bitmap
+126:6218645:no bitmap
+127:6290653:no bitmap
+128:6354524:no bitmap
+129:6428845:no bitmap
+130:6472573:no bitmap
+131:6558922:no bitmap
+132:6633852:no bitmap
+133:6686605:no bitmap
+134:6741807:no bitmap
+135:6814922:no bitmap
+136:6816176:no bitmap
+137:6856398:no bitmap
+138:6877420:no bitmap
+139:6894688:no bitmap
+140:6898066:no bitmap
+141:6969147:no bitmap
+142:7032793:no bitmap
+143:7106242:no bitmap
+144:7149012:no bitmap
+145:7235657:no bitmap
+146:7309972:no bitmap
+147:7361787:no bitmap
+148:7415871:no bitmap
+149:7487566:no bitmap
+150:7491232:no bitmap
+151:7533309:no bitmap
+152:7556249:no bitmap
+153:7574969:no bitmap
+154:7579144:no bitmap
+155:7649587:no bitmap
+156:7713035:no bitmap
+157:7785658:no bitmap
+158:7827392:no bitmap
+159:7914466:no bitmap
+160:7996251:no bitmap
+161:8047460:no bitmap
+162:8100036:no bitmap
+163:8170301:no bitmap
+164:8177914:no bitmap
+165:8219090:no bitmap
+166:8221845:no bitmap
+167:8242039:no bitmap
+168:8247795:no bitmap
+169:8317800:no bitmap
+170:8381536:no bitmap
+171:8454160:no bitmap
+172:8494953:no bitmap
+173:8582304:no bitmap
+174:8663530:no bitmap
+175:8714213:no bitmap
+176:8766476:no bitmap
+177:8835886:no bitmap
+178:8846456:no bitmap
+179:8884956:no bitmap
+180:8890958:no bitmap
+181:8910790:no bitmap
+182:8916720:no bitmap
+183:8989475:no bitmap
+184:9054033:no bitmap
+185:9126822:no bitmap
+186:9164460:no bitmap
+187:9252200:no bitmap
+188:9333009:no bitmap
+189:9383495:no bitmap
+190:9435235:no bitmap
+191:9504417:no bitmap
+192:9515223:no bitmap
+193:9547962:no bitmap
+194:9555320:no bitmap
+195:9571258:no bitmap
+196:9575861:no bitmap
+197:9646363:no bitmap
+198:9712033:no bitmap
+199:9785585:no bitmap
+200:9822031:no bitmap
+201:9910586:no bitmap
+202:9991167:no bitmap
+203:10068433:no bitmap
+204:10147319:no bitmap
+205:10216988:no bitmap
+206:10229154:no bitmap
+207:10259738:no bitmap
+208:10268335:no bitmap
+209:10286218:no bitmap
+210:10290883:no bitmap
+211:10361744:no bitmap
+212:10428789:no bitmap
+213:10503155:no bitmap
+214:10539514:no bitmap
+215:10628705:no bitmap
+216:10709217:no bitmap
+217:10786559:no bitmap
+218:10865708:no bitmap
+219:10935750:no bitmap
+220:10951375:no bitmap
+221:10982911:no bitmap
+222:10993619:no bitmap
+223:11011016:no bitmap
+224:11016676:no bitmap
+225:11088453:no bitmap
+226:11157043:no bitmap
+227:11231908:no bitmap
+228:11269778:no bitmap
+229:11359781:no bitmap
+230:11440533:no bitmap
+231:11518592:no bitmap
+232:11598084:no bitmap
+233:11669298:no bitmap
+234:11689738:no bitmap
+235:11720668:no bitmap
+236:11733897:no bitmap
+237:11751401:no bitmap
+238:11757718:no bitmap
+239:11830618:no bitmap
+240:11901260:no bitmap
+241:11976660:no bitmap
+242:12018549:no bitmap
+243:12108756:no bitmap
+244:12189137:no bitmap
+245:12267583:no bitmap
+246:12347543:no bitmap
+247:12419614:no bitmap
+248:12446527:no bitmap
+249:12477062:no bitmap
+250:12493807:no bitmap
+251:12513086:no bitmap
+252:12519380:no bitmap
+253:12593800:no bitmap
+254:12666121:no bitmap
+255:12741048:no bitmap
+256:12788330:no bitmap
+257:12878527:no bitmap
+258:12958719:no bitmap
+259:13037552:no bitmap
+260:13118110:no bitmap
+261:13190948:no bitmap
+262:13224615:no bitmap
+263:13254033:no bitmap
+264:13276152:no bitmap
+265:13292726:no bitmap
+266:13302439:bitmap 43089 undef pts
+267:13327048:bitmap 43089 undef pts
+268:13351935:bitmap 43089 undef pts
+269:13377058:bitmap 43089 undef pts
+270:13402039:bitmap 43089 undef pts
+271:13425640:no bitmap
+272:13435933:bitmap 14870 undef pts
+273:13499424:bitmap 14870 undef pts
+274:13570343:bitmap 14870 undef pts
+275:13642525:bitmap 12443 undef pts
+276:13709026:bitmap 12443 undef pts
+277:13782934:bitmap 12443 undef pts
+278:13858158:bitmap 10941 undef pts
+279:13926617:bitmap 10941 undef pts
+280:14002144:bitmap 10941 undef pts
+281:14079044:bitmap 9110 undef pts
+282:14149968:bitmap 9110 undef pts
+283:14227476:bitmap 9110 undef pts
+284:14306803:bitmap 157 undef pts
+285:14378541:bitmap 157 undef pts
+286:14437096:bitmap 157 undef pts
+287:14497100:no bitmap
+288:14569110:no bitmap
+289:14638785:no bitmap
+290:14740898:no bitmap
+291:14820343:no bitmap
+292:14901394:no bitmap
+293:14973488:no bitmap
+294:15044914:no bitmap
+295:15148099:no bitmap
+296:15226842:no bitmap
+297:15307223:no bitmap
+298:15379800:no bitmap
+299:15453184:no bitmap
+300:15557618:no bitmap
+301:15636152:no bitmap
+302:15716345:no bitmap
+303:15789594:no bitmap
+304:15864212:no bitmap
+305:15969879:no bitmap
+306:16048615:no bitmap
+307:16128998:no bitmap
+308:16201972:no bitmap
+309:16277338:no bitmap
+310:16383273:no bitmap
+311:16461972:no bitmap
+312:16542060:bitmap 22907 undef pts
+313:16597570:bitmap 22907 undef pts
+314:16652314:bitmap 22907 undef pts
+315:16711035:bitmap 22907 undef pts
+316:16800228:bitmap 22907 undef pts
+317:16888608:bitmap 22907 undef pts
+318:16928995:bitmap 24315 undef pts
+319:16984068:bitmap 24315 undef pts
+320:17038408:bitmap 24315 undef pts
+321:17096708:bitmap 24315 undef pts
+322:17184170:bitmap 24315 undef pts
+323:17270380:bitmap 24315 undef pts
+324:17310409:bitmap 23300 undef pts
+325:17364120:bitmap 23300 undef pts
+326:17416663:bitmap 23300 undef pts
+327:17471836:bitmap 23300 undef pts
+328:17557869:bitmap 23300 undef pts
+329:17642910:bitmap 23300 undef pts
+330:17682694:bitmap 23279 undef pts
+331:17736593:bitmap 23279 undef pts
+332:17789804:bitmap 23279 undef pts
+333:17845504:bitmap 23279 undef pts
+334:17931974:bitmap 23279 undef pts
+335:18016773:bitmap 23279 undef pts
+336:18057116:bitmap 24640 undef pts
+337:18108703:bitmap 24640 undef pts
+338:18159117:bitmap 24640 undef pts
+339:18210702:bitmap 24640 undef pts
+340:18293055:bitmap 24640 undef pts
+341:18373949:bitmap 24640 undef pts
+342:18412892:bitmap 23865 undef pts
+343:18465142:bitmap 23865 undef pts
+344:18516648:bitmap 23865 undef pts
+345:18569180:bitmap 23865 undef pts
+346:18652847:bitmap 23865 undef pts
+347:18734345:bitmap 23865 undef pts

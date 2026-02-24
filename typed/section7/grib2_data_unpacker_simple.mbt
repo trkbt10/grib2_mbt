@@ -173,7 +173,8 @@ pub fn unpack_simple(
     let packed = reader.read_bits(bits_per_value)
     // GRIB2 formula: Y * 10^D = R + X * 2^E
     // Therefore: Y = (R + X * 2^E) / 10^D
-    let unpacked = (ref_value + packed.to_double() * binary_scale) / decimal_scale
+    let unpacked = (ref_value + packed.to_double() * binary_scale) /
+      decimal_scale
     values.push(unpacked)
   }
   Ok({ values, num_points })
