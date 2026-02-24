@@ -119,6 +119,7 @@ pub(all) struct Grib2RecordMeta {
   section3_lon2_microdeg : Int
   section3_di_microdeg : Int
   section3_dj_microdeg : Int
+  section3_scanning_mode : Int
   section4_length : Int
   section4_num_coord : Int
   section4_parameter_category : Int
@@ -7677,6 +7678,12 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
       } else {
         -1
       }
+      let section3_scanning_mode = if section3_template_id == 0 &&
+        section3.length() >= 72 {
+        section3[71].to_uint().reinterpret_as_int()
+      } else {
+        -1
+      }
       let section4_template_id = if section4.length() >= 9 {
         read_u16_be_from(section4, 7)
       } else {
@@ -7898,6 +7905,7 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         section3_lon2_microdeg,
         section3_di_microdeg,
         section3_dj_microdeg,
+        section3_scanning_mode,
         section4_length: submessage.section4.length,
         section4_num_coord,
         section4_parameter_category: category,

@@ -1035,6 +1035,79 @@ pub fn wgrib2_code_table_6_0_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
+pub fn wgrib2_flag_table_3_3_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "flag table 3.3=" +
+      meta.section3_resolution_flags.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+fn scanning_mode_label(mode : Int) -> String {
+  // Bit 1: i direction (0=positive/+i, 1=negative/-i)
+  // Bit 2: j direction (0=negative/-j, 1=positive/+j)
+  // Bit 3: adjacent points (0=i direction consecutive, 1=j direction consecutive)
+  let i_dir = if (mode & 0x80) != 0 { "-i" } else { "+i" }
+  let j_dir = if (mode & 0x40) != 0 { "+j" } else { "-j" }
+  // Common labels
+  if mode == 0 {
+    "WE:NS"
+  } else if mode == 64 {
+    "WE:SN"
+  } else if mode == 128 {
+    "EW:NS"
+  } else if mode == 192 {
+    "EW:SN"
+  } else {
+    i_dir + ":" + j_dir
+  }
+}
+
+///|
+pub fn wgrib2_flag_table_3_4_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let mode = meta.section3_scanning_mode
+    let label = scanning_mode_label(mode)
+    lines.push(
+      format_prefix(meta) +
+      "flag table 3.4=" +
+      mode.to_string() +
+      " " +
+      label,
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_scan_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let mode = meta.section3_scanning_mode
+    let input_label = scanning_mode_label(mode)
+    // wgrib2 outputs transformed to WE:SN
+    lines.push(
+      format_prefix(meta) +
+      "scan=" +
+      mode.to_string() +
+      " input=" +
+      input_label +
+      " output=WE:SN",
+    )
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] {
   // Same as -process
   wgrib2_process_lines(context)
