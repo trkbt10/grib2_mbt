@@ -132,6 +132,13 @@ fn print_usage() -> Unit {
   println("  -warn_old_g2  print old g2lib warnings")
   println("  -wave_partition  print wave partition")
   println("  -processid  print process identifiers")
+  println("  -ftime2  print forecast time (future replacement)")
+  println("  -geolocation  print geolocation package")
+  println("  -JMA  print JMA locally defined PDT")
+  println("  -JMA_Nb  print JMA Nb value")
+  println("  -JMA_Nr  print JMA Nr value")
+  println("  -reset_delayed_error  clear delayed error flag")
+  println("  -ftn_api_fn0  print Fortran API format")
 }
 
 ///|
@@ -541,6 +548,27 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-processid" {
     return Some(InventoryProcessId)
+  }
+  if args.length() == 1 && args[0] == "-ftime2" {
+    return Some(InventoryFtime2)
+  }
+  if args.length() == 1 && args[0] == "-geolocation" {
+    return Some(InventoryGeolocation)
+  }
+  if args.length() == 1 && args[0] == "-JMA" {
+    return Some(InventoryJMA)
+  }
+  if args.length() == 1 && args[0] == "-JMA_Nb" {
+    return Some(InventoryJMANb)
+  }
+  if args.length() == 1 && args[0] == "-JMA_Nr" {
+    return Some(InventoryJMANr)
+  }
+  if args.length() == 1 && args[0] == "-reset_delayed_error" {
+    return Some(InventoryResetDelayedError)
+  }
+  if args.length() == 1 && args[0] == "-ftn_api_fn0" {
+    return Some(InventoryFtnApiFn0)
   }
   None
 }

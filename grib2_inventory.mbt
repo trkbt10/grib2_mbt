@@ -2672,3 +2672,111 @@ pub fn wgrib2_processid_lines(context : Grib2FileContext) -> Array[String] {
   }
   lines
 }
+
+///|
+pub fn wgrib2_ftime2_lines(context : Grib2FileContext) -> Array[String] {
+  // -ftime2: Same as -ftime (future replacement)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + meta.tail)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_geolocation_lines(context : Grib2FileContext) -> Array[String] {
+  // -geolocation: Package used to get lat/lon of grid points
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "geolocation=not_used")
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_JMA_lines(context : Grib2FileContext) -> Array[String] {
+  // -JMA: JMA locally defined PDT (only for JMA data)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_JMA_Nb_lines(context : Grib2FileContext) -> Array[String] {
+  // -JMA_Nb: JMA Nb value (-1 if not JMA data)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "JMA_Nb=-1")
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_JMA_Nr_lines(context : Grib2FileContext) -> Array[String] {
+  // -JMA_Nr: JMA Nr value (-1 if not JMA data)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "JMA_Nr=-1")
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_reset_delayed_error_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
+  // -reset_delayed_error: Clear reset_delayed_error flag
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+fn pad_ftn(value : Int, width : Int) -> String {
+  // Right-align integer in specified-width field (Fortran I<width> format)
+  let s = value.to_string()
+  let pad_len = width - s.length()
+  let mut result = ""
+  for _ in 0..<pad_len {
+    result = result + " "
+  }
+  result + s
+}
+
+///|
+pub fn wgrib2_ftn_api_fn0_lines(context : Grib2FileContext) -> Array[String] {
+  // -ftn_api_fn0: Fortran API format - n npnts nx ny msg_no submsg
+  // First field uses I11, remaining fields use I12
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  let mut msg_no = 0
+  let mut prev_offset = -1
+  for meta in records {
+    // Track message number (increments when offset changes)
+    if meta.message_offset != prev_offset {
+      msg_no += 1
+      prev_offset = meta.message_offset
+    }
+    let submsg = 1 // Assuming single submessage for simplicity
+    lines.push(
+      format_prefix(meta) +
+      pad_ftn(meta.record_index, 11) +
+      pad_ftn(meta.section3_npts, 12) +
+      pad_ftn(meta.section3_ni, 12) +
+      pad_ftn(meta.section3_nj, 12) +
+      pad_ftn(msg_no, 12) +
+      pad_ftn(submsg, 12),
+    )
+  }
+  lines
+}
