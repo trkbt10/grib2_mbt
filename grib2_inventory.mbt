@@ -1108,6 +1108,93 @@ pub fn wgrib2_scan_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+pub fn wgrib2_ext_name_lines(context : Grib2FileContext) -> Array[String] {
+  // Same as -var
+  wgrib2_var_lines(context)
+}
+
+///|
+fn level_for_full_name(level : String) -> String {
+  // Replace spaces with underscores for full_name format
+  level.replace_all(old=" ", new="_")
+}
+
+///|
+pub fn wgrib2_full_name_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let level = level_for_full_name(meta.level_name.display())
+    lines.push(
+      format_prefix(meta) +
+      meta.parameter_name.display() +
+      "." +
+      level,
+    )
+  }
+  lines
+}
+
+///|
+fn simple_level_label(level_name : String) -> String {
+  // Convert level name to simple form
+  if level_name == "surface" {
+    "sfc"
+  } else if level_name.starts_with("mean sea level") {
+    "msl"
+  } else if level_name.starts_with("tropopause") {
+    "tropopause"
+  } else if level_name.starts_with("top of atmosphere") {
+    "TOA"
+  } else if level_name.ends_with(" mb") {
+    level_name.substring(end=level_name.length() - 3) + " mb"
+  } else if level_name.ends_with(" m above ground") {
+    level_name.substring(end=level_name.length() - 14) + " m above gnd"
+  } else if level_name.ends_with(" in sequence") {
+    // "1 in sequence" -> "_1"
+    "_" + level_name.substring(end=level_name.length() - 12)
+  } else {
+    level_name
+  }
+}
+
+///|
+pub fn wgrib2_lev0_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    let level = meta.level_name.display()
+    let simple = simple_level_label(level)
+    lines.push(format_prefix(meta) + simple)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_cyclic_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Check if grid is cyclic (covers 360 degrees in longitude)
+    // For lat-lon grid, check if (lon2 - lon1) + di >= 360
+    let is_cyclic = if meta.section3_template.id() == 0 &&
+      meta.section3_di_microdeg > 0 {
+      let lon_span = if meta.section3_lon2_microdeg >= meta.section3_lon1_microdeg {
+        meta.section3_lon2_microdeg - meta.section3_lon1_microdeg
+      } else {
+        meta.section3_lon2_microdeg + 360000000 - meta.section3_lon1_microdeg
+      }
+      lon_span + meta.section3_di_microdeg >= 360000000
+    } else {
+      false
+    }
+    let label = if is_cyclic { "cyclic" } else { "not cyclic" }
+    lines.push(format_prefix(meta) + label)
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_code_table_4_3_lines(context : Grib2FileContext) -> Array[String] {
   // Same as -process
   wgrib2_process_lines(context)
