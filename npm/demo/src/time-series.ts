@@ -77,6 +77,56 @@ export function extractForecastHour(record: Grib2Record): number {
   }
 }
 
+function toPressureLevelHpa(scaleFactor: number, scaledValue: number): number {
+  const levelPa = scaledValue * Math.pow(10, -scaleFactor);
+  return levelPa / 100;
+}
+
+function formatPressureLevel(level: number): string {
+  if (!Number.isFinite(level)) {
+    return String(level);
+  }
+  const abs = Math.abs(level);
+  if (abs !== 0 && (abs < 1e-3 || abs >= 1e6)) {
+    return level.toExponential(6).replace(/\.?0+e/, 'e');
+  }
+  return String(Number(level.toFixed(6)));
+}
+
+function samePressureLevel(a: number, b: number): boolean {
+  const diff = Math.abs(a - b);
+  const tol = Math.max(1e-12, Math.max(Math.abs(a), Math.abs(b)) * 1e-9);
+  return diff <= tol;
+}
+
+function buildPressureLevelKey(scaleFactor: number, scaledValue: number): string {
+  return `100:${scaleFactor}:${scaledValue}`;
+}
+
+interface IsobaricLevelSpec {
+  key: string;
+  hpa: number;
+}
+
+function getIsobaricLevelSpec(record: Grib2Record): IsobaricLevelSpec | null {
+  const s4 = record.section4;
+  if (s4.typeOfFirstFixedSurface !== 100) {
+    return null;
+  }
+  const scaledValue = s4.scaledValueOfFirstFixedSurface ?? 0;
+  const scaleFactor = s4.scaleFactorOfFirstFixedSurface ?? 0;
+  return {
+    key: buildPressureLevelKey(scaleFactor, scaledValue),
+    hpa: toPressureLevelHpa(scaleFactor, scaledValue),
+  };
+}
+
+export interface PressureLevelOption {
+  key: string;
+  hpa: number;
+  label: string;
+}
+
 /**
  * TimeSeriesManager: Manages multiple files and their records as a time series.
  */
@@ -115,25 +165,49 @@ export class TimeSeriesManager {
   /**
    * Get all available pressure levels for a parameter.
    */
-  getPressureLevels(parameterName: string): number[] {
-    const levels = new Set<number>();
+  getPressureLevelOptions(parameterName: string): PressureLevelOption[] {
+    const levels = new Map<string, number>();
     for (const file of this.files) {
       for (const record of file.grib2.records()) {
         const s4 = record.section4;
         const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
         if (name !== parameterName) continue;
 
-        // Only isobaric surfaces (type 100)
-        if (s4.typeOfFirstFixedSurface === 100) {
-          const value = s4.scaledValueOfFirstFixedSurface ?? 0;
-          const scale = s4.scaleFactorOfFirstFixedSurface ?? 0;
-          const levelPa = value * Math.pow(10, -scale);
-          const levelHpa = levelPa / 100;
-          levels.add(levelHpa);
-        }
+        const level = getIsobaricLevelSpec(record);
+        if (!level) continue;
+        levels.set(level.key, level.hpa);
       }
     }
-    return Array.from(levels).sort((a, b) => b - a);
+    return Array.from(levels.entries())
+      .map(([key, hpa]) => ({ key, hpa, label: `${formatPressureLevel(hpa)} mb` }))
+      .sort((a, b) => b.hpa - a.hpa);
+  }
+
+  /**
+   * Backward-compatible helper: returns only hPa numeric values.
+   */
+  getPressureLevels(parameterName: string): number[] {
+    return this.getPressureLevelOptions(parameterName).map((v) => v.hpa);
+  }
+
+  /**
+   * Build time series frames for a specific parameter and pressure level key.
+   */
+  buildTimeSeriesByLevelKey(parameterName: string, levelKey: string): TimeSeriesFrame[] {
+    const frames: TimeSeriesFrame[] = [];
+    for (const file of this.files) {
+      for (const record of file.grib2.records()) {
+        const s4 = record.section4;
+        const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
+        if (name !== parameterName) continue;
+        const level = getIsobaricLevelSpec(record);
+        if (!level || level.key !== levelKey) continue;
+        const forecastHour = extractForecastHour(record);
+        frames.push({ forecastHour, record });
+      }
+    }
+    frames.sort((a, b) => a.forecastHour - b.forecastHour);
+    return frames;
   }
 
   /**
@@ -148,15 +222,10 @@ export class TimeSeriesManager {
         const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
         if (name !== parameterName) continue;
 
-        // Check pressure level (type 100 = isobaric)
-        if (s4.typeOfFirstFixedSurface !== 100) continue;
-
-        const value = s4.scaledValueOfFirstFixedSurface ?? 0;
-        const scale = s4.scaleFactorOfFirstFixedSurface ?? 0;
-        const levelPa = value * Math.pow(10, -scale);
-        const levelHpa = levelPa / 100;
-
-        if (levelHpa !== pressureLevel) continue;
+        const level = getIsobaricLevelSpec(record);
+        if (!level) continue;
+        const levelHpa = level.hpa;
+        if (!samePressureLevel(levelHpa, pressureLevel)) continue;
 
         const forecastHour = extractForecastHour(record);
 

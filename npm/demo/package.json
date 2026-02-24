@@ -3,22 +3,29 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "copy-wasm": "cp ../../_build/wasm-gc/release/build/grib2_mbt.wasm public/grib2.wasm",
-    "predev": "npm run copy-wasm",
+    "build:wasm": "cd ../.. && ./scripts/build-wasm.sh",
+    "predev": "npm run build:wasm",
     "dev": "vite",
-    "prebuild": "npm run copy-wasm",
+    "prebuild": "npm run build:wasm",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "smoke-test": "cd ../.. && node ./scripts/smoke-test-wasm.mjs"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.40.0",
     "@vitest/ui": "^2.0.0",
+    "eslint": "^10.0.2",
+    "globals": "^17.3.0",
     "jsdom": "^25.0.0",
     "typescript": "^5.3.0",
+    "typescript-eslint": "^8.56.1",
     "vite": "^5.0.0",
     "vitest": "^2.0.0"
   }

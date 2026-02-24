@@ -18,7 +18,6 @@ import {
   getGridData,
   initBrowser,
   isInitialized,
-  bytesToLatin1,
 } from './grib2-browser';
 
 import type {

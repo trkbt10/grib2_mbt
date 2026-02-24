@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { bytesToLatin1, latin1ToBytes } from './grib2-browser';
+import { bytesToLatin1 } from './grib2-browser';
 
 // WASM-GC with js-string builtins is not fully supported in Node.js
 // These tests require browser environment - run via Playwright E2E

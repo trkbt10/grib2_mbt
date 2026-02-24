@@ -27,7 +27,8 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "build": "cd .. && moon build --target wasm-gc && cp _build/wasm-gc/release/build/lib/lib.wasm npm/grib2.wasm",
-    "test": "node test.js"
+    "build": "cd .. && ./scripts/build-wasm.sh",
+    "check:dts": "cd .. && node ./scripts/check-wasm-dts.mjs",
+    "test": "cd .. && node ./scripts/smoke-test-wasm.mjs"
   }
 }
