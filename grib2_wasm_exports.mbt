@@ -63,69 +63,6 @@ pub fn wasm_get_record_count(handle : Int) -> Int {
 }
 
 ///|
-/// Decode records and return as JSON string.
-/// Returns empty string on error.
-pub fn wasm_decode_records_json(handle : Int) -> String {
-  if handle < 0 || handle >= wasm_contexts.length() {
-    return ""
-  }
-  let context = wasm_contexts[handle]
-  let records = decode_records(context)
-  records_to_json(records)
-}
-
-///|
-/// Render inventory lines.
-/// mode: 0=default, 1=short, 2=sec0, 3=sec3, 4=sec4, 5=sec5, 6=sec6, 7=seclen, 8=n, 9=range, 10=var, 11=lev, 12=ftime, 13=grid, 14=varlev
-pub fn wasm_render_inventory(handle : Int, mode : Int) -> String {
-  if handle < 0 || handle >= wasm_contexts.length() {
-    return ""
-  }
-  let context = wasm_contexts[handle]
-  let inventory_mode = int_to_inventory_mode(mode)
-  let lines = render_inventory_lines(context, inventory_mode)
-  lines_to_json(lines)
-}
-
-///|
-/// Decode a record's grid-point values and return as JSON string.
-/// record_index is 1-based (same as decodeRecords output).
-/// Returns {"error":"..."} on error.
-pub fn wasm_decode_record_grid_json(handle : Int, record_index : Int) -> String {
-  if handle < 0 || handle >= wasm_contexts.length() {
-    return grid_error_to_json(record_index, "invalid handle")
-  }
-  if record_index <= 0 {
-    return grid_error_to_json(record_index, "record_index must be >= 1")
-  }
-  let context = wasm_contexts[handle]
-  let frame = match find_submessage_by_record_index(context, record_index) {
-    Some(frame) => frame
-    None =>
-      return grid_error_to_json(
-        record_index,
-        "record_index out of range: \{record_index}",
-      )
-  }
-  let message = frame.0
-  let submessage = frame.1
-  let unpacked = match unpack_submessage_data(message, submessage) {
-    Ok(v) => v
-    Err(e) => return grid_error_to_json(record_index, unpack_error_message(e))
-  }
-  let section5_template = match
-    decode_submessage_section5(message, submessage) {
-    Ok(s5) => section5_template_id(s5)
-    Err(_) => -1
-  }
-  let has_bitmap = match decode_submessage_section6(message, submessage) {
-    Ok(s6) => s6.bitmap_indicator == 0
-    Err(_) => false
-  }
-  grid_data_to_json(record_index, unpacked, section5_template, has_bitmap)
-}
-
-///|
 fn find_submessage_by_record_index(
   context : Grib2FileContext,
   record_index : Int,
@@ -140,124 +77,6 @@ fn find_submessage_by_record_index(
     }
   }
   None
-}
-
-///|
-fn section5_template_id(section5 : Grib2Section5Decoded) -> Int {
-  match section5.template {
-    DataRepresentationTemplate50(_) => 0
-    DataRepresentationTemplate51(_) => 1
-    DataRepresentationTemplate52(_) => 2
-    DataRepresentationTemplate53(_) => 3
-    DataRepresentationTemplate54(_) => 4
-    DataRepresentationTemplate540(_) => 40
-    DataRepresentationTemplate541(_) => 41
-    DataRepresentationTemplate542(_) => 42
-    DataRepresentationTemplate550(_) => 50
-    DataRepresentationTemplate551(_) => 51
-    DataRepresentationTemplate553(_) => 53
-    DataRepresentationTemplate561(_) => 61
-    DataRepresentationTemplate5200(_) => 200
-    DataRepresentationTemplateUnknown(id, _) => id
-  }
-}
-
-///|
-fn int_to_inventory_mode(mode : Int) -> Grib2InventoryMode {
-  match mode {
-    0 => InventoryDefault
-    1 => InventoryShort
-    2 => InventorySec0
-    3 => InventorySec3
-    4 => InventorySec4
-    5 => InventorySec5
-    6 => InventorySec6
-    7 => InventorySecLen
-    8 => InventoryN
-    9 => InventoryRange
-    10 => InventoryVar
-    11 => InventoryLev
-    12 => InventoryFtime
-    13 => InventoryGrid
-    14 => InventoryVarLev
-    _ => InventoryDefault
-  }
-}
-
-///|
-fn lines_to_json(lines : Array[String]) -> String {
-  let buf = StringBuilder::new()
-  buf.write_char('[')
-  for i, line in lines {
-    if i > 0 {
-      buf.write_char(',')
-    }
-    buf.write_char('"')
-    buf.write_string(escape_json_string(line))
-    buf.write_char('"')
-  }
-  buf.write_char(']')
-  buf.to_string()
-}
-
-///|
-fn grid_error_to_json(record_index : Int, error : String) -> String {
-  let buf = StringBuilder::new()
-  buf.write_char('{')
-  buf.write_string("\"recordIndex\":")
-  buf.write_string(record_index.to_string())
-  buf.write_string(",\"error\":\"")
-  buf.write_string(escape_json_string(error))
-  buf.write_string("\"}")
-  buf.to_string()
-}
-
-///|
-fn double_to_json(value : Double) -> String {
-  if value != value {
-    "null"
-  } else {
-    value.to_string()
-  }
-}
-
-///|
-fn grid_data_to_json(
-  record_index : Int,
-  grid : UnpackedGridData,
-  section5_template : Int,
-  has_bitmap : Bool,
-) -> String {
-  let buf = StringBuilder::new()
-  buf.write_char('{')
-  buf.write_string("\"recordIndex\":")
-  buf.write_string(record_index.to_string())
-  buf.write_string(",\"numPoints\":")
-  buf.write_string(grid.num_points.to_string())
-  buf.write_string(",\"section5Template\":")
-  buf.write_string(section5_template.to_string())
-  buf.write_string(",\"hasBitmap\":")
-  buf.write_string(if has_bitmap { "true" } else { "false" })
-  buf.write_string(",\"values\":")
-  buf.write_char('[')
-  for i, value in grid.values {
-    if i > 0 {
-      buf.write_char(',')
-    }
-    buf.write_string(double_to_json(value))
-  }
-  buf.write_char(']')
-  buf.write_char('}')
-  buf.to_string()
-}
-
-///|
-fn unpack_error_message(err : UnpackError) -> String {
-  match err {
-    InvalidBitsPerValue(msg) => msg
-    InsufficientData(msg) => msg
-    UnsupportedTemplate(msg) => msg
-  }
 }
 
 ///|
@@ -276,65 +95,397 @@ fn escape_json_string(s : String) -> String {
   buf.to_string()
 }
 
+// =============================================================================
+// Section Accessor Functions (JSON)
+// =============================================================================
+
 ///|
-fn records_to_json(records : Array[Grib2RecordMeta]) -> String {
-  let buf = StringBuilder::new()
-  buf.write_char('[')
-  for i, record in records {
-    if i > 0 {
-      buf.write_char(',')
-    }
-    buf.write_string(record_to_json(record))
+/// Get Section 1 data as JSON string.
+/// message_index is 0-based.
+/// Returns {"error":"..."} on error.
+pub fn wasm_get_section1(handle : Int, message_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return section_error_to_json("invalid handle")
   }
-  buf.write_char(']')
+  let context = wasm_contexts[handle]
+  if message_index < 0 || message_index >= context.messages.length() {
+    return section_error_to_json("message_index out of range")
+  }
+  let message = context.messages[message_index]
+  match decode_message_section1(message) {
+    Ok(s1) => section1_to_json(s1)
+    Err(e) => section_error_to_json(e.to_string())
+  }
+}
+
+///|
+/// Get Section 3 data as JSON string.
+/// record_index is 1-based.
+/// Returns {"error":"..."} on error.
+pub fn wasm_get_section3(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return section_error_to_json("invalid handle")
+  }
+  if record_index <= 0 {
+    return section_error_to_json("record_index must be >= 1")
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return section_error_to_json("record_index out of range")
+  }
+  match decode_submessage_section3(frame.0, frame.1) {
+    Ok(s3) => section3_to_json(s3)
+    Err(e) => section_error_to_json(e.to_string())
+  }
+}
+
+///|
+/// Get Section 4 data as JSON string.
+/// record_index is 1-based.
+/// Returns {"error":"..."} on error.
+pub fn wasm_get_section4(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return section_error_to_json("invalid handle")
+  }
+  if record_index <= 0 {
+    return section_error_to_json("record_index must be >= 1")
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return section_error_to_json("record_index out of range")
+  }
+  match decode_submessage_section4(frame.0, frame.1) {
+    Ok(s4) => section4_to_json(s4)
+    Err(e) => section_error_to_json(e.to_string())
+  }
+}
+
+///|
+/// Get Section 5 data as JSON string.
+/// record_index is 1-based.
+/// Returns {"error":"..."} on error.
+pub fn wasm_get_section5(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return section_error_to_json("invalid handle")
+  }
+  if record_index <= 0 {
+    return section_error_to_json("record_index must be >= 1")
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return section_error_to_json("record_index out of range")
+  }
+  match decode_submessage_section5(frame.0, frame.1) {
+    Ok(s5) => section5_to_json(s5)
+    Err(e) => section_error_to_json(e.to_string())
+  }
+}
+
+///|
+/// Get Section 6 data as JSON string.
+/// record_index is 1-based.
+/// Returns {"error":"..."} on error.
+pub fn wasm_get_section6(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return section_error_to_json("invalid handle")
+  }
+  if record_index <= 0 {
+    return section_error_to_json("record_index must be >= 1")
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return section_error_to_json("record_index out of range")
+  }
+  match decode_submessage_section6(frame.0, frame.1) {
+    Ok(s6) => section6_to_json(s6)
+    Err(e) => section_error_to_json(e.to_string())
+  }
+}
+
+///|
+fn section_error_to_json(error : String) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"error\":\"")
+  buf.write_string(escape_json_string(error))
+  buf.write_string("\"}")
   buf.to_string()
 }
 
 ///|
-fn record_to_json(r : Grib2RecordMeta) -> String {
+fn section1_to_json(s1 : Grib2Section1Decoded) -> String {
   let buf = StringBuilder::new()
   buf.write_char('{')
-  buf.write_string("\"recordIndex\":")
-  buf.write_string(r.record_index.to_string())
-  buf.write_string(",\"recordId\":\"")
-  buf.write_string(escape_json_string(r.record_id))
-  buf.write_string("\",\"messageOffset\":")
-  buf.write_string(r.message_offset.to_string())
-  buf.write_string(",\"messageTotalLength\":")
-  buf.write_string(r.message_total_length.to_string())
-  buf.write_string(",\"referenceTime\":\"")
-  buf.write_string(escape_json_string(r.reference_time))
-  buf.write_string("\",\"discipline\":")
-  buf.write_string(r.discipline.to_string())
-  buf.write_string(",\"edition\":")
-  buf.write_string(r.edition.to_string())
-  buf.write_string(",\"parameterName\":\"")
-  buf.write_string(escape_json_string(r.parameter_name.display()))
-  buf.write_string("\",\"levelName\":\"")
-  buf.write_string(escape_json_string(r.level_name.display()))
-  buf.write_string("\",\"section3Template\":")
-  buf.write_string(r.section3_template.id().to_string())
-  buf.write_string(",\"section4Template\":")
-  buf.write_string(r.section4_template.id().to_string())
-  buf.write_string(",\"section5Template\":")
-  buf.write_string(r.section5_template.id().to_string())
-  buf.write_string(",\"section3Ni\":")
-  buf.write_string(r.section3_ni.to_string())
-  buf.write_string(",\"section3Nj\":")
-  buf.write_string(r.section3_nj.to_string())
-  buf.write_string(",\"section3Lat1Microdeg\":")
-  buf.write_string(r.section3_lat1_microdeg.to_string())
-  buf.write_string(",\"section3Lon1Microdeg\":")
-  buf.write_string(r.section3_lon1_microdeg.to_string())
-  buf.write_string(",\"section3Lat2Microdeg\":")
-  buf.write_string(r.section3_lat2_microdeg.to_string())
-  buf.write_string(",\"section3Lon2Microdeg\":")
-  buf.write_string(r.section3_lon2_microdeg.to_string())
-  buf.write_string(",\"section5NumDefinedPoints\":")
-  buf.write_string(r.section5_num_defined_points.to_string())
-  buf.write_string(",\"forecastTail\":\"")
-  buf.write_string(escape_json_string(r.tail))
-  buf.write_string("\"")
+  buf.write_string("\"center\":")
+  buf.write_string(s1.center.to_string())
+  buf.write_string(",\"subcenter\":")
+  buf.write_string(s1.subcenter.to_string())
+  buf.write_string(",\"masterTableVersion\":")
+  buf.write_string(s1.master_table_version.to_string())
+  buf.write_string(",\"localTableVersion\":")
+  buf.write_string(s1.local_table_version.to_string())
+  buf.write_string(",\"significanceOfRefTime\":")
+  buf.write_string(s1.significance_of_reference_time.to_string())
+  buf.write_string(",\"year\":")
+  buf.write_string(s1.reference_year.to_string())
+  buf.write_string(",\"month\":")
+  buf.write_string(s1.reference_month.to_string())
+  buf.write_string(",\"day\":")
+  buf.write_string(s1.reference_day.to_string())
+  buf.write_string(",\"hour\":")
+  buf.write_string(s1.reference_hour.to_string())
+  buf.write_string(",\"minute\":")
+  buf.write_string(s1.reference_minute.to_string())
+  buf.write_string(",\"second\":")
+  buf.write_string(s1.reference_second.to_string())
+  buf.write_string(",\"productionStatus\":")
+  buf.write_string(s1.production_status.to_string())
+  buf.write_string(",\"typeOfData\":")
+  buf.write_string(s1.processed_data_type.to_string())
   buf.write_char('}')
+  buf.to_string()
+}
+
+///|
+fn section3_to_json(s3 : Grib2Section3Decoded) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"gridDefinitionSource\":")
+  buf.write_string(s3.source_of_grid_definition.to_string())
+  buf.write_string(",\"numberOfPoints\":")
+  buf.write_string(s3.number_of_data_points.to_string())
+  // Extract template number and common fields
+  let info = @typed.get_section3_grid_info(s3.template)
+  buf.write_string(",\"template\":")
+  buf.write_string(info.template_id.to_string())
+  if info.ni >= 0 {
+    buf.write_string(",\"ni\":")
+    buf.write_string(info.ni.to_string())
+    buf.write_string(",\"nj\":")
+    buf.write_string(info.nj.to_string())
+    buf.write_string(",\"lat1Microdeg\":")
+    buf.write_string(info.la1.to_string())
+    buf.write_string(",\"lon1Microdeg\":")
+    buf.write_string(info.lo1.to_string())
+    buf.write_string(",\"lat2Microdeg\":")
+    buf.write_string(info.la2.to_string())
+    buf.write_string(",\"lon2Microdeg\":")
+    buf.write_string(info.lo2.to_string())
+    buf.write_string(",\"diMicrodeg\":")
+    buf.write_string(info.di.to_string())
+    buf.write_string(",\"djMicrodeg\":")
+    buf.write_string(info.dj.to_string())
+    buf.write_string(",\"scanMode\":")
+    buf.write_string(info.scan_mode.to_string())
+    buf.write_string(",\"resolutionFlags\":")
+    buf.write_string(info.res_flags.to_string())
+  }
+  buf.write_char('}')
+  buf.to_string()
+}
+
+///|
+fn section4_to_json(s4 : Grib2Section4Decoded) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  // Extract template number and common fields
+  let info = @typed.get_section4_product_info(s4.template)
+  buf.write_string("\"template\":")
+  buf.write_string(info.template_id.to_string())
+  if info.param_cat >= 0 {
+    buf.write_string(",\"parameterCategory\":")
+    buf.write_string(info.param_cat.to_string())
+    buf.write_string(",\"parameterNumber\":")
+    buf.write_string(info.param_num.to_string())
+    buf.write_string(",\"typeOfGeneratingProcess\":")
+    buf.write_string(info.gen_process.to_string())
+    buf.write_string(",\"indicatorOfUnitOfTimeRange\":")
+    buf.write_string(info.time_unit.to_string())
+    buf.write_string(",\"forecastTime\":")
+    buf.write_string(info.forecast_time.to_string())
+    buf.write_string(",\"typeOfFirstFixedSurface\":")
+    buf.write_string(info.first_surface_type.to_string())
+    buf.write_string(",\"scaleFactorOfFirstFixedSurface\":")
+    buf.write_string(info.first_surface_scale.to_string())
+    buf.write_string(",\"scaledValueOfFirstFixedSurface\":")
+    buf.write_string(info.first_surface_value.to_string())
+    buf.write_string(",\"typeOfSecondFixedSurface\":")
+    if info.second_surface_type >= 0 && info.second_surface_type != 255 {
+      buf.write_string(info.second_surface_type.to_string())
+    } else {
+      buf.write_string("null")
+    }
+    buf.write_string(",\"scaleFactorOfSecondFixedSurface\":")
+    if info.second_surface_scale >= 0 {
+      buf.write_string(info.second_surface_scale.to_string())
+    } else {
+      buf.write_string("null")
+    }
+    buf.write_string(",\"scaledValueOfSecondFixedSurface\":")
+    if info.second_surface_value >= 0 {
+      buf.write_string(info.second_surface_value.to_string())
+    } else {
+      buf.write_string("null")
+    }
+    // Optional ensemble fields
+    if info.ensemble_type >= 0 {
+      buf.write_string(",\"ensembleType\":")
+      buf.write_string(info.ensemble_type.to_string())
+    }
+    if info.perturb_num >= 0 {
+      buf.write_string(",\"perturbationNumber\":")
+      buf.write_string(info.perturb_num.to_string())
+    }
+    if info.ensemble_members >= 0 {
+      buf.write_string(",\"numberOfEnsembleMembers\":")
+      buf.write_string(info.ensemble_members.to_string())
+    }
+    if info.prob_type >= 0 {
+      buf.write_string(",\"probabilityType\":")
+      buf.write_string(info.prob_type.to_string())
+    }
+  }
+  buf.write_char('}')
+  buf.to_string()
+}
+
+///|
+fn section5_to_json(s5 : Grib2Section5Decoded) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"numberOfPoints\":")
+  buf.write_string(s5.number_of_data_points.to_string())
+  let info = @typed.get_section5_data_info(s5.template)
+  buf.write_string(",\"template\":")
+  buf.write_string(info.template_id.to_string())
+  if info.reference_value_ieee >= 0 {
+    buf.write_string(",\"referenceValue\":")
+    buf.write_string(ieee_to_float(info.reference_value_ieee).to_string())
+    buf.write_string(",\"binaryScaleFactor\":")
+    buf.write_string(info.binary_scale.to_string())
+    buf.write_string(",\"decimalScaleFactor\":")
+    buf.write_string(info.decimal_scale.to_string())
+    buf.write_string(",\"bitsPerValue\":")
+    buf.write_string(info.bits_per_value.to_string())
+  }
+  buf.write_char('}')
+  buf.to_string()
+}
+
+///|
+fn ieee_to_float(ieee : Int) -> Double {
+  ieee.reinterpret_as_uint().reinterpret_as_float().to_double()
+}
+
+///|
+fn section6_to_json(s6 : Grib2Section6Decoded) -> String {
+  let buf = StringBuilder::new()
+  buf.write_char('{')
+  buf.write_string("\"bitmapIndicator\":")
+  buf.write_string(s6.bitmap_indicator.to_string())
+  buf.write_char('}')
+  buf.to_string()
+}
+
+// =============================================================================
+// Binary Data Transfer (latin1)
+// =============================================================================
+
+///|
+/// Get latitude coordinates as latin1 string (Float32 little-endian bytes).
+/// record_index is 1-based.
+/// Returns empty string on error.
+pub fn wasm_get_latitudes(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return ""
+  }
+  if record_index <= 0 {
+    return ""
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return ""
+  }
+  match decode_submessage_section3(frame.0, frame.1) {
+    Ok(s3) =>
+      match generate_coordinates(s3) {
+        Some(coords) => doubles_to_f32_latin1(coords.latitudes)
+        None => ""
+      }
+    Err(_) => ""
+  }
+}
+
+///|
+/// Get longitude coordinates as latin1 string (Float32 little-endian bytes).
+/// record_index is 1-based.
+/// Returns empty string on error.
+pub fn wasm_get_longitudes(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return ""
+  }
+  if record_index <= 0 {
+    return ""
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return ""
+  }
+  match decode_submessage_section3(frame.0, frame.1) {
+    Ok(s3) =>
+      match generate_coordinates(s3) {
+        Some(coords) => doubles_to_f32_latin1(coords.longitudes)
+        None => ""
+      }
+    Err(_) => ""
+  }
+}
+
+///|
+/// Get grid data as latin1 string (Float32 little-endian bytes).
+/// record_index is 1-based.
+/// Returns empty string on error.
+pub fn wasm_get_grid_data(handle : Int, record_index : Int) -> String {
+  if handle < 0 || handle >= wasm_contexts.length() {
+    return ""
+  }
+  if record_index <= 0 {
+    return ""
+  }
+  let context = wasm_contexts[handle]
+  let frame = match find_submessage_by_record_index(context, record_index) {
+    Some(frame) => frame
+    None => return ""
+  }
+  match unpack_submessage_data(frame.0, frame.1) {
+    Ok(unpacked) => doubles_to_f32_latin1(unpacked.values)
+    Err(_) => ""
+  }
+}
+
+///|
+/// Generate coordinates from Section 3 data.
+fn generate_coordinates(s3 : Grib2Section3Decoded) -> @typed.CoordinateGrid? {
+  @typed.generate_coordinates_from_section3(s3.template)
+}
+
+///|
+/// Convert Double array to latin1 string (each byte -> char code 0-255).
+/// Uses Float32 little-endian encoding.
+fn doubles_to_f32_latin1(values : Array[Double]) -> String {
+  let buf = StringBuilder::new()
+  for value in values {
+    let f32_bits = Float::from_double(value).reinterpret_as_uint()
+    for j in 0..<4 {
+      let byte_val = ((f32_bits >> (j * 8)) & 0xFF).reinterpret_as_int()
+      buf.write_char(Char::from_int(byte_val))
+    }
+  }
   buf.to_string()
 }

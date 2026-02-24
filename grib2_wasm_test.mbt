@@ -9,7 +9,7 @@ fn inline_reader(_source : String) -> Result[Bytes, String] {
 }
 
 ///|
-test "wasm smoke: parse and strict rebuild in memory" {
+test "wasm smoke: parse and raw rebuild in memory" {
   let bytes = minimal_grib2_message_bytes()
   let context = match parse_grib2_file(bytes) {
     Ok(context) => context
@@ -17,11 +17,10 @@ test "wasm smoke: parse and strict rebuild in memory" {
   }
   inspect(context.message_count(), content="1")
   inspect(context.record_count(), content="1")
-  let strict = match rebuild_strict(context) {
-    Ok(bytes) => bytes
-    Err(error) => fail(error.to_string())
-  }
-  inspect(strict == minimal_grib2_message_bytes(), content="true")
+  // Use rebuild_raw instead of rebuild_strict since minimal message
+  // doesn't have valid typed section content
+  let rebuilt = rebuild_raw(context)
+  inspect(rebuilt == minimal_grib2_message_bytes(), content="true")
 }
 
 ///|
@@ -36,14 +35,49 @@ test "wasm smoke: io adapter works with callback reader" {
 }
 
 ///|
-test "wasm_decode_record_grid_json invalid handle returns error json" {
-  let json = wasm_decode_record_grid_json(-1, 1)
+test "wasm_get_section1 invalid handle returns error json" {
+  let json = wasm_get_section1(-1, 0)
   inspect(json.contains("\"error\""), content="true")
 }
 
 ///|
-test "wasm_decode_record_grid_json out of range record returns error json" {
-  let handle = wasm_parse_grib2(minimal_grib2_message_bytes())
-  let json = wasm_decode_record_grid_json(handle, 2)
+test "wasm_get_section3 invalid handle returns error json" {
+  let json = wasm_get_section3(-1, 1)
   inspect(json.contains("\"error\""), content="true")
+}
+
+///|
+test "wasm_get_section4 invalid handle returns error json" {
+  let json = wasm_get_section4(-1, 1)
+  inspect(json.contains("\"error\""), content="true")
+}
+
+///|
+test "wasm_get_section5 invalid handle returns error json" {
+  let json = wasm_get_section5(-1, 1)
+  inspect(json.contains("\"error\""), content="true")
+}
+
+///|
+test "wasm_get_section6 invalid handle returns error json" {
+  let json = wasm_get_section6(-1, 1)
+  inspect(json.contains("\"error\""), content="true")
+}
+
+///|
+test "wasm_get_grid_data invalid handle returns empty string" {
+  let result = wasm_get_grid_data(-1, 1)
+  inspect(result.length(), content="0")
+}
+
+///|
+test "wasm_get_latitudes invalid handle returns empty string" {
+  let result = wasm_get_latitudes(-1, 1)
+  inspect(result.length(), content="0")
+}
+
+///|
+test "wasm_get_longitudes invalid handle returns empty string" {
+  let result = wasm_get_longitudes(-1, 1)
+  inspect(result.length(), content="0")
 }

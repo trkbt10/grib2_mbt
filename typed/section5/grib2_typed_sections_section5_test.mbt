@@ -490,9 +490,10 @@ test "section5 template5200 typed decode and encode roundtrip" {
 
 ///|
 test "section5 unknown template preserves raw payload" {
+  // Use template 9999 which is not a known template
   let section5 : Grib2Section5Decoded = {
     number_of_data_points: 3,
-    template: DataRepresentationTemplateUnknown(200, b"\x99\x88\x77\x66"),
+    template: DataRepresentationTemplateUnknown(9999, b"\x99\x88\x77\x66"),
   }
   let encoded = encode_section5_bytes(section5)
   let decoded = match decode_section5_bytes(encoded) {
@@ -501,7 +502,7 @@ test "section5 unknown template preserves raw payload" {
   }
   match decoded.template {
     DataRepresentationTemplateUnknown(template_number, raw) => {
-      inspect(template_number, content="200")
+      inspect(template_number, content="9999")
       inspect(raw == b"\x99\x88\x77\x66", content="true")
     }
     _ => fail("unknown template was not preserved")
