@@ -131,6 +131,13 @@ pub(all) enum Grib2InventoryMode {
   InventoryWarnOldG2
   InventoryWavePartition
   InventoryProcessId
+  InventoryFtime2
+  InventoryGeolocation
+  InventoryJMA
+  InventoryJMANb
+  InventoryJMANr
+  InventoryResetDelayedError
+  InventoryFtnApiFn0
 } derive(Show)
 
 ///|
@@ -270,6 +277,13 @@ pub fn render_inventory_lines(
     InventoryWarnOldG2 => wgrib2_warn_old_g2_lines(context)
     InventoryWavePartition => wgrib2_wave_partition_lines(context)
     InventoryProcessId => wgrib2_processid_lines(context)
+    InventoryFtime2 => wgrib2_ftime2_lines(context)
+    InventoryGeolocation => wgrib2_geolocation_lines(context)
+    InventoryJMA => wgrib2_JMA_lines(context)
+    InventoryJMANb => wgrib2_JMA_Nb_lines(context)
+    InventoryJMANr => wgrib2_JMA_Nr_lines(context)
+    InventoryResetDelayedError => wgrib2_reset_delayed_error_lines(context)
+    InventoryFtnApiFn0 => wgrib2_ftn_api_fn0_lines(context)
   }
 }
 
