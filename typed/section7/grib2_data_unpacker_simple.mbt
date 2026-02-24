@@ -171,8 +171,9 @@ pub fn unpack_simple(
   let values : Array[Double] = []
   for i = 0; i < num_points; i = i + 1 {
     let packed = reader.read_bits(bits_per_value)
-    // Y = R + (X * 2^E) / 10^D
-    let unpacked = ref_value + packed.to_double() * binary_scale / decimal_scale
+    // GRIB2 formula: Y * 10^D = R + X * 2^E
+    // Therefore: Y = (R + X * 2^E) / 10^D
+    let unpacked = (ref_value + packed.to_double() * binary_scale) / decimal_scale
     values.push(unpacked)
   }
   Ok({ values, num_points })
