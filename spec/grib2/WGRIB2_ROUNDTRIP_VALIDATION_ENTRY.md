@@ -99,16 +99,16 @@ wgrib2 inv カテゴリ 166個のうち、24個が実装済み。残り142個の
 | `-T` | reference time YYYYMMDDHHMMSS | [x] |
 | `-vt` | verf time (YYYYMMDDHH) | [x] |
 | `-VT` | verf time (YYYYMMDDHHMMSS) | [x] |
-| `-start_ft` | forecast start time | [ ] |
-| `-start_FT` | forecast start time (full) | [ ] |
-| `-end_ft` | forecast end time | [ ] |
-| `-end_FT` | forecast end time (full) | [ ] |
+| `-start_ft` | forecast start time | [x] |
+| `-start_FT` | forecast start time (full) | [x] |
+| `-end_ft` | forecast end time | [x] |
+| `-end_FT` | forecast end time (full) | [x] |
 | `-MM` | reference time MM | [x] |
 | `-YY` | reference time YYYY | [x] |
-| `-RT` | type of reference Time | [ ] |
-| `-S` | simple inventory with minutes/seconds | [ ] |
-| `-unix_time` | print unix timestamp | [ ] |
-| `-verf` | inventory using verification time | [ ] |
+| `-RT` | type of reference Time | [x] |
+| `-S` | simple inventory with minutes/seconds | [x] |
+| `-unix_time` | print unix timestamp | [x] |
+| `-verf` | inventory using verification time | [x] |
 | `-Match_inv` | match inventory with D=YYYYMMDDHHmmss | [ ] |
 
 ### 優先度 中 - code_table系 (49個)

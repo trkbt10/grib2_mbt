@@ -357,6 +357,135 @@ pub fn wgrib2_MM_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+fn rt_label(significance : Int) -> String {
+  match significance {
+    0 => "Analysis"
+    1 => "Start of fcst"
+    2 => "Verf time of fcst"
+    3 => "Obs time"
+    4 => "Local Time"
+    5 => "Simulation Start"
+    6 => "Start of Data Assimilation"
+    255 => "Missing"
+    _ => "unknown"
+  }
+}
+
+///|
+pub fn wgrib2_RT_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "RT=" + rt_label(meta.section1_significance_of_ref_time))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_start_ft_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For instantaneous data, start_ft equals verification time
+    lines.push(format_prefix(meta) + "start_ft=" + meta.reference_time)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_start_FT_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For instantaneous data, start_FT equals verification time (full)
+    lines.push(format_prefix(meta) + "start_FT=" + meta.reference_time_full)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_end_ft_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For instantaneous data, end_ft equals verification time
+    lines.push(format_prefix(meta) + "end_ft=" + meta.reference_time)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_end_FT_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // For instantaneous data, end_FT equals verification time (full)
+    lines.push(format_prefix(meta) + "end_FT=" + meta.reference_time_full)
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_S_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Same as -s but with D= (full timestamp) instead of d=
+    lines.push(
+      format_prefix(meta) +
+      "D=" +
+      meta.reference_time_full +
+      ":" +
+      meta.parameter_name.display() +
+      ":" +
+      meta.level_name.display() +
+      ":" +
+      meta.tail +
+      ":",
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_verf_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    // Same as -s but with vt= (verification time) instead of d=
+    lines.push(
+      format_prefix(meta) +
+      "vt=" +
+      meta.reference_time +
+      ":" +
+      meta.parameter_name.display() +
+      ":" +
+      meta.level_name.display() +
+      ":" +
+      meta.tail +
+      ":",
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_unix_time_lines(context : Grib2FileContext) -> Array[String] {
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) +
+      "unix_rt=" +
+      meta.unix_rt.to_string() +
+      ":unix_vt=" +
+      meta.unix_vt.to_string(),
+    )
+  }
+  lines
+}
+
+///|
 pub fn wgrib2_n_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
