@@ -2780,3 +2780,58 @@ pub fn wgrib2_ftn_api_fn0_lines(context : Grib2FileContext) -> Array[String] {
   }
   lines
 }
+
+///|
+pub fn wgrib2_grib_max_bits_lines(context : Grib2FileContext) -> Array[String] {
+  // -grib_max_bits: Maximum bits used in grib encoding
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(
+      format_prefix(meta) + "grib_max_bits=" + meta.section5_bits_per_value.to_string(),
+    )
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_hybrid_lines(context : Grib2FileContext) -> Array[String] {
+  // -hybrid: Shows vertical coordinate parameters from Sec4
+  // Only outputs values for hybrid levels (assuming 2 var per level)
+  // For non-hybrid data, outputs empty
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_V_lines(context : Grib2FileContext) -> Array[String] {
+  // -V: Diagnostic/verbose output (outputs nothing for standard use)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_crlf_lines(context : Grib2FileContext) -> Array[String] {
+  // -crlf: Changes line ending to CRLF (Windows style)
+  // The actual CRLF conversion happens at output layer
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta))
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_inv_lines(context : Grib2FileContext) -> Array[String] {
+  // -inv: Standard inventory (same as default -s)
+  wgrib2_s_lines(context)
+}

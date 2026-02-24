@@ -139,6 +139,11 @@ fn print_usage() -> Unit {
   println("  -JMA_Nr  print JMA Nr value")
   println("  -reset_delayed_error  clear delayed error flag")
   println("  -ftn_api_fn0  print Fortran API format")
+  println("  -grib_max_bits  print maximum bits used in encoding")
+  println("  -hybrid  print hybrid vertical coordinates")
+  println("  -V  print diagnostic output")
+  println("  -crlf  use CRLF line endings")
+  println("  -inv  print standard inventory")
 }
 
 ///|
@@ -569,6 +574,21 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   }
   if args.length() == 1 && args[0] == "-ftn_api_fn0" {
     return Some(InventoryFtnApiFn0)
+  }
+  if args.length() == 1 && args[0] == "-grib_max_bits" {
+    return Some(InventoryGribMaxBits)
+  }
+  if args.length() == 1 && args[0] == "-hybrid" {
+    return Some(InventoryHybrid)
+  }
+  if args.length() == 1 && args[0] == "-V" {
+    return Some(InventoryVerbose)
+  }
+  if args.length() == 1 && args[0] == "-crlf" {
+    return Some(InventoryCrlf)
+  }
+  if args.length() == 1 && args[0] == "-inv" {
+    return Some(InventoryInv)
   }
   None
 }

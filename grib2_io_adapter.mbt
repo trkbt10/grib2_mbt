@@ -138,6 +138,11 @@ pub(all) enum Grib2InventoryMode {
   InventoryJMANr
   InventoryResetDelayedError
   InventoryFtnApiFn0
+  InventoryGribMaxBits
+  InventoryHybrid
+  InventoryVerbose
+  InventoryCrlf
+  InventoryInv
 } derive(Show)
 
 ///|
@@ -284,6 +289,11 @@ pub fn render_inventory_lines(
     InventoryJMANr => wgrib2_JMA_Nr_lines(context)
     InventoryResetDelayedError => wgrib2_reset_delayed_error_lines(context)
     InventoryFtnApiFn0 => wgrib2_ftn_api_fn0_lines(context)
+    InventoryGribMaxBits => wgrib2_grib_max_bits_lines(context)
+    InventoryHybrid => wgrib2_hybrid_lines(context)
+    InventoryVerbose => wgrib2_V_lines(context)
+    InventoryCrlf => wgrib2_crlf_lines(context)
+    InventoryInv => wgrib2_inv_lines(context)
   }
 }
 
