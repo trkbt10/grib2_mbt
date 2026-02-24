@@ -4,7 +4,13 @@
  * Uses WebAssembly GC with js-string builtins for efficient string handling.
  */
 
-import type { RecordMeta, RecordGrid } from './types';
+import type {
+  Section1Data,
+  Section3Data,
+  Section4Data,
+  Section5Data,
+  Section6Data,
+} from './types';
 
 let wasmInstance: WebAssembly.Instance | null = null;
 
@@ -86,26 +92,32 @@ export function getRecordCount(handle: number): number {
   return fn(handle);
 }
 
+// =============================================================================
+// Section Accessor Functions (Low-Level API)
+// =============================================================================
+
 /**
- * Decode records and return as objects.
+ * Convert latin1 string to Float32Array (little-endian).
  */
-export function decodeRecords(handle: number): RecordMeta[] {
-  const exports = getExports();
-  const fn = exports.decodeRecordsJson as (h: number) => string;
-  const jsonStr = fn(handle);
-  if (!jsonStr) return [];
-  return JSON.parse(jsonStr);
+function latin1ToFloat32Array(latin1: string): Float32Array {
+  const bytes = new Uint8Array(latin1.length);
+  for (let i = 0; i < latin1.length; i++) {
+    bytes[i] = latin1.charCodeAt(i);
+  }
+  return new Float32Array(bytes.buffer);
 }
 
 /**
- * Decode one record's grid-point values.
+ * Get Section 1 (Identification Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param messageIndex - 0-based message index
  */
-export function decodeRecordGrid(handle: number, recordIndex: number): RecordGrid {
+export function getSection1(handle: number, messageIndex: number): Section1Data {
   const exports = getExports();
-  const fn = exports.decodeRecordGridJson as (h: number, r: number) => string;
-  const jsonStr = fn(handle, recordIndex);
+  const fn = exports.getSection1 as (h: number, m: number) => string;
+  const jsonStr = fn(handle, messageIndex);
   if (!jsonStr) {
-    throw new Error('decodeRecordGridJson returned empty response');
+    throw new Error('getSection1 returned empty response');
   }
   const parsed = JSON.parse(jsonStr);
   if (parsed && parsed.error) {
@@ -115,33 +127,125 @@ export function decodeRecordGrid(handle: number, recordIndex: number): RecordGri
 }
 
 /**
- * Inventory mode constants.
+ * Get Section 3 (Grid Definition Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
  */
-export const InventoryMode = {
-  DEFAULT: 0,
-  SHORT: 1,
-  SEC0: 2,
-  SEC3: 3,
-  SEC4: 4,
-  SEC5: 5,
-  SEC6: 6,
-  SEC_LEN: 7,
-  N: 8,
-  RANGE: 9,
-  VAR: 10,
-  LEV: 11,
-  FTIME: 12,
-  GRID: 13,
-  VAR_LEV: 14
-} as const;
+export function getSection3(handle: number, recordIndex: number): Section3Data {
+  const exports = getExports();
+  const fn = exports.getSection3 as (h: number, r: number) => string;
+  const jsonStr = fn(handle, recordIndex);
+  if (!jsonStr) {
+    throw new Error('getSection3 returned empty response');
+  }
+  const parsed = JSON.parse(jsonStr);
+  if (parsed && parsed.error) {
+    throw new Error(parsed.error);
+  }
+  return parsed;
+}
 
 /**
- * Render inventory lines.
+ * Get Section 4 (Product Definition Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
  */
-export function renderInventory(handle: number, mode: number = InventoryMode.DEFAULT): string[] {
+export function getSection4(handle: number, recordIndex: number): Section4Data {
   const exports = getExports();
-  const fn = exports.renderInventory as (h: number, m: number) => string;
-  const jsonStr = fn(handle, mode);
-  if (!jsonStr) return [];
-  return JSON.parse(jsonStr);
+  const fn = exports.getSection4 as (h: number, r: number) => string;
+  const jsonStr = fn(handle, recordIndex);
+  if (!jsonStr) {
+    throw new Error('getSection4 returned empty response');
+  }
+  const parsed = JSON.parse(jsonStr);
+  if (parsed && parsed.error) {
+    throw new Error(parsed.error);
+  }
+  return parsed;
+}
+
+/**
+ * Get Section 5 (Data Representation Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ */
+export function getSection5(handle: number, recordIndex: number): Section5Data {
+  const exports = getExports();
+  const fn = exports.getSection5 as (h: number, r: number) => string;
+  const jsonStr = fn(handle, recordIndex);
+  if (!jsonStr) {
+    throw new Error('getSection5 returned empty response');
+  }
+  const parsed = JSON.parse(jsonStr);
+  if (parsed && parsed.error) {
+    throw new Error(parsed.error);
+  }
+  return parsed;
+}
+
+/**
+ * Get Section 6 (Bit-Map Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ */
+export function getSection6(handle: number, recordIndex: number): Section6Data {
+  const exports = getExports();
+  const fn = exports.getSection6 as (h: number, r: number) => string;
+  const jsonStr = fn(handle, recordIndex);
+  if (!jsonStr) {
+    throw new Error('getSection6 returned empty response');
+  }
+  const parsed = JSON.parse(jsonStr);
+  if (parsed && parsed.error) {
+    throw new Error(parsed.error);
+  }
+  return parsed;
+}
+
+/**
+ * Get latitude coordinates for a record's grid.
+ * Uses efficient latin1 binary transfer.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ */
+export function getLatitudes(handle: number, recordIndex: number): Float32Array {
+  const exports = getExports();
+  const fn = exports.getLatitudes as (h: number, r: number) => string;
+  const latin1 = fn(handle, recordIndex);
+  if (!latin1) {
+    throw new Error('getLatitudes returned empty response');
+  }
+  return latin1ToFloat32Array(latin1);
+}
+
+/**
+ * Get longitude coordinates for a record's grid.
+ * Uses efficient latin1 binary transfer.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ */
+export function getLongitudes(handle: number, recordIndex: number): Float32Array {
+  const exports = getExports();
+  const fn = exports.getLongitudes as (h: number, r: number) => string;
+  const latin1 = fn(handle, recordIndex);
+  if (!latin1) {
+    throw new Error('getLongitudes returned empty response');
+  }
+  return latin1ToFloat32Array(latin1);
+}
+
+/**
+ * Get grid data values for a record.
+ * Uses efficient latin1 binary transfer.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ */
+export function getGridData(handle: number, recordIndex: number): Float32Array {
+  const exports = getExports();
+  const fn = exports.getGridData as (h: number, r: number) => string;
+  const latin1 = fn(handle, recordIndex);
+  if (!latin1) {
+    throw new Error('getGridData returned empty response');
+  }
+  return latin1ToFloat32Array(latin1);
 }

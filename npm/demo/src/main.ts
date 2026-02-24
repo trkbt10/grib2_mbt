@@ -2,10 +2,10 @@
  * GRIB2 WASM Demo - Main Application
  */
 
-import type { RecordMeta, LoadedFile, TimeSeriesFrame } from './types';
-import { initBrowser, parseGrib2, decodeRecords, decodeRecordGrid } from './grib2-browser';
+import type { LoadedFile, TimeSeriesFrame, GridData } from './types';
+import { initBrowser, openGrib2 } from './grib2';
 import { renderGrid, drawColorScale, calculateStats } from './canvas-renderer';
-import { TimeSeriesManager, applyTemporalMovingAverage } from './time-series';
+import { TimeSeriesManager, applyTemporalMovingAverage, getParameterName } from './time-series';
 import { VideoRecorder, downloadBlob } from './video-recorder';
 
 // Fixture paths (served from public directory)
@@ -75,15 +75,10 @@ async function loadFile(url: string): Promise<LoadedFile> {
   const arrayBuffer = await response.arrayBuffer();
   const data = new Uint8Array(arrayBuffer);
 
-  const handle = parseGrib2(data);
-  if (handle < 0) {
-    throw new Error('Failed to parse GRIB2 file');
-  }
-
-  const records = decodeRecords(handle);
+  const grib2 = openGrib2(data);
   const name = url.split('/').pop() ?? url;
 
-  return { name, handle, records };
+  return { name, grib2 };
 }
 
 async function loadFixtures(urls: string[]): Promise<void> {
@@ -186,9 +181,10 @@ function updateTimeSeries(): void {
   }
 
   // Update grid dimensions from first frame
-  const meta = currentFrames[0].meta;
-  currentNi = meta.section3Ni;
-  currentNj = meta.section3Nj;
+  const record = currentFrames[0].record;
+  const { ni, nj } = record.gridDimensions;
+  currentNi = ni;
+  currentNj = nj;
 
   // Update timeline slider
   timeSlider.min = '0';
@@ -235,7 +231,11 @@ function renderCurrentFrame(): void {
     });
 
     // Draw color scale
-    const unit = frame.meta.parameterName.includes('TMP') ? 'K' : '';
+    const paramName = getParameterName(
+      frame.record.parameterCategory,
+      frame.record.parameterNumber
+    );
+    const unit = paramName.includes('TMP') ? 'K' : '';
     drawColorScale(scaleCanvas, globalMinValue, globalMaxValue, unit);
 
     // Show stats
@@ -343,16 +343,11 @@ fileInput.addEventListener('change', async () => {
     const arrayBuffer = await file.arrayBuffer();
     const data = new Uint8Array(arrayBuffer);
 
-    const handle = parseGrib2(data);
-    if (handle < 0) {
-      throw new Error('Failed to parse GRIB2 file');
-    }
-
-    const records = decodeRecords(handle);
-    timeSeriesManager.addFile({ name: file.name, handle, records });
+    const grib2 = openGrib2(data);
+    timeSeriesManager.addFile({ name: file.name, grib2 });
 
     updateParameterSelect();
-    setStatus(`Loaded ${file.name} (${records.length} records)`, 'success');
+    setStatus(`Loaded ${file.name} (${grib2.recordCount} records)`, 'success');
   } catch (error) {
     setStatus(`Error: ${error instanceof Error ? error.message : error}`, 'error');
   }

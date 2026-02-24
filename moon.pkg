@@ -1,0 +1,24 @@
+import {
+  "trkbt10/grib2_mbt/typed",
+}
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "wasm_parse_grib2_string:parseGrib2",
+        "wasm_get_message_count:getMessageCount",
+        "wasm_get_record_count:getRecordCount",
+        "wasm_get_section1:getSection1",
+        "wasm_get_section3:getSection3",
+        "wasm_get_section4:getSection4",
+        "wasm_get_section5:getSection5",
+        "wasm_get_section6:getSection6",
+        "wasm_get_latitudes:getLatitudes",
+        "wasm_get_longitudes:getLongitudes",
+        "wasm_get_grid_data:getGridData",
+      ],
+      "use-js-builtin-string": true,
+    },
+  },
+)

@@ -2,6 +2,94 @@
  * GRIB2 WASM Module Type Definitions
  */
 
+// =============================================================================
+// Section Data Types (Low-Level API)
+// =============================================================================
+
+/**
+ * Section 1: Identification Section data
+ */
+export interface Section1Data {
+  center: number;
+  subcenter: number;
+  masterTableVersion: number;
+  localTableVersion: number;
+  significanceOfRefTime: number;
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+  productionStatus: number;
+  typeOfData: number;
+}
+
+/**
+ * Section 3: Grid Definition Section data
+ */
+export interface Section3Data {
+  template: number;
+  gridDefinitionSource: number;
+  numberOfPoints: number;
+  ni?: number;
+  nj?: number;
+  lat1Microdeg?: number;
+  lon1Microdeg?: number;
+  lat2Microdeg?: number;
+  lon2Microdeg?: number;
+  diMicrodeg?: number;
+  djMicrodeg?: number;
+  scanMode?: number;
+  resolutionFlags?: number;
+}
+
+/**
+ * Section 4: Product Definition Section data
+ */
+export interface Section4Data {
+  template: number;
+  parameterCategory?: number;
+  parameterNumber?: number;
+  typeOfGeneratingProcess?: number;
+  indicatorOfUnitOfTimeRange?: number;
+  forecastTime?: number;
+  typeOfFirstFixedSurface?: number;
+  scaleFactorOfFirstFixedSurface?: number;
+  scaledValueOfFirstFixedSurface?: number;
+  typeOfSecondFixedSurface?: number | null;
+  scaleFactorOfSecondFixedSurface?: number | null;
+  scaledValueOfSecondFixedSurface?: number | null;
+  // Template-specific optional fields
+  ensembleType?: number;
+  perturbationNumber?: number;
+  numberOfEnsembleMembers?: number;
+  probabilityType?: number;
+}
+
+/**
+ * Section 5: Data Representation Section data
+ */
+export interface Section5Data {
+  template: number;
+  numberOfPoints: number;
+  referenceValue?: number;
+  binaryScaleFactor?: number;
+  decimalScaleFactor?: number;
+  bitsPerValue?: number;
+}
+
+/**
+ * Section 6: Bit-Map Section data
+ */
+export interface Section6Data {
+  bitmapIndicator: number;
+}
+
+// =============================================================================
+// Initialization Functions
+// =============================================================================
+
 /**
  * Initialize the WASM module (Node.js).
  * Must be called before using any other functions.
@@ -35,84 +123,70 @@ export function getMessageCount(handle: number): number;
  */
 export function getRecordCount(handle: number): number;
 
-/**
- * Record metadata from a GRIB2 file.
- */
-export interface RecordMeta {
-  recordIndex: number;
-  recordId: string;
-  messageOffset: number;
-  messageTotalLength: number;
-  referenceTime: string;
-  discipline: number;
-  edition: number;
-  parameterName: string;
-  levelName: string;
-  section3Template: number;
-  section4Template: number;
-  section5Template: number;
-  section3Ni: number;
-  section3Nj: number;
-  section3Lat1Microdeg: number;
-  section3Lon1Microdeg: number;
-  section3Lat2Microdeg: number;
-  section3Lon2Microdeg: number;
-  section5NumDefinedPoints: number;
-  forecastTail: string;
-}
+// =============================================================================
+// Section Accessor Functions (Low-Level API)
+// =============================================================================
 
 /**
- * Grid-point data for one record.
- * `values` may include `null` where the source value is NaN.
- */
-export interface RecordGrid {
-  recordIndex: number;
-  numPoints: number;
-  section5Template: number;
-  hasBitmap: boolean;
-  values: Array<number | null>;
-}
-
-/**
- * Decode records and return as objects.
+ * Get Section 1 (Identification Section) data.
  * @param handle - Context handle from parseGrib2
- * @returns Array of record metadata objects
+ * @param messageIndex - 0-based message index
+ * @returns Section 1 data
  */
-export function decodeRecords(handle: number): RecordMeta[];
+export function getSection1(handle: number, messageIndex: number): Section1Data;
 
 /**
- * Decode one record's grid-point values.
+ * Get Section 3 (Grid Definition Section) data.
  * @param handle - Context handle from parseGrib2
  * @param recordIndex - 1-based record index
- * @returns Decoded grid-point values
+ * @returns Section 3 data
  */
-export function decodeRecordGrid(handle: number, recordIndex: number): RecordGrid;
+export function getSection3(handle: number, recordIndex: number): Section3Data;
 
 /**
- * Inventory mode constants.
- */
-export const InventoryMode: {
-  readonly DEFAULT: 0;
-  readonly SHORT: 1;
-  readonly SEC0: 2;
-  readonly SEC3: 3;
-  readonly SEC4: 4;
-  readonly SEC5: 5;
-  readonly SEC6: 6;
-  readonly SEC_LEN: 7;
-  readonly N: 8;
-  readonly RANGE: 9;
-  readonly VAR: 10;
-  readonly LEV: 11;
-  readonly FTIME: 12;
-  readonly GRID: 13;
-  readonly VAR_LEV: 14;
-};
-
-/**
- * Render inventory lines.
+ * Get Section 4 (Product Definition Section) data.
  * @param handle - Context handle from parseGrib2
- * @param mode - Inventory mode (use InventoryMode constants)
- * @returns Array of inventory lines
+ * @param recordIndex - 1-based record index
+ * @returns Section 4 data
  */
-export function renderInventory(handle: number, mode?: number): string[];
+export function getSection4(handle: number, recordIndex: number): Section4Data;
+
+/**
+ * Get Section 5 (Data Representation Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Section 5 data
+ */
+export function getSection5(handle: number, recordIndex: number): Section5Data;
+
+/**
+ * Get Section 6 (Bit-Map Section) data.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Section 6 data
+ */
+export function getSection6(handle: number, recordIndex: number): Section6Data;
+
+/**
+ * Get latitude coordinates for a record's grid.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Float32Array of latitude values in degrees
+ */
+export function getLatitudes(handle: number, recordIndex: number): Float32Array;
+
+/**
+ * Get longitude coordinates for a record's grid.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Float32Array of longitude values in degrees
+ */
+export function getLongitudes(handle: number, recordIndex: number): Float32Array;
+
+/**
+ * Get grid data values for a record.
+ * @param handle - Context handle from parseGrib2
+ * @param recordIndex - 1-based record index
+ * @returns Float32Array of grid data values
+ */
+export function getGridData(handle: number, recordIndex: number): Float32Array;

@@ -2,29 +2,79 @@
  * Time series processing and moving average
  */
 
-import type { RecordMeta, RecordGrid, TimeSeriesFrame, LoadedFile } from './types';
-import { decodeRecordGrid } from './grib2-browser';
+import type { LoadedFile, TimeSeriesFrame, GridData } from './types';
+import type { Grib2Record } from './grib2';
+
+// Parameter name lookup table (Category.Number -> name)
+const PARAM_NAMES: Record<string, string> = {
+  '0.0': 'TMP',      // Temperature
+  '0.2': 'POT',      // Potential temperature
+  '0.6': 'DPT',      // Dew point temperature
+  '2.2': 'UGRD',     // U-component of wind
+  '2.3': 'VGRD',     // V-component of wind
+  '3.0': 'PRES',     // Pressure
+  '3.1': 'PRMSL',    // Pressure reduced to MSL
+  '3.5': 'HGT',      // Geopotential height
+  '1.1': 'RH',       // Relative humidity
+  '1.8': 'APCP',     // Total precipitation
+};
+
+// Level type lookup table (type code -> name format)
+const LEVEL_NAMES: Record<number, (value: number) => string> = {
+  100: (v) => `${v / 100} hPa`,  // Isobaric surface (Pa -> hPa)
+  101: () => 'mean sea level',
+  102: () => 'specific altitude above mean sea level',
+  103: (v) => `${v} m above ground`,
+  104: () => 'sigma level',
+  105: () => 'hybrid level',
+  1: () => 'surface',
+  2: () => 'cloud base',
+  3: () => 'cloud top',
+  4: () => '0 degC isotherm',
+  6: () => 'max wind',
+  7: () => 'tropopause',
+  8: () => 'nominal top of atmosphere',
+  200: () => 'entire atmosphere',
+  204: () => 'highest tropospheric freezing level',
+};
 
 /**
- * Extract forecast hour from forecastTail.
- * Examples: "3 hour fcst" -> 3, "anl" -> 0
+ * Get parameter name from category and number.
  */
-export function extractForecastHour(forecastTail: string): number {
-  // Analysis time
-  if (forecastTail === 'anl' || forecastTail.includes('analysis')) {
-    return 0;
+export function getParameterName(category: number, number: number): string {
+  const key = `${category}.${number}`;
+  return PARAM_NAMES[key] ?? `PARAM_${category}_${number}`;
+}
+
+/**
+ * Get level name from type and value.
+ */
+export function getLevelName(type: number, scaleFactor: number, scaledValue: number): string {
+  const formatter = LEVEL_NAMES[type];
+  if (formatter) {
+    const value = scaledValue * Math.pow(10, -scaleFactor);
+    return formatter(value);
   }
-  // "N hour fcst" format
-  const hourMatch = forecastTail.match(/^(\d+)\s*hour\s*fcst/i);
-  if (hourMatch) {
-    return parseInt(hourMatch[1], 10);
+  return `level_${type}`;
+}
+
+/**
+ * Extract forecast hour from Section 4 forecast time.
+ * Converts to hours based on time unit indicator.
+ */
+export function extractForecastHour(record: Grib2Record): number {
+  const s4 = record.section4;
+  const forecastTime = s4.forecastTime ?? 0;
+  const timeUnit = s4.indicatorOfUnitOfTimeRange ?? 1;
+
+  switch (timeUnit) {
+    case 0: return Math.floor(forecastTime / 60);  // Minutes -> hours
+    case 1: return forecastTime;                    // Hours
+    case 2: return forecastTime * 24;               // Days -> hours
+    case 3: return forecastTime * 24 * 30;          // Months -> hours (approx)
+    case 4: return forecastTime * 24 * 365;         // Years -> hours (approx)
+    default: return forecastTime;
   }
-  // "N day fcst" format
-  const dayMatch = forecastTail.match(/^(\d+)\s*day\s*fcst/i);
-  if (dayMatch) {
-    return parseInt(dayMatch[1], 10) * 24;
-  }
-  return 0;
 }
 
 /**
@@ -32,14 +82,12 @@ export function extractForecastHour(forecastTail: string): number {
  */
 export class TimeSeriesManager {
   private files: LoadedFile[] = [];
-  private frames: TimeSeriesFrame[] = [];
 
   /**
    * Add a loaded file to the manager.
    */
   addFile(file: LoadedFile): void {
     this.files.push(file);
-    this.rebuildFrames();
   }
 
   /**
@@ -47,7 +95,6 @@ export class TimeSeriesManager {
    */
   clear(): void {
     this.files = [];
-    this.frames = [];
   }
 
   /**
@@ -56,8 +103,10 @@ export class TimeSeriesManager {
   getParameterNames(): string[] {
     const names = new Set<string>();
     for (const file of this.files) {
-      for (const record of file.records) {
-        names.add(record.parameterName);
+      for (const record of file.grib2.records()) {
+        const s4 = record.section4;
+        const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
+        names.add(name);
       }
     }
     return Array.from(names).sort();
@@ -69,18 +118,18 @@ export class TimeSeriesManager {
   getPressureLevels(parameterName: string): number[] {
     const levels = new Set<number>();
     for (const file of this.files) {
-      for (const record of file.records) {
-        if (record.parameterName === parameterName) {
-          // Extract pressure level from levelName
-          // Formats: "500 hPa", "500 mb", "5 mb" (for 500 Pa = 5 hPa)
-          const hPaMatch = record.levelName.match(/^(\d+)\s*hPa/i);
-          const mbMatch = record.levelName.match(/^(\d+)\s*mb/i);
-          if (hPaMatch) {
-            levels.add(parseInt(hPaMatch[1], 10));
-          } else if (mbMatch) {
-            // mb is same as hPa (1 mb = 1 hPa)
-            levels.add(parseInt(mbMatch[1], 10));
-          }
+      for (const record of file.grib2.records()) {
+        const s4 = record.section4;
+        const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
+        if (name !== parameterName) continue;
+
+        // Only isobaric surfaces (type 100)
+        if (s4.typeOfFirstFixedSurface === 100) {
+          const value = s4.scaledValueOfFirstFixedSurface ?? 0;
+          const scale = s4.scaleFactorOfFirstFixedSurface ?? 0;
+          const levelPa = value * Math.pow(10, -scale);
+          const levelHpa = levelPa / 100;
+          levels.add(levelHpa);
         }
       }
     }
@@ -94,22 +143,26 @@ export class TimeSeriesManager {
     const frames: TimeSeriesFrame[] = [];
 
     for (const file of this.files) {
-      for (const record of file.records) {
-        if (record.parameterName !== parameterName) continue;
+      for (const record of file.grib2.records()) {
+        const s4 = record.section4;
+        const name = getParameterName(s4.parameterCategory ?? 0, s4.parameterNumber ?? 0);
+        if (name !== parameterName) continue;
 
-        // Check pressure level (supports both hPa and mb formats)
-        const hPaMatch = record.levelName.match(/^(\d+)\s*hPa/i);
-        const mbMatch = record.levelName.match(/^(\d+)\s*mb/i);
-        const levelMatch = hPaMatch || mbMatch;
-        if (!levelMatch || parseInt(levelMatch[1], 10) !== pressureLevel) continue;
+        // Check pressure level (type 100 = isobaric)
+        if (s4.typeOfFirstFixedSurface !== 100) continue;
 
-        const forecastHour = extractForecastHour(record.forecastTail);
+        const value = s4.scaledValueOfFirstFixedSurface ?? 0;
+        const scale = s4.scaleFactorOfFirstFixedSurface ?? 0;
+        const levelPa = value * Math.pow(10, -scale);
+        const levelHpa = levelPa / 100;
+
+        if (levelHpa !== pressureLevel) continue;
+
+        const forecastHour = extractForecastHour(record);
 
         frames.push({
           forecastHour,
-          recordIndex: record.recordIndex,
-          handle: file.handle,
-          meta: record
+          record,
         });
       }
     }
@@ -117,33 +170,6 @@ export class TimeSeriesManager {
     // Sort by forecast hour
     frames.sort((a, b) => a.forecastHour - b.forecastHour);
     return frames;
-  }
-
-  private rebuildFrames(): void {
-    // Default to TMP at 500 hPa if available
-    const paramNames = this.getParameterNames();
-    const tmpParam = paramNames.find(n => n.includes('TMP') || n.includes('Temperature'));
-    if (tmpParam) {
-      const levels = this.getPressureLevels(tmpParam);
-      const level500 = levels.find(l => l === 500) ?? levels[0];
-      if (level500) {
-        this.frames = this.buildTimeSeries(tmpParam, level500);
-      }
-    }
-  }
-
-  /**
-   * Get current frames.
-   */
-  getFrames(): TimeSeriesFrame[] {
-    return this.frames;
-  }
-
-  /**
-   * Get frame count.
-   */
-  get frameCount(): number {
-    return this.frames.length;
   }
 }
 
@@ -154,7 +180,7 @@ export function applyTemporalMovingAverage(
   frames: TimeSeriesFrame[],
   centerIndex: number,
   radius: number
-): RecordGrid | null {
+): GridData | null {
   if (frames.length === 0 || centerIndex < 0 || centerIndex >= frames.length) {
     return null;
   }
@@ -162,19 +188,19 @@ export function applyTemporalMovingAverage(
   if (radius === 0) {
     // No averaging, just return the center frame
     const frame = frames[centerIndex];
-    return decodeRecordGrid(frame.handle, frame.recordIndex);
+    const values = frame.record.getValues();
+    return { numPoints: values.length, values };
   }
 
   // Collect grids within the window
-  const grids: RecordGrid[] = [];
+  const grids: Float32Array[] = [];
   const startIdx = Math.max(0, centerIndex - radius);
   const endIdx = Math.min(frames.length - 1, centerIndex + radius);
 
   for (let i = startIdx; i <= endIdx; i++) {
     const frame = frames[i];
     try {
-      const grid = decodeRecordGrid(frame.handle, frame.recordIndex);
-      grids.push(grid);
+      grids.push(frame.record.getValues());
     } catch {
       // Skip failed grids
     }
@@ -186,29 +212,23 @@ export function applyTemporalMovingAverage(
 
   // Calculate average
   const centerGrid = grids[Math.floor(grids.length / 2)];
-  const numPoints = centerGrid.numPoints;
-  const avgValues: Array<number | null> = new Array(numPoints);
+  const numPoints = centerGrid.length;
+  const avgValues = new Float32Array(numPoints);
 
   for (let p = 0; p < numPoints; p++) {
     let sum = 0;
     let count = 0;
 
     for (const grid of grids) {
-      const v = grid.values[p];
-      if (v !== null) {
+      const v = grid[p];
+      if (!Number.isNaN(v)) {
         sum += v;
         count++;
       }
     }
 
-    avgValues[p] = count > 0 ? sum / count : null;
+    avgValues[p] = count > 0 ? sum / count : NaN;
   }
 
-  return {
-    recordIndex: centerGrid.recordIndex,
-    numPoints,
-    section5Template: centerGrid.section5Template,
-    hasBitmap: centerGrid.hasBitmap,
-    values: avgValues
-  };
+  return { numPoints, values: avgValues };
 }

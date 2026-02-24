@@ -108,85 +108,38 @@ function getRecordCount(handle) {
   throw new Error('getRecordCount export not found');
 }
 
-/**
- * Decode records and return as JSON.
- *
- * @param {number} handle - Context handle from parseGrib2
- * @returns {Array<Object>} - Array of record metadata objects
- */
-function decodeRecords(handle) {
-  if (!wasmInstance) {
-    throw new Error('WASM module not initialized. Call init() first.');
-  }
 
-  const exports = wasmInstance.exports;
-  if (exports.decodeRecordsJson) {
-    const jsonStr = exports.decodeRecordsJson(handle);
-    if (!jsonStr) return [];
-    return JSON.parse(jsonStr);
+// =============================================================================
+// Section Accessor Functions (Low-Level API)
+// =============================================================================
+
+/**
+ * Convert latin1 string to Float32Array (little-endian).
+ */
+function latin1ToFloat32Array(latin1) {
+  const bytes = new Uint8Array(latin1.length);
+  for (let i = 0; i < latin1.length; i++) {
+    bytes[i] = latin1.charCodeAt(i);
   }
-  throw new Error('decodeRecordsJson export not found');
+  return new Float32Array(bytes.buffer);
 }
 
 /**
- * Inventory mode constants.
- */
-const InventoryMode = {
-  DEFAULT: 0,
-  SHORT: 1,
-  SEC0: 2,
-  SEC3: 3,
-  SEC4: 4,
-  SEC5: 5,
-  SEC6: 6,
-  SEC_LEN: 7,
-  N: 8,
-  RANGE: 9,
-  VAR: 10,
-  LEV: 11,
-  FTIME: 12,
-  GRID: 13,
-  VAR_LEV: 14
-};
-
-/**
- * Render inventory lines.
+ * Get Section 1 (Identification Section) data.
  *
  * @param {number} handle - Context handle from parseGrib2
- * @param {number} mode - Inventory mode (use InventoryMode constants)
- * @returns {Array<string>} - Array of inventory lines
+ * @param {number} messageIndex - 0-based message index
+ * @returns {Object} - Section 1 data
  */
-function renderInventory(handle, mode = InventoryMode.DEFAULT) {
+function getSection1(handle, messageIndex) {
   if (!wasmInstance) {
     throw new Error('WASM module not initialized. Call init() first.');
   }
-
   const exports = wasmInstance.exports;
-  if (exports.renderInventory) {
-    const jsonStr = exports.renderInventory(handle, mode);
-    if (!jsonStr) return [];
-    return JSON.parse(jsonStr);
-  }
-  throw new Error('renderInventory export not found');
-}
-
-/**
- * Decode a record's grid-point values.
- *
- * @param {number} handle - Context handle from parseGrib2
- * @param {number} recordIndex - 1-based record index
- * @returns {Object} - Decoded grid data
- */
-function decodeRecordGrid(handle, recordIndex) {
-  if (!wasmInstance) {
-    throw new Error('WASM module not initialized. Call init() first.');
-  }
-
-  const exports = wasmInstance.exports;
-  if (exports.decodeRecordGridJson) {
-    const jsonStr = exports.decodeRecordGridJson(handle, recordIndex);
+  if (exports.getSection1) {
+    const jsonStr = exports.getSection1(handle, messageIndex);
     if (!jsonStr) {
-      throw new Error('decodeRecordGridJson returned empty response');
+      throw new Error('getSection1 returned empty response');
     }
     const parsed = JSON.parse(jsonStr);
     if (parsed && parsed.error) {
@@ -194,7 +147,177 @@ function decodeRecordGrid(handle, recordIndex) {
     }
     return parsed;
   }
-  throw new Error('decodeRecordGridJson export not found');
+  throw new Error('getSection1 export not found');
+}
+
+/**
+ * Get Section 3 (Grid Definition Section) data.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Object} - Section 3 data
+ */
+function getSection3(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getSection3) {
+    const jsonStr = exports.getSection3(handle, recordIndex);
+    if (!jsonStr) {
+      throw new Error('getSection3 returned empty response');
+    }
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.error) {
+      throw new Error(parsed.error);
+    }
+    return parsed;
+  }
+  throw new Error('getSection3 export not found');
+}
+
+/**
+ * Get Section 4 (Product Definition Section) data.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Object} - Section 4 data
+ */
+function getSection4(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getSection4) {
+    const jsonStr = exports.getSection4(handle, recordIndex);
+    if (!jsonStr) {
+      throw new Error('getSection4 returned empty response');
+    }
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.error) {
+      throw new Error(parsed.error);
+    }
+    return parsed;
+  }
+  throw new Error('getSection4 export not found');
+}
+
+/**
+ * Get Section 5 (Data Representation Section) data.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Object} - Section 5 data
+ */
+function getSection5(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getSection5) {
+    const jsonStr = exports.getSection5(handle, recordIndex);
+    if (!jsonStr) {
+      throw new Error('getSection5 returned empty response');
+    }
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.error) {
+      throw new Error(parsed.error);
+    }
+    return parsed;
+  }
+  throw new Error('getSection5 export not found');
+}
+
+/**
+ * Get Section 6 (Bit-Map Section) data.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Object} - Section 6 data
+ */
+function getSection6(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getSection6) {
+    const jsonStr = exports.getSection6(handle, recordIndex);
+    if (!jsonStr) {
+      throw new Error('getSection6 returned empty response');
+    }
+    const parsed = JSON.parse(jsonStr);
+    if (parsed && parsed.error) {
+      throw new Error(parsed.error);
+    }
+    return parsed;
+  }
+  throw new Error('getSection6 export not found');
+}
+
+/**
+ * Get latitude coordinates for a record's grid.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Float32Array} - Latitude values in degrees
+ */
+function getLatitudes(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getLatitudes) {
+    const latin1 = exports.getLatitudes(handle, recordIndex);
+    if (!latin1) {
+      throw new Error('getLatitudes returned empty response');
+    }
+    return latin1ToFloat32Array(latin1);
+  }
+  throw new Error('getLatitudes export not found');
+}
+
+/**
+ * Get longitude coordinates for a record's grid.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Float32Array} - Longitude values in degrees
+ */
+function getLongitudes(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getLongitudes) {
+    const latin1 = exports.getLongitudes(handle, recordIndex);
+    if (!latin1) {
+      throw new Error('getLongitudes returned empty response');
+    }
+    return latin1ToFloat32Array(latin1);
+  }
+  throw new Error('getLongitudes export not found');
+}
+
+/**
+ * Get grid data values for a record.
+ *
+ * @param {number} handle - Context handle from parseGrib2
+ * @param {number} recordIndex - 1-based record index
+ * @returns {Float32Array} - Grid data values
+ */
+function getGridData(handle, recordIndex) {
+  if (!wasmInstance) {
+    throw new Error('WASM module not initialized. Call init() first.');
+  }
+  const exports = wasmInstance.exports;
+  if (exports.getGridData) {
+    const latin1 = exports.getGridData(handle, recordIndex);
+    if (!latin1) {
+      throw new Error('getGridData returned empty response');
+    }
+    return latin1ToFloat32Array(latin1);
+  }
+  throw new Error('getGridData export not found');
 }
 
 module.exports = {
@@ -203,8 +326,13 @@ module.exports = {
   parseGrib2,
   getMessageCount,
   getRecordCount,
-  decodeRecords,
-  decodeRecordGrid,
-  renderInventory,
-  InventoryMode
+  // Low-level section accessor functions
+  getSection1,
+  getSection3,
+  getSection4,
+  getSection5,
+  getSection6,
+  getLatitudes,
+  getLongitudes,
+  getGridData
 };

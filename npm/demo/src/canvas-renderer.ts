@@ -10,13 +10,21 @@ export interface RenderOptions {
   colormap?: (t: number) => RGB;
 }
 
+// Type for grid values (supports both old Array<number|null> and new Float32Array)
+type GridValues = Float32Array | Array<number | null>;
+
+// Helper to check if value is missing (null or NaN)
+function isMissing(value: number | null): boolean {
+  return value === null || Number.isNaN(value);
+}
+
 /**
  * Render grid values to a canvas.
  * Values are normalized and mapped to colors using the colormap.
  */
 export function renderGrid(
   canvas: HTMLCanvasElement,
-  values: Array<number | null>,
+  values: GridValues,
   ni: number,
   nj: number,
   options: RenderOptions = {}
@@ -40,10 +48,11 @@ export function renderGrid(
     let computedMin = Infinity;
     let computedMax = -Infinity;
 
-    for (const v of values) {
-      if (v !== null) {
-        computedMin = Math.min(computedMin, v);
-        computedMax = Math.max(computedMax, v);
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i];
+      if (!isMissing(v)) {
+        computedMin = Math.min(computedMin, v as number);
+        computedMax = Math.max(computedMax, v as number);
       }
     }
 
@@ -63,14 +72,14 @@ export function renderGrid(
 
       const value = values[srcIdx];
 
-      if (value === null) {
-        // Transparent for null values
+      if (isMissing(value)) {
+        // Transparent for missing values
         data[dstIdx] = 0;
         data[dstIdx + 1] = 0;
         data[dstIdx + 2] = 0;
         data[dstIdx + 3] = 0;
       } else {
-        const normalized = (value - minVal) / range;
+        const normalized = ((value as number) - minVal) / range;
         const [r, g, b] = colormap(normalized);
         data[dstIdx] = r;
         data[dstIdx + 1] = g;
@@ -123,7 +132,7 @@ export function canvasToDataURL(canvas: HTMLCanvasElement, format = 'image/png')
 /**
  * Calculate statistics for grid values.
  */
-export function calculateStats(values: Array<number | null>): {
+export function calculateStats(values: GridValues): {
   min: number;
   max: number;
   mean: number;
@@ -134,11 +143,13 @@ export function calculateStats(values: Array<number | null>): {
   let sum = 0;
   let count = 0;
 
-  for (const v of values) {
-    if (v !== null) {
-      min = Math.min(min, v);
-      max = Math.max(max, v);
-      sum += v;
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (!isMissing(v)) {
+      const num = v as number;
+      min = Math.min(min, num);
+      max = Math.max(max, num);
+      sum += num;
       count++;
     }
   }
