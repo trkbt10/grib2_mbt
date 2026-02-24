@@ -118,16 +118,37 @@ test "single file roundtrip: gfswave small" {
 | `-full_name` | [x] | [x] |
 | `-lev0` | [x] | [x] |
 | `-cyclic` | [x] | [x] |
+| `-domain` | [x] | [x] |
+| `-scale` | [x] | [x] |
+| `-scaling` | [x] | [x] |
+| `-radius` | [x] | [x] |
+| `-varX` | [x] | [x] |
+| `-grid_id` | [x] | [x] |
+| `-nl` | [x] | [x] |
+| `-misc` | [x] | [x] |
+| `-flag_table_3.5` | [x] | [x] |
+| `-flag_table_3.9` | [x] | [x] |
+| `-flag_table_3.10` | [x] | [x] |
+| `-Match_inv` | [x] | [x] |
+| `-code_table_3.2` | [x] | [x] |
+| `-code_table_4.5a` | [x] | [x] |
+| `-code_table_4.5b` | [x] | [x] |
+| `-code_table_1.5` | [x] | [x] |
+| `-code_table_1.6` | [x] | [x] |
+| `-code_table_4.6` | [x] | [x] |
+| `-code_table_4.9` | [x] | [x] |
+| `-code_table_4.10` | [x] | [x] |
+| `-code_table_4.11` | [x] | [x] |
 
 ---
 
-## 未実装オプション (106個)
+## 未実装オプション (85個)
 
-wgrib2 inv カテゴリ 166個のうち、60個が実装済み。残り106個の内訳:
+wgrib2 inv カテゴリ 166個のうち、81個が実装済み。残り85個の内訳:
 
-### 優先度 高 - 時刻系 (残り1個)
+### 優先度 高 - 時刻系 (全15個実装完了)
 
-基本的なインベントリ機能として需要が高い。14個実装済み、1個未実装。
+基本的なインベントリ機能として需要が高い。15個全て実装済み。
 
 | オプション | 説明 | 状態 |
 |------------|------|------|
@@ -145,30 +166,30 @@ wgrib2 inv カテゴリ 166個のうち、60個が実装済み。残り106個の
 | `-S` | simple inventory with minutes/seconds | [x] |
 | `-unix_time` | print unix timestamp | [x] |
 | `-verf` | inventory using verification time | [x] |
-| `-Match_inv` | match inventory with D=YYYYMMDDHHmmss | [ ] |
+| `-Match_inv` | match inventory with D=YYYYMMDDHHmmss | [x] |
 
-### 優先度 中 - code_table系 (49個のうち15個実装済み)
+### 優先度 中 - code_table系 (49個のうち24個実装済み)
 
 コードテーブル値の詳細表示。IMPLEMENTATION_CHECKLIST.md の Code Tables 実装と連動。
 
 | カテゴリ | 数 | 実装済み | 例 |
 |----------|----|----|-------|
 | Section 0 | 1 | 1 | `-code_table_0.0` ✓ |
-| Section 1 | 7 | 5 | `-code_table_1.0~1.4` ✓ |
-| Section 3 | 10 | 2 | `-code_table_3.0` ✓, `-code_table_3.1` ✓ |
-| Section 4 | 25 | 5 | `-code_table_4.0~4.4` ✓ |
+| Section 1 | 7 | 7 | `-code_table_1.0~1.6` ✓ |
+| Section 3 | 10 | 3 | `-code_table_3.0` ✓, `-code_table_3.1` ✓, `-code_table_3.2` ✓ |
+| Section 4 | 25 | 11 | `-code_table_4.0~4.4` ✓, `-code_table_4.5a/b` ✓, `-code_table_4.6` ✓, etc. |
 | Section 5 | 6 | 1 | `-code_table_5.0` ✓ |
 | Section 6 | - | 1 | `-code_table_6.0` ✓ |
 
-### 優先度 中 - flag_table系 (5個のうち2個実装済み)
+### 優先度 中 - flag_table系 (全5個実装完了)
 
 | オプション | 説明 | 状態 |
 |------------|------|------|
 | `-flag_table_3.3` | resolution and component flags | [x] |
 | `-flag_table_3.4` | scanning mode | [x] |
-| `-flag_table_3.5` | projection center | [ ] |
-| `-flag_table_3.9` | numbering order of diamonds | [ ] |
-| `-flag_table_3.10` | scanning mode for one diamond | [ ] |
+| `-flag_table_3.5` | projection center | [x] |
+| `-flag_table_3.9` | numbering order of diamonds | [x] |
+| `-flag_table_3.10` | scanning mode for one diamond | [x] |
 
 ### 優先度 低 - データアクセス系 (8個)
 
