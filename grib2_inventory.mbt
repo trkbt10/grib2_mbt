@@ -1854,8 +1854,8 @@ fn format_scaling(meta : Grib2RecordMeta) -> String {
 
 ///|
 pub fn wgrib2_match_inv_lines(context : Grib2FileContext) -> Array[String] {
-  // -Match_inv: comprehensive inventory for matching
-  // Format: n:offset:D=YYYYMMDDHHmmss:VAR:LEVEL:FTIME::VAR:n=N:npts=NPTS:varX:pdt=N:d=YYYYMMDDHH:start_FT=YYYYMMDDHHmmss:end_FT=YYYYMMDDHHmmss:scaling:FTIME:vt=YYYYMMDDHH:
+  // -match_inv/-Match_inv: comprehensive inventory for matching
+  // Format: n:offset:d=YYYYMMDDHH:VAR:LEVEL:FTIME::VAR:n=N:npts=NPTS:varX:pdt=N:D=YYYYMMDDHHmmss:start_FT=YYYYMMDDHHmmss:end_FT=YYYYMMDDHHmmss:scaling:FTIME:vt=YYYYMMDDHH:
   let records = decode_records(context)
   let lines : Array[String] = []
   for meta in records {
@@ -1866,8 +1866,9 @@ pub fn wgrib2_match_inv_lines(context : Grib2FileContext) -> Array[String] {
     let end_ft = meta.reference_time_full
     // vt (verification time) equals reference_time for anl data
     let vt_short = meta.reference_time
+    // Field order matches wgrib2: d= early, D= after pdt=
     let line = format_prefix(meta) +
-      "D=" + meta.reference_time_full +
+      "d=" + meta.reference_time +
       ":" + meta.parameter_name.display() +
       ":" + meta.level_name.display() +
       ":" + ftime_label +
@@ -1876,7 +1877,7 @@ pub fn wgrib2_match_inv_lines(context : Grib2FileContext) -> Array[String] {
       ":npts=" + meta.section3_npts.to_string() +
       ":" + format_varX(meta) +
       ":pdt=" + meta.section4_template.id().to_string() +
-      ":d=" + meta.reference_time +
+      ":D=" + meta.reference_time_full +
       ":start_FT=" + start_ft +
       ":end_FT=" + end_ft +
       ":" + format_scaling(meta) +
@@ -3224,6 +3225,417 @@ pub fn wgrib2_checksum7_lines(context : Grib2FileContext) -> Array[String] {
           lines.push(prefix + "sec7_cksum=" + crc.to_string())
         }
         None => lines.push(prefix + "sec7_cksum=0")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+fn get_section_bytes_for_record(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+  section_num : Int,
+) -> BytesView? {
+  match section_num {
+    0 => Some(get_section0_bytes(message))
+    1 => Some(get_section1_bytes(message))
+    2 | 3 | 4 | 5 | 6 | 7 => get_section_bytes(message, submessage, section_num)
+    _ => None
+  }
+}
+
+///|
+pub fn wgrib2_get_byte_lines(
+  context : Grib2FileContext,
+  section : Int,
+  octet : Int,
+  count : Int,
+) -> Array[String] {
+  // -get_byte X Y Z: Get bytes in Section X, Octet Y, count Z (decimal)
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match get_section_bytes_for_record(message, submessage, section) {
+        Some(sec) => {
+          let start_idx = octet - 1 // octets are 1-based
+          if start_idx >= 0 && start_idx + count <= sec.length() {
+            let values : Array[String] = []
+            for i in 0..<count {
+              let byte_val = sec[start_idx + i].to_uint().reinterpret_as_int()
+              values.push(byte_val.to_string())
+            }
+            lines.push(
+              prefix +
+              section.to_string() +
+              "-" +
+              octet.to_string() +
+              "=" +
+              values.join(","),
+            )
+          } else {
+            lines.push(prefix)
+          }
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_get_hex_lines(
+  context : Grib2FileContext,
+  section : Int,
+  octet : Int,
+  count : Int,
+) -> Array[String] {
+  // -get_hex X Y Z: Get bytes in Section X, Octet Y, count Z (hex)
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match get_section_bytes_for_record(message, submessage, section) {
+        Some(sec) => {
+          let start_idx = octet - 1
+          if start_idx >= 0 && start_idx + count <= sec.length() {
+            let values : Array[String] = []
+            for i in 0..<count {
+              let byte_val = sec[start_idx + i].to_uint().reinterpret_as_int()
+              values.push(byte_to_hex(byte_val))
+            }
+            lines.push(
+              prefix +
+              section.to_string() +
+              "-" +
+              octet.to_string() +
+              "=" +
+              values.join(","),
+            )
+          } else {
+            lines.push(prefix)
+          }
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_get_int_lines(
+  context : Grib2FileContext,
+  section : Int,
+  octet : Int,
+  count : Int,
+) -> Array[String] {
+  // -get_int X Y Z: Get 4-byte ints in Section X, Octet Y, count Z
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match get_section_bytes_for_record(message, submessage, section) {
+        Some(sec) => {
+          let start_idx = octet - 1
+          if start_idx >= 0 && start_idx + count * 4 <= sec.length() {
+            let values : Array[String] = []
+            for i in 0..<count {
+              let idx = start_idx + i * 4
+              let val = (sec[idx].to_uint().reinterpret_as_int() << 24) |
+                (sec[idx + 1].to_uint().reinterpret_as_int() << 16) |
+                (sec[idx + 2].to_uint().reinterpret_as_int() << 8) |
+                sec[idx + 3].to_uint().reinterpret_as_int()
+              values.push(val.to_string())
+            }
+            lines.push(
+              prefix +
+              section.to_string() +
+              "-" +
+              octet.to_string() +
+              "=" +
+              values.join(","),
+            )
+          } else {
+            lines.push(prefix)
+          }
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_get_int2_lines(
+  context : Grib2FileContext,
+  section : Int,
+  octet : Int,
+  count : Int,
+) -> Array[String] {
+  // -get_int2 X Y Z: Get 2-byte ints in Section X, Octet Y, count Z
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match get_section_bytes_for_record(message, submessage, section) {
+        Some(sec) => {
+          let start_idx = octet - 1
+          if start_idx >= 0 && start_idx + count * 2 <= sec.length() {
+            let values : Array[String] = []
+            for i in 0..<count {
+              let idx = start_idx + i * 2
+              let val = (sec[idx].to_uint().reinterpret_as_int() << 8) |
+                sec[idx + 1].to_uint().reinterpret_as_int()
+              values.push(val.to_string())
+            }
+            lines.push(
+              prefix +
+              section.to_string() +
+              "-" +
+              octet.to_string() +
+              "=" +
+              values.join(","),
+            )
+          } else {
+            lines.push(prefix)
+          }
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+fn ieee_uint_to_float(bits : UInt) -> Double {
+  bits.reinterpret_as_int().reinterpret_as_float().to_double()
+}
+
+///|
+fn format_ieee_float(val : Double) -> String {
+  // Format like wgrib2's %f - with 6 decimal places
+  let int_part = val.to_int()
+  let frac_part = (val - int_part.to_double()).abs() * 1000000.0
+  let frac_int = frac_part.to_int()
+  // Pad fractional part to 6 digits
+  let frac_str = frac_int.to_string()
+  let padding = "0".repeat(6 - frac_str.length())
+  if val < 0.0 && int_part == 0 {
+    "-0." + padding + frac_str
+  } else {
+    int_part.to_string() + "." + padding + frac_str
+  }
+}
+
+///|
+pub fn wgrib2_get_ieee_lines(
+  context : Grib2FileContext,
+  section : Int,
+  octet : Int,
+  count : Int,
+) -> Array[String] {
+  // -get_ieee X Y Z: Get IEEE floats in Section X, Octet Y, count Z
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match get_section_bytes_for_record(message, submessage, section) {
+        Some(sec) => {
+          let start_idx = octet - 1
+          if start_idx >= 0 && start_idx + count * 4 <= sec.length() {
+            let values : Array[String] = []
+            for i in 0..<count {
+              let idx = start_idx + i * 4
+              let bits = (sec[idx].to_uint() << 24) |
+                (sec[idx + 1].to_uint() << 16) |
+                (sec[idx + 2].to_uint() << 8) |
+                sec[idx + 3].to_uint()
+              let val = ieee_uint_to_float(bits)
+              values.push(format_ieee_float(val))
+            }
+            lines.push(
+              prefix +
+              section.to_string() +
+              "-" +
+              octet.to_string() +
+              "=" +
+              values.join(","),
+            )
+          } else {
+            lines.push(prefix)
+          }
+        }
+        None => lines.push(prefix)
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+fn is_nan(v : Double) -> Bool {
+  v != v // NaN is the only value not equal to itself
+}
+
+///|
+pub fn wgrib2_min_lines(context : Grib2FileContext) -> Array[String] {
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match unpack_submessage_data(message, submessage) {
+        Ok(data) => {
+          let mut min_val : Double? = None
+          for v in data.values {
+            if not(is_nan(v)) {
+              match min_val {
+                None => min_val = Some(v)
+                Some(current) => if v < current { min_val = Some(v) }
+              }
+            }
+          }
+          match min_val {
+            Some(m) => lines.push(prefix + "min=" + m.to_string())
+            None => lines.push(prefix + "min=undefined")
+          }
+        }
+        Err(_) => lines.push(prefix + "min=error")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_max_lines(context : Grib2FileContext) -> Array[String] {
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match unpack_submessage_data(message, submessage) {
+        Ok(data) => {
+          let mut max_val : Double? = None
+          for v in data.values {
+            if not(is_nan(v)) {
+              match max_val {
+                None => max_val = Some(v)
+                Some(current) => if v > current { max_val = Some(v) }
+              }
+            }
+          }
+          match max_val {
+            Some(m) => lines.push(prefix + "max=" + m.to_string())
+            None => lines.push(prefix + "max=undefined")
+          }
+        }
+        Err(_) => lines.push(prefix + "max=error")
+      }
+      record_index += 1
+    }
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_stats_lines(context : Grib2FileContext) -> Array[String] {
+  let lines : Array[String] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      let prefix = record_index.to_string() +
+        ":" +
+        message.offset.to_string() +
+        ":"
+      match unpack_submessage_data(message, submessage) {
+        Ok(data) => {
+          let ndata = data.values.length()
+          let mut defined_count = 0
+          let mut sum = 0.0
+          let mut min_val : Double? = None
+          let mut max_val : Double? = None
+          for v in data.values {
+            if not(is_nan(v)) {
+              defined_count += 1
+              sum += v
+              match min_val {
+                None => min_val = Some(v)
+                Some(current) => if v < current { min_val = Some(v) }
+              }
+              match max_val {
+                None => max_val = Some(v)
+                Some(current) => if v > current { max_val = Some(v) }
+              }
+            }
+          }
+          let undef_count = ndata - defined_count
+          let mean = if defined_count > 0 {
+            sum / defined_count.to_double()
+          } else {
+            0.0
+          }
+          let min_str = match min_val {
+            Some(m) => m.to_string()
+            None => "undefined"
+          }
+          let max_str = match max_val {
+            Some(m) => m.to_string()
+            None => "undefined"
+          }
+          lines.push(
+            prefix +
+            "ndata=" +
+            ndata.to_string() +
+            ":undef=" +
+            undef_count.to_string() +
+            ":mean=" +
+            mean.to_string() +
+            ":min=" +
+            min_str +
+            ":max=" +
+            max_str,
+          )
+        }
+        Err(_) => lines.push(prefix + "stats=error")
       }
       record_index += 1
     }

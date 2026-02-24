@@ -75,6 +75,7 @@ fn print_usage() -> Unit {
   println("  -nl  add blank line after each record")
   println("  -misc  print miscellaneous inventory")
   println("  -Match_inv  print comprehensive match inventory")
+  println("  -match_inv  print comprehensive match inventory (same as -Match_inv)")
   println("  -code_table_3.2  print earth shape (code table 3.2)")
   println("  -code_table_4.5a  print first surface type (code table 4.5)")
   println("  -code_table_4.5b  print second surface type (code table 4.5)")
@@ -146,12 +147,29 @@ fn print_usage() -> Unit {
   println("  -inv  print standard inventory")
   println("  -0xSec N  hex dump of section N (0,1,3,4,5,6,7)")
   println("  -checksum N  CRC checksum of section N (0,1,3,4,5,6,7)")
+  println("  -get_byte sec oct count  get count bytes from section sec at octet oct")
+  println("  -get_hex sec oct count  get count bytes as hex from section sec at octet oct")
+  println("  -get_int sec oct count  get count bytes as unsigned int from section sec at octet oct")
+  println("  -get_int2 sec oct count  get count bytes as signed int from section sec at octet oct")
+  println("  -get_ieee sec oct count  get count 4-byte IEEE floats from section sec at octet oct")
+  println("  -min    print minimum data value")
+  println("  -max    print maximum data value")
+  println("  -stats  print data statistics (ndata, undef, mean, min, max)")
 }
 
 ///|
 fn print_lines(lines : Array[String]) -> Unit {
   for line in lines {
     println(line)
+  }
+}
+
+///|
+fn parse_int_option(s : String) -> Int? {
+  try {
+    Some(@strconv.parse_int!(s))
+  } catch {
+    _ => None
   }
 }
 
@@ -167,6 +185,9 @@ fn native_read_bytes(path : String) -> Result[Bytes, String] {
 ///|
 fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 0 || (args.length() == 1 && args[0] == "-s") {
+    return Some(InventoryShort)
+  }
+  if args.length() == 1 && args[0] == "-one_line" {
     return Some(InventoryShort)
   }
   if args.length() == 1 && args[0] == "-Sec0" {
@@ -385,6 +406,9 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-Match_inv" {
     return Some(InventoryMatchInv)
   }
+  if args.length() == 1 && args[0] == "-match_inv" {
+    return Some(InventoryMatchInv)
+  }
   if args.length() == 1 && args[0] == "-code_table_3.2" {
     return Some(InventoryCodeTable32)
   }
@@ -592,6 +616,15 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 1 && args[0] == "-inv" {
     return Some(InventoryInv)
   }
+  if args.length() == 1 && args[0] == "-min" {
+    return Some(InventoryMin)
+  }
+  if args.length() == 1 && args[0] == "-max" {
+    return Some(InventoryMax)
+  }
+  if args.length() == 1 && args[0] == "-stats" {
+    return Some(InventoryStats)
+  }
   // Hex dump options
   if args.length() == 2 && args[0] == "-0xSec" && args[1] == "0" {
     return Some(Inventory0xSec0)
@@ -636,6 +669,37 @@ fn parse_mode(args : Array[String]) -> @lib.Grib2InventoryMode? {
   if args.length() == 2 && args[0] == "-checksum" && args[1] == "7" {
     return Some(InventoryChecksum7)
   }
+  // get_byte, get_hex, get_int, get_int2 options (require 3 arguments each)
+  if args.length() == 4 && args[0] == "-get_byte" {
+    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
+      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetByte(sec, oct, cnt))
+      _ => ()
+    }
+  }
+  if args.length() == 4 && args[0] == "-get_hex" {
+    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
+      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetHex(sec, oct, cnt))
+      _ => ()
+    }
+  }
+  if args.length() == 4 && args[0] == "-get_int" {
+    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
+      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetInt(sec, oct, cnt))
+      _ => ()
+    }
+  }
+  if args.length() == 4 && args[0] == "-get_int2" {
+    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
+      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetInt2(sec, oct, cnt))
+      _ => ()
+    }
+  }
+  if args.length() == 4 && args[0] == "-get_ieee" {
+    match (parse_int_option(args[1]), parse_int_option(args[2]), parse_int_option(args[3])) {
+      (Some(sec), Some(oct), Some(cnt)) => return Some(InventoryGetIeee(sec, oct, cnt))
+      _ => ()
+    }
+  }
   None
 }
 
@@ -645,7 +709,7 @@ fn run_cli(args : Array[String]) -> Int {
     print_usage()
     return 1
   }
-  if args.length() > 5 {
+  if args.length() > 6 {
     println("error: too many arguments")
     print_usage()
     return 1
