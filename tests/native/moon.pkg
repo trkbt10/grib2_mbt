@@ -1,6 +1,7 @@
 import {
   "trkbt10/grib2_mbt" @lib,
   "moonbitlang/x/fs" @fs,
+  "trkbt10/grib2_mbt/tests/native/grib2_support" @grib2support,
 }
 
 options(
@@ -9,7 +10,7 @@ options(
     "grib2_io_adapter_test.mbt": [ "native", "llvm" ],
     "grib2_parser_test.mbt": [ "native", "llvm" ],
     "grib2_writer_fast_test.mbt": [ "native", "llvm" ],
-    "grib2_writer_helpers_test.mbt": [ "native", "llvm" ],
     "grib2_writer_roundtrip_test.mbt": [ "native", "llvm" ],
+    "grib2_writer_structural_validation_test.mbt": [ "native", "llvm" ],
   },
 )

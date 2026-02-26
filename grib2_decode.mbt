@@ -171,20 +171,17 @@ fn section_slice(
 
 ///|
 fn read_u16_be_from(bytes : BytesView, index : Int) -> Int {
-  bytes.unsafe_read_uint16_be(index).to_uint().reinterpret_as_int()
+  binary_read_u16_be_view(bytes, index)
 }
 
 ///|
 fn read_u32_be_from(bytes : BytesView, index : Int) -> Int {
-  bytes.unsafe_read_uint32_be(index).reinterpret_as_int()
+  binary_read_u32_be_view(bytes, index)
 }
 
 ///|
 fn read_i16_be_from(bytes : BytesView, index : Int) -> Int {
-  let unsigned = bytes
-    .unsafe_read_uint16_be(index)
-    .to_uint()
-    .reinterpret_as_int()
+  let unsigned = binary_read_u16_be_view(bytes, index)
   if unsigned >= 0x8000 {
     unsigned - 0x10000
   } else {
@@ -194,10 +191,7 @@ fn read_i16_be_from(bytes : BytesView, index : Int) -> Int {
 
 ///|
 fn read_i16_sign_magnitude_from(bytes : BytesView, index : Int) -> Int {
-  let unsigned = bytes
-    .unsafe_read_uint16_be(index)
-    .to_uint()
-    .reinterpret_as_int()
+  let unsigned = binary_read_u16_be_view(bytes, index)
   let magnitude = unsigned & 0x7FFF
   if (unsigned & 0x8000) != 0 {
     -magnitude

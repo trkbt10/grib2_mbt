@@ -11,28 +11,22 @@ fn error_with_offset(prefix : String, offset : Int) -> String {
 
 ///|
 fn read_u32_be(bytes : Bytes, offset : Int) -> UInt {
-  bytes.unsafe_read_uint32_be(offset)
+  binary_read_u32_be_uint(bytes, offset)
 }
 
 ///|
 fn read_u8_as_int(bytes : Bytes, offset : Int) -> Int {
-  bytes[offset].to_uint().reinterpret_as_int()
+  binary_read_u8_as_int(bytes, offset)
 }
 
 ///|
 fn has_grib_magic(bytes : Bytes, offset : Int) -> Bool {
-  bytes[offset] == b'G' &&
-  bytes[offset + 1] == b'R' &&
-  bytes[offset + 2] == b'I' &&
-  bytes[offset + 3] == b'B'
+  binary_has_magic_at(bytes, offset, b'G', b'R', b'I', b'B')
 }
 
 ///|
 fn has_end_magic(bytes : Bytes, offset : Int) -> Bool {
-  bytes[offset] == b'7' &&
-  bytes[offset + 1] == b'7' &&
-  bytes[offset + 2] == b'7' &&
-  bytes[offset + 3] == b'7'
+  binary_has_magic_at(bytes, offset, b'7', b'7', b'7', b'7')
 }
 
 ///|
