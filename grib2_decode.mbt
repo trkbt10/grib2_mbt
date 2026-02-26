@@ -193,6 +193,20 @@ fn read_i16_be_from(bytes : BytesView, index : Int) -> Int {
 }
 
 ///|
+fn read_i16_sign_magnitude_from(bytes : BytesView, index : Int) -> Int {
+  let unsigned = bytes
+    .unsafe_read_uint16_be(index)
+    .to_uint()
+    .reinterpret_as_int()
+  let magnitude = unsigned & 0x7FFF
+  if (unsigned & 0x8000) != 0 {
+    -magnitude
+  } else {
+    magnitude
+  }
+}
+
+///|
 fn read_i32_sign_magnitude_from(bytes : BytesView, index : Int) -> Int {
   let b0 = bytes[index].to_uint().reinterpret_as_int()
   let b1 = bytes[index + 1].to_uint().reinterpret_as_int()
@@ -209,10 +223,11 @@ fn read_i32_sign_magnitude_from(bytes : BytesView, index : Int) -> Int {
 ///|
 fn read_signed_byte_from(bytes : BytesView, index : Int) -> Int {
   let raw = bytes[index].to_uint().reinterpret_as_int()
-  if raw >= 128 {
-    raw - 256
+  let magnitude = raw & 0x7F
+  if (raw & 0x80) != 0 {
+    -magnitude
   } else {
-    raw
+    magnitude
   }
 }
 
@@ -7978,12 +7993,12 @@ pub fn decode_records(context : Grib2FileContext) -> Array[Grib2RecordMeta] {
         0
       }
       let section5_binary_scale_factor = if section5.length() >= 17 {
-        read_i16_be_from(section5, 15)
+        read_i16_sign_magnitude_from(section5, 15)
       } else {
         0
       }
       let section5_decimal_scale_factor = if section5.length() >= 19 {
-        read_i16_be_from(section5, 17)
+        read_i16_sign_magnitude_from(section5, 17)
       } else {
         0
       }

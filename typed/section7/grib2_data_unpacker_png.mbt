@@ -426,7 +426,7 @@ pub fn unpack_png(
   let decimal_scale = png_pow10(u16_to_i16(template.decimal_scale_factor))
   let values : Array[Double] = []
   for sample in samples {
-    values.push(ref_value + sample.to_double() * binary_scale / decimal_scale)
+    values.push((ref_value + sample.to_double() * binary_scale) / decimal_scale)
   }
   Ok({ values, num_points })
 }

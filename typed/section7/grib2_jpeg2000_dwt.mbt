@@ -172,6 +172,97 @@ fn ceil_div_pow2(n : Int, s : Int) -> Result[Int, UnpackError] {
 }
 
 ///|
+fn inverse53_dwt_from_coeffs_int(
+  coeffs : Array[Int],
+  width : Int,
+  height : Int,
+  num_decomposition_levels : Int,
+) -> Result[Array[Int], UnpackError] {
+  if width <= 0 || height <= 0 {
+    return Err(UnsupportedTemplate("width/height must be > 0"))
+  }
+  if coeffs.length() != width * height {
+    return Err(
+      InsufficientData(
+        "coeff length mismatch: expected=\{width * height}, actual=\{coeffs.length()}",
+      ),
+    )
+  }
+  if num_decomposition_levels < 0 || num_decomposition_levels > 30 {
+    return Err(
+      UnsupportedTemplate(
+        "num_decomposition_levels out of range: \{num_decomposition_levels}",
+      ),
+    )
+  }
+  let data = Array::make(coeffs.length(), 0)
+  for i = 0; i < coeffs.length(); i = i + 1 {
+    data[i] = coeffs[i]
+  }
+  if num_decomposition_levels == 0 {
+    return Ok(data)
+  }
+  let mut ll_w = match ceil_div_pow2(width, num_decomposition_levels) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let mut ll_h = match ceil_div_pow2(height, num_decomposition_levels) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  for level = num_decomposition_levels; level > 0; level = level - 1 {
+    let target_w = match ceil_div_pow2(width, level - 1) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let target_h = match ceil_div_pow2(height, level - 1) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let high_w = target_w - ll_w
+    let high_h = target_h - ll_h
+    let horiz = Array::make(target_w * target_h, 0)
+    for y = 0; y < target_h; y = y + 1 {
+      let low_i = Array::make(ll_w, 0)
+      let high_i = Array::make(high_w, 0)
+      for x = 0; x < ll_w; x = x + 1 {
+        low_i[x] = data[y * width + x]
+      }
+      for x = 0; x < high_w; x = x + 1 {
+        high_i[x] = data[y * width + ll_w + x]
+      }
+      let row = match inverse53_1d(low_i, high_i, target_w) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      for x = 0; x < target_w; x = x + 1 {
+        horiz[y * target_w + x] = row[x]
+      }
+    }
+    for x = 0; x < target_w; x = x + 1 {
+      let low_i = Array::make(ll_h, 0)
+      let high_i = Array::make(high_h, 0)
+      for y = 0; y < ll_h; y = y + 1 {
+        low_i[y] = horiz[y * target_w + x]
+      }
+      for y = 0; y < high_h; y = y + 1 {
+        high_i[y] = horiz[(ll_h + y) * target_w + x]
+      }
+      let col = match inverse53_1d(low_i, high_i, target_h) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      for y = 0; y < target_h; y = y + 1 {
+        data[y * width + x] = col[y]
+      }
+    }
+    ll_w = target_w
+    ll_h = target_h
+  }
+  Ok(data)
+}
+
+///|
 fn inverse_dwt_from_coeffs_double(
   coeffs : Array[Double],
   width : Int,
@@ -194,6 +285,29 @@ fn inverse_dwt_from_coeffs_double(
       UnsupportedTemplate(
         "num_decomposition_levels out of range: \{num_decomposition_levels}",
       ),
+    )
+  }
+  if wavelet_transform == 1 {
+    let coeffs_i = Array::make(coeffs.length(), 0)
+    for i = 0; i < coeffs.length(); i = i + 1 {
+      coeffs_i[i] = coeffs[i].to_int()
+    }
+    let recon_i = match
+      inverse53_dwt_from_coeffs_int(
+        coeffs_i, width, height, num_decomposition_levels,
+      ) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let recon = Array::make(recon_i.length(), 0.0)
+    for i = 0; i < recon_i.length(); i = i + 1 {
+      recon[i] = recon_i[i].to_double()
+    }
+    return Ok(recon)
+  }
+  if wavelet_transform != 0 {
+    return Err(
+      UnsupportedTemplate("unsupported wavelet_transform: \{wavelet_transform}"),
     )
   }
   let data = Array::make(coeffs.length(), 0.0)
@@ -227,62 +341,22 @@ fn inverse_dwt_from_coeffs_double(
       let low_len = ll_w
       let high_len = high_w
       if y < ll_h {
-        if wavelet_transform == 1 {
-          let low_i = Array::make(low_len, 0)
-          let high_i = Array::make(high_len, 0)
-          for x = 0; x < low_len; x = x + 1 {
-            low_i[x] = data[y * width + x].to_int()
-          }
-          for x = 0; x < high_len; x = x + 1 {
-            high_i[x] = data[y * width + ll_w + x].to_int()
-          }
-          let row = match inverse53_1d(low_i, high_i, target_w) {
-            Ok(v) => v
-            Err(e) => return Err(e)
-          }
-          for x = 0; x < target_w; x = x + 1 {
-            horiz[y * target_w + x] = row[x].to_double()
-          }
-        } else if wavelet_transform == 0 {
-          let low_d = Array::make(low_len, 0.0)
-          let high_d = Array::make(high_len, 0.0)
-          for x = 0; x < low_len; x = x + 1 {
-            low_d[x] = data[y * width + x]
-          }
-          for x = 0; x < high_len; x = x + 1 {
-            high_d[x] = data[y * width + ll_w + x]
-          }
-          let row = match inverse97_1d(low_d, high_d, target_w) {
-            Ok(v) => v
-            Err(e) => return Err(e)
-          }
-          for x = 0; x < target_w; x = x + 1 {
-            horiz[y * target_w + x] = row[x]
-          }
-        } else {
-          return Err(
-            UnsupportedTemplate(
-              "unsupported wavelet_transform: \{wavelet_transform}",
-            ),
-          )
-        }
-      } else if wavelet_transform == 1 {
-        let low_i = Array::make(low_len, 0)
-        let high_i = Array::make(high_len, 0)
+        let low_d = Array::make(low_len, 0.0)
+        let high_d = Array::make(high_len, 0.0)
         for x = 0; x < low_len; x = x + 1 {
-          low_i[x] = data[(ll_h + (y - ll_h)) * width + x].to_int()
+          low_d[x] = data[y * width + x]
         }
         for x = 0; x < high_len; x = x + 1 {
-          high_i[x] = data[(ll_h + (y - ll_h)) * width + ll_w + x].to_int()
+          high_d[x] = data[y * width + ll_w + x]
         }
-        let row = match inverse53_1d(low_i, high_i, target_w) {
+        let row = match inverse97_1d(low_d, high_d, target_w) {
           Ok(v) => v
           Err(e) => return Err(e)
         }
         for x = 0; x < target_w; x = x + 1 {
-          horiz[y * target_w + x] = row[x].to_double()
+          horiz[y * target_w + x] = row[x]
         }
-      } else if wavelet_transform == 0 {
+      } else {
         let low_d = Array::make(low_len, 0.0)
         let high_d = Array::make(high_len, 0.0)
         for x = 0; x < low_len; x = x + 1 {
@@ -298,53 +372,23 @@ fn inverse_dwt_from_coeffs_double(
         for x = 0; x < target_w; x = x + 1 {
           horiz[y * target_w + x] = row[x]
         }
-      } else {
-        return Err(
-          UnsupportedTemplate(
-            "unsupported wavelet_transform: \{wavelet_transform}",
-          ),
-        )
       }
     }
     for x = 0; x < target_w; x = x + 1 {
-      if wavelet_transform == 1 {
-        let low_i = Array::make(ll_h, 0)
-        let high_i = Array::make(high_h, 0)
-        for y = 0; y < ll_h; y = y + 1 {
-          low_i[y] = horiz[y * target_w + x].to_int()
-        }
-        for y = 0; y < high_h; y = y + 1 {
-          high_i[y] = horiz[(ll_h + y) * target_w + x].to_int()
-        }
-        let col = match inverse53_1d(low_i, high_i, target_h) {
-          Ok(v) => v
-          Err(e) => return Err(e)
-        }
-        for y = 0; y < target_h; y = y + 1 {
-          data[y * width + x] = col[y].to_double()
-        }
-      } else if wavelet_transform == 0 {
-        let low_d = Array::make(ll_h, 0.0)
-        let high_d = Array::make(high_h, 0.0)
-        for y = 0; y < ll_h; y = y + 1 {
-          low_d[y] = horiz[y * target_w + x]
-        }
-        for y = 0; y < high_h; y = y + 1 {
-          high_d[y] = horiz[(ll_h + y) * target_w + x]
-        }
-        let col = match inverse97_1d(low_d, high_d, target_h) {
-          Ok(v) => v
-          Err(e) => return Err(e)
-        }
-        for y = 0; y < target_h; y = y + 1 {
-          data[y * width + x] = col[y]
-        }
-      } else {
-        return Err(
-          UnsupportedTemplate(
-            "unsupported wavelet_transform: \{wavelet_transform}",
-          ),
-        )
+      let low_d = Array::make(ll_h, 0.0)
+      let high_d = Array::make(high_h, 0.0)
+      for y = 0; y < ll_h; y = y + 1 {
+        low_d[y] = horiz[y * target_w + x]
+      }
+      for y = 0; y < high_h; y = y + 1 {
+        high_d[y] = horiz[(ll_h + y) * target_w + x]
+      }
+      let col = match inverse97_1d(low_d, high_d, target_h) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      for y = 0; y < target_h; y = y + 1 {
+        data[y * width + x] = col[y]
       }
     }
     ll_w = target_w

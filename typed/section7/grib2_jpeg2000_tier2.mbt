@@ -15,7 +15,12 @@ fn Jpeg2000PacketBitReader::new(data : Bytes) -> Jpeg2000PacketBitReader {
 fn Jpeg2000PacketBitReader::byte_aligned_offset(
   self : Jpeg2000PacketBitReader,
 ) -> Int {
-  if self.bit_pos == 0 {
+  // If previous byte was 0xFF, the next byte starts with a stuffed bit
+  // and raw-byte alignment must skip that byte when no payload bit has
+  // been consumed from it yet.
+  if self.bit_pos == 0 && self.skip_next_msb {
+    self.byte_pos + 1
+  } else if self.bit_pos == 0 {
     self.byte_pos
   } else {
     self.byte_pos + 1
@@ -128,14 +133,7 @@ fn decode_num_coding_passes(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  if v7 <= 126 {
-    return Ok(37 + v7)
-  }
-  let v8 = match reader.read_bits(8) {
-    Ok(v) => v
-    Err(e) => return Err(e)
-  }
-  Ok(164 + v8)
+  Ok(37 + v7)
 }
 
 ///|
@@ -180,7 +178,7 @@ priv struct Jpeg2000TagTreeState {
   level_heights : Array[Int]
   level_offsets : Array[Int]
   values : Array[Int]
-  known : Array[Bool]
+  lows : Array[Int]
 }
 
 ///|
@@ -223,8 +221,8 @@ fn build_tagtree_state(
     level_widths,
     level_heights,
     level_offsets,
-    values: Array::make(total_nodes, 0),
-    known: Array::make(total_nodes, false),
+    values: Array::make(total_nodes, 999),
+    lows: Array::make(total_nodes, 0),
   })
 }
 
@@ -278,34 +276,36 @@ fn tagtree_decode_leq(
     path_x[level] = path_x[level - 1] / 2
     path_y[level] = path_y[level - 1] / 2
   }
-  let mut min_value = 0
+  let mut low = 0
   for level = level_count - 1; level >= 0; level = level - 1 {
     let node_idx = match
       tagtree_node_index(state, level, path_x[level], path_y[level]) {
       Ok(v) => v
       Err(e) => return Err(e)
     }
-    if state.values[node_idx] < min_value {
-      state.values[node_idx] = min_value
+    if low > state.lows[node_idx] {
+      state.lows[node_idx] = low
+    } else {
+      low = state.lows[node_idx]
     }
-    while state.values[node_idx] <= threshold && !state.known[node_idx] {
+    while low < threshold && low < state.values[node_idx] {
       let bit = match reader.read_bit() {
         Ok(v) => v
         Err(e) => return Err(e)
       }
-      if bit == 0 {
-        state.values[node_idx] += 1
+      if bit == 1 {
+        state.values[node_idx] = low
       } else {
-        state.known[node_idx] = true
+        low += 1
       }
     }
-    min_value = state.values[node_idx]
+    state.lows[node_idx] = low
   }
   let leaf_idx = match tagtree_node_index(state, 0, leaf_x, leaf_y) {
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  Ok(state.values[leaf_idx] <= threshold)
+  Ok(state.values[leaf_idx] < threshold)
 }
 
 ///|
@@ -319,14 +319,14 @@ fn tagtree_decode_value(
   if max_threshold < 0 {
     return Err(UnsupportedTemplate("max_threshold must be >= 0"))
   }
-  for threshold = 0; threshold <= max_threshold; threshold = threshold + 1 {
+  for threshold = 1; threshold <= max_threshold + 1; threshold = threshold + 1 {
     let leq = match
       tagtree_decode_leq(state, reader, leaf_x, leaf_y, threshold) {
       Ok(v) => v
       Err(e) => return Err(e)
     }
     if leq {
-      return Ok(threshold)
+      return Ok(threshold - 1)
     }
   }
   Err(
@@ -365,6 +365,33 @@ fn tagtree_decode_value_with_leaf_refs(
     leaf_ref.leaf_y,
     max_threshold,
   )
+}
+
+///|
+fn tagtree_decode_leq_with_leaf_refs(
+  states : Array[Jpeg2000TagTreeState],
+  leaf_refs : Array[Jpeg2000TagTreeLeafRef],
+  codeblock_index : Int,
+  reader : Jpeg2000PacketBitReader,
+  threshold : Int,
+) -> Result[Bool, UnpackError] {
+  if codeblock_index < 0 || codeblock_index >= leaf_refs.length() {
+    return Err(
+      UnsupportedTemplate(
+        "tag-tree leaf-ref index out of range: index=\{codeblock_index}, len=\{leaf_refs.length()}",
+      ),
+    )
+  }
+  let leaf_ref = leaf_refs[codeblock_index]
+  if leaf_ref.group_index < 0 || leaf_ref.group_index >= states.length() {
+    return Err(
+      UnsupportedTemplate(
+        "tag-tree group index out of range: group=\{leaf_ref.group_index}, groups=\{states.length()}",
+      ),
+    )
+  }
+  let state = states[leaf_ref.group_index]
+  tagtree_decode_leq(state, reader, leaf_ref.leaf_x, leaf_ref.leaf_y, threshold)
 }
 
 ///|
@@ -412,6 +439,8 @@ fn parse_packet_codeblocks_with_state(
 ) -> Result[MultiCodeblockPacketHeader, UnpackError] {
   let inclusion_layer_known : Array[Bool] = []
   let inclusion_layer : Array[Int] = []
+  let segment_passes = Array::make(included_before.length(), 0)
+  let segment_maxpasses = Array::make(included_before.length(), 0)
   parse_packet_codeblocks_with_layer_state(
     payload,
     use_sop,
@@ -422,10 +451,43 @@ fn parse_packet_codeblocks_with_state(
     zero_bitplanes,
     inclusion_layer_known,
     inclusion_layer,
+    0,
+    segment_passes,
+    segment_maxpasses,
     None,
     None,
     None,
   )
+}
+
+///|
+fn codeblock_segment_maxpasses(
+  codeblock_style : Int,
+  previous_maxpasses : Int,
+  first_segment : Bool,
+) -> Result[Int, UnpackError] {
+  if (codeblock_style & 0xC0) != 0 {
+    return Err(
+      UnsupportedTemplate(
+        "codeblock_style has reserved bits set: 0x\{codeblock_style.to_string(radix=16)}",
+      ),
+    )
+  }
+  let use_termall = (codeblock_style & 0x04) != 0
+  let use_lazy = (codeblock_style & 0x01) != 0
+  if use_termall {
+    return Ok(1)
+  }
+  if use_lazy {
+    if first_segment {
+      return Ok(10)
+    }
+    if previous_maxpasses == 1 || previous_maxpasses == 10 {
+      return Ok(2)
+    }
+    return Ok(1)
+  }
+  Ok(109)
 }
 
 ///|
@@ -439,6 +501,9 @@ fn parse_packet_codeblocks_with_layer_state(
   zero_bitplanes : Array[Int],
   inclusion_layer_known : Array[Bool],
   inclusion_layer : Array[Int],
+  codeblock_style : Int,
+  segment_passes : Array[Int],
+  segment_maxpasses : Array[Int],
   inclusion_tagtree_states : Array[Jpeg2000TagTreeState]?,
   zero_bitplanes_tagtree_states : Array[Jpeg2000TagTreeState]?,
   tagtree_leaf_refs : Array[Jpeg2000TagTreeLeafRef]?,
@@ -450,33 +515,32 @@ fn parse_packet_codeblocks_with_layer_state(
     return Err(UnsupportedTemplate("state arrays must be non-empty"))
   }
   if lblocks.length() != included_before.length() ||
-    zero_bitplanes.length() != included_before.length() {
+    zero_bitplanes.length() != included_before.length() ||
+    segment_passes.length() != included_before.length() ||
+    segment_maxpasses.length() != included_before.length() {
     return Err(
       UnsupportedTemplate(
-        "state arrays length mismatch: included=\{included_before.length()}, lblocks=\{lblocks.length()}, zero_bitplanes=\{zero_bitplanes.length()}",
+        "state arrays length mismatch: included=\{included_before.length()}, lblocks=\{lblocks.length()}, zero_bitplanes=\{zero_bitplanes.length()}, segment_passes=\{segment_passes.length()}, segment_maxpasses=\{segment_maxpasses.length()}",
       ),
     )
   }
-  let use_layer_state = inclusion_layer_known.length() ==
+  let _has_inclusion_layer_state = inclusion_layer_known.length() ==
     included_before.length() &&
     inclusion_layer.length() == included_before.length()
-  let mut use_tagtree = false
-  if use_layer_state {
-    use_tagtree = match inclusion_tagtree_states {
-      Some(inclusion_states) =>
-        match zero_bitplanes_tagtree_states {
-          Some(zero_states) =>
-            match tagtree_leaf_refs {
-              Some(leaf_refs) =>
-                inclusion_states.length() > 0 &&
-                zero_states.length() > 0 &&
-                leaf_refs.length() == included_before.length()
-              None => false
-            }
-          None => false
-        }
-      None => false
-    }
+  let use_tagtree = match inclusion_tagtree_states {
+    Some(inclusion_states) =>
+      match zero_bitplanes_tagtree_states {
+        Some(zero_states) =>
+          match tagtree_leaf_refs {
+            Some(leaf_refs) =>
+              inclusion_states.length() > 0 &&
+              zero_states.length() > 0 &&
+              leaf_refs.length() == included_before.length()
+            None => false
+          }
+        None => false
+      }
+    None => false
   }
   let mut start = 0
   if use_sop {
@@ -501,75 +565,98 @@ fn parse_packet_codeblocks_with_layer_state(
   let data = payload.sub(start~).to_bytes()
   let reader = Jpeg2000PacketBitReader::new(data)
   let codeblocks : Array[CodeblockPacketHeader] = []
+  let packet_present = match reader.read_bit() {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  if packet_present == 0 {
+    for i = 0; i < included_before.length(); i = i + 1 {
+      if lblocks[i] < 3 {
+        lblocks[i] = 3
+      }
+      codeblocks.push({
+        included: false,
+        zero_bitplanes: zero_bitplanes[i],
+        num_coding_passes: 0,
+        lblock_increment: 0,
+        lblock: lblocks[i],
+        codeword_length: 0,
+      })
+    }
+    let mut bytes_consumed = start + reader.byte_aligned_offset()
+    if use_eph {
+      if bytes_consumed + 2 > payload.length() {
+        return Err(InsufficientData("EPH marker segment is truncated"))
+      }
+      if !(payload[bytes_consumed] == b'\xFF' &&
+        payload[bytes_consumed + 1] == b'\x92') {
+        return Err(
+          UnsupportedTemplate("COD requires EPH but no EPH marker found"),
+        )
+      }
+      bytes_consumed += 2
+    }
+    return Ok({ codeblocks, bytes_consumed })
+  }
   for i = 0; i < included_before.length(); i = i + 1 {
     if lblocks[i] < 3 {
       lblocks[i] = 3
     }
-    let first_inclusion_bit = match reader.read_bit() {
-      Ok(v) => v
-      Err(e) => return Err(e)
+    let mut zero_bitplanes_i = zero_bitplanes[i]
+    let included_now = if !included_before[i] {
+      if use_tagtree {
+        let states = match inclusion_tagtree_states {
+          Some(v) => v
+          None =>
+            return Err(
+              UnsupportedTemplate("inclusion tag-tree states are required"),
+            )
+        }
+        let leaf_refs = match tagtree_leaf_refs {
+          Some(v) => v
+          None =>
+            return Err(UnsupportedTemplate("tag-tree leaf refs are required"))
+        }
+        match
+          tagtree_decode_leq_with_leaf_refs(
+            states,
+            leaf_refs,
+            i,
+            reader,
+            layer_index + 1,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+      } else {
+        let inclusion_bit = match reader.read_bit() {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        inclusion_bit == 1
+      }
+    } else {
+      let inclusion_bit = match reader.read_bit() {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      inclusion_bit == 1
     }
-    if first_inclusion_bit == 0 {
+    if !included_now {
       codeblocks.push({
         included: false,
-        zero_bitplanes: 0,
+        zero_bitplanes: zero_bitplanes_i,
         num_coding_passes: 0,
         lblock_increment: 0,
-        lblock: 3,
+        lblock: lblocks[i],
         codeword_length: 0,
       })
       continue
     }
-    let mut zero_bitplanes_i = zero_bitplanes[i]
     if !included_before[i] {
-      if use_layer_state {
-        if !inclusion_layer_known[i] {
-          let first_layer = if use_tagtree {
-            let states = match inclusion_tagtree_states {
-              Some(v) => v
-              None =>
-                return Err(
-                  UnsupportedTemplate("inclusion tag-tree states are required"),
-                )
-            }
-            let leaf_refs = match tagtree_leaf_refs {
-              Some(v) => v
-              None =>
-                return Err(
-                  UnsupportedTemplate("tag-tree leaf refs are required"),
-                )
-            }
-            match
-              tagtree_decode_value_with_leaf_refs(
-                states, leaf_refs, i, reader, 31,
-              ) {
-              Ok(v) => v
-              Err(e) => return Err(e)
-            }
-          } else {
-            match reader.read_unary_ones(31) {
-              Ok(v) => v
-              Err(e) => return Err(e)
-            }
-          }
-          inclusion_layer[i] = first_layer
-          inclusion_layer_known[i] = true
-        }
-        if layer_index < inclusion_layer[i] {
-          codeblocks.push({
-            included: false,
-            zero_bitplanes: zero_bitplanes_i,
-            num_coding_passes: 0,
-            lblock_increment: 0,
-            lblock: lblocks[i],
-            codeword_length: 0,
-          })
-          continue
-        }
-      }
       zero_bitplanes_i = if use_tagtree {
         let states = match zero_bitplanes_tagtree_states {
-          Some(v) => v
+          Some(z) => z
           None =>
             return Err(
               UnsupportedTemplate("zero-bitplanes tag-tree states are required"),
@@ -582,7 +669,7 @@ fn parse_packet_codeblocks_with_layer_state(
         }
         match
           tagtree_decode_value_with_leaf_refs(states, leaf_refs, i, reader, 31) {
-          Ok(v) => v
+          Ok(z) => z
           Err(e) => return Err(e)
         }
       } else {
@@ -602,17 +689,75 @@ fn parse_packet_codeblocks_with_layer_state(
     }
     lblocks[i] = lblocks[i] + lblock_increment
     let lblock = lblocks[i]
-    let passes_log2 = match floor_log2_positive(num_coding_passes) {
-      Ok(v) => v
-      Err(e) => return Err(e)
+    let mut current_seg_maxpasses = segment_maxpasses[i]
+    let mut current_seg_passes = segment_passes[i]
+    if !included_before[i] {
+      current_seg_maxpasses = match
+        codeblock_segment_maxpasses(codeblock_style, 0, true) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      current_seg_passes = 0
+    } else if current_seg_maxpasses <= 0 {
+      current_seg_maxpasses = match
+        codeblock_segment_maxpasses(codeblock_style, 0, true) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      current_seg_passes = 0
+    } else if current_seg_passes >= current_seg_maxpasses {
+      current_seg_maxpasses = match
+        codeblock_segment_maxpasses(
+          codeblock_style, current_seg_maxpasses, false,
+        ) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      current_seg_passes = 0
     }
-    let length_bits = lblock + passes_log2
-    let codeword_length = match reader.read_bits(length_bits) {
-      Ok(v) => v
-      Err(e) => return Err(e)
+    let mut remaining_passes = num_coding_passes
+    let mut codeword_length = 0
+    while remaining_passes > 0 {
+      let available_passes = current_seg_maxpasses - current_seg_passes
+      if available_passes <= 0 {
+        return Err(
+          UnsupportedTemplate(
+            "invalid segment pass capacity: max=\{current_seg_maxpasses}, used=\{current_seg_passes}",
+          ),
+        )
+      }
+      let seg_new_passes = if remaining_passes < available_passes {
+        remaining_passes
+      } else {
+        available_passes
+      }
+      let seg_passes_log2 = match floor_log2_positive(seg_new_passes) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      let length_bits = lblock + seg_passes_log2
+      let seg_length = match reader.read_bits(length_bits) {
+        Ok(v) => v
+        Err(e) => return Err(e)
+      }
+      codeword_length += seg_length
+      remaining_passes -= seg_new_passes
+      current_seg_passes += seg_new_passes
+      if remaining_passes > 0 {
+        current_seg_maxpasses = match
+          codeblock_segment_maxpasses(
+            codeblock_style, current_seg_maxpasses, false,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        current_seg_passes = 0
+      }
     }
     included_before[i] = true
     zero_bitplanes[i] = zero_bitplanes_i
+    segment_passes[i] = current_seg_passes
+    segment_maxpasses[i] = current_seg_maxpasses
     codeblocks.push({
       included: true,
       zero_bitplanes: zero_bitplanes_i,
@@ -748,8 +893,18 @@ test "decode_num_coding_passes common short codes" {
 }
 
 ///|
+test "decode_num_coding_passes upper bound is 164" {
+  // 11 + 11 + 11111 + 1111111 -> 164 passes (with 0xFF bit-stuffing).
+  let r = Jpeg2000PacketBitReader::new(b"\xFF\x7F\x80")
+  match decode_num_coding_passes(r) {
+    Ok(v) => inspect(v, content="164")
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
 test "probe_first_packet_header with sop and unary zero-bitplanes" {
-  let payload = b"\xFF\x91\x00\x04\x00\x00\xEC\x50"
+  let payload = b"\xFF\x91\x00\x04\x00\x00\xF6\x28"
   match probe_first_packet_header(payload, true, false) {
     Ok(v) => {
       inspect(v.first_inclusion_bit, content="1")
@@ -762,8 +917,8 @@ test "probe_first_packet_header with sop and unary zero-bitplanes" {
 
 ///|
 test "parse_first_packet_single_codeblock parses coding passes and length" {
-  // bits: inclusion=1, zero=2(110), passes=3(1100), lblock_inc=0, len(4 bits)=10(1010)
-  let payload = b"\xEC\x50"
+  // bits: present=1, inclusion=1, zero=2(110), passes=3(1100), lblock_inc=0, len(4 bits)=10(1010)
+  let payload = b"\xF6\x28"
   match parse_first_packet_single_codeblock(payload, false, false) {
     Ok(v) => {
       inspect(v.included, content="true")
@@ -780,7 +935,7 @@ test "parse_first_packet_single_codeblock parses coding passes and length" {
 
 ///|
 test "parse_first_packet_single_codeblock accepts EPH marker" {
-  let payload = b"\xEC\x50\xFF\x92"
+  let payload = b"\xF6\x28\xFF\x92"
   match parse_first_packet_single_codeblock(payload, false, true) {
     Ok(v) => {
       inspect(v.codeword_length, content="10")
@@ -792,8 +947,8 @@ test "parse_first_packet_single_codeblock accepts EPH marker" {
 
 ///|
 test "parse_first_packet_single_codeblock parses two-pass header" {
-  // bits: inclusion=1, zero=0, passes=2(10), lblock_inc=0, len(4 bits)=1(0001)
-  let payload = b"\xA0\x80\x34"
+  // bits: present=1, inclusion=1, zero=0, passes=2(10), lblock_inc=0, len(4 bits)=1(0001)
+  let payload = b"\xD0\x40\x34"
   match parse_first_packet_single_codeblock(payload, false, false) {
     Ok(v) => {
       inspect(v.included, content="true")
@@ -809,10 +964,11 @@ test "parse_first_packet_single_codeblock parses two-pass header" {
 
 ///|
 test "parse_first_packet_codeblocks parses two codeblocks" {
+  // packet present bit + two codeblock headers.
   // cb0: inclusion=1, zero=0, passes=1, lblock_inc=0, len=1 (7 bits)
   // cb1: inclusion=1, zero=0, passes=1, lblock_inc=0, len=1 (7 bits)
-  // concatenated header bits => 0x83 0x04
-  let payload = b"\x83\x04\x34\x34"
+  // concatenated header bits => 0xC1 0x82
+  let payload = b"\xC1\x82\x34\x34"
   match parse_first_packet_codeblocks(payload, false, false, 2, 1) {
     Ok(v) => {
       inspect(v.codeblocks.length(), content="2")
@@ -860,6 +1016,8 @@ test "parse_packet_codeblocks_with_layer_state defers first inclusion by layer" 
   let included_before = [false]
   let lblocks = [3]
   let zero_bitplanes = [0]
+  let segment_passes = [0]
+  let segment_maxpasses = [0]
   let inclusion_layer_known = [false]
   let inclusion_layer = [0]
   let inclusion_tagtree_states = match build_tagtree_state(1, 1) {
@@ -879,25 +1037,25 @@ test "parse_packet_codeblocks_with_layer_state defers first inclusion by layer" 
     None => None
   }
   let tagtree_leaf_refs = Some([{ group_index: 0, leaf_x: 0, leaf_y: 0 }])
-  // layer=0: inclusion bit=1, first-layer(tag-tree)=1 => not included yet.
+  // layer=0: packet present=1, inclusion tag-tree (threshold=1) says not included yet.
   match
     parse_packet_codeblocks_with_layer_state(
-      b"\xA0", false, false, 0, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
-      inclusion_layer, inclusion_tagtree_states, zero_bitplanes_tagtree_states, tagtree_leaf_refs,
+      b"\x80", false, false, 0, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
+      inclusion_layer, 0, segment_passes, segment_maxpasses, inclusion_tagtree_states,
+      zero_bitplanes_tagtree_states, tagtree_leaf_refs,
     ) {
     Ok(v) => {
       inspect(v.codeblocks.length(), content="1")
       inspect(v.codeblocks[0].included, content="false")
-      inspect(inclusion_layer_known[0], content="true")
-      inspect(inclusion_layer[0], content="1")
     }
     Err(_) => fail("unexpected error")
   }
   // layer=1: same codeblock can now be included.
   match
     parse_packet_codeblocks_with_layer_state(
-      b"\xC2\x34", false, false, 1, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
-      inclusion_layer, inclusion_tagtree_states, zero_bitplanes_tagtree_states, tagtree_leaf_refs,
+      b"\xE1\x34", false, false, 1, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
+      inclusion_layer, 0, segment_passes, segment_maxpasses, inclusion_tagtree_states,
+      zero_bitplanes_tagtree_states, tagtree_leaf_refs,
     ) {
     Ok(v) => {
       inspect(v.codeblocks.length(), content="1")
@@ -916,6 +1074,8 @@ test "parse_packet_codeblocks_with_layer_state supports per-group tagtree refs" 
   let included_before = [false, false]
   let lblocks = [3, 3]
   let zero_bitplanes = [0, 0]
+  let segment_passes = [0, 0]
+  let segment_maxpasses = [0, 0]
   let inclusion_layer_known = [false, false]
   let inclusion_layer = [0, 0]
   let inclusion_tagtree_states = match
@@ -932,13 +1092,15 @@ test "parse_packet_codeblocks_with_layer_state supports per-group tagtree refs" 
     { group_index: 0, leaf_x: 0, leaf_y: 0 },
     { group_index: 1, leaf_x: 0, leaf_y: 0 },
   ])
-  // block0: inclusion=1, first-layer=1 => deferred at layer=0.
-  // block1: inclusion=1, first-layer=0, zbp=0, passes=1, lblock_inc=0, len=2.
-  // Bits: 101 1110001 (padded) -> 0xBC,0x40
+  // packet present=1.
+  // block0: inclusion tag-tree says deferred at layer=0 (value=1).
+  // block1: inclusion tag-tree says included, zbp=0, passes=1, lblock_inc=0, len=2.
+  // Bits -> 0xB1,0x00
   match
     parse_packet_codeblocks_with_layer_state(
-      b"\xBC\x40", false, false, 0, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
-      inclusion_layer, inclusion_tagtree_states, zero_bitplanes_tagtree_states, tagtree_leaf_refs,
+      b"\xB1\x00", false, false, 0, included_before, lblocks, zero_bitplanes, inclusion_layer_known,
+      inclusion_layer, 0, segment_passes, segment_maxpasses, inclusion_tagtree_states,
+      zero_bitplanes_tagtree_states, tagtree_leaf_refs,
     ) {
     Ok(v) => {
       inspect(v.codeblocks.length(), content="2")
@@ -946,10 +1108,6 @@ test "parse_packet_codeblocks_with_layer_state supports per-group tagtree refs" 
       inspect(v.codeblocks[1].included, content="true")
       inspect(v.codeblocks[1].num_coding_passes, content="1")
       inspect(v.codeblocks[1].codeword_length, content="2")
-      inspect(inclusion_layer_known[0], content="true")
-      inspect(inclusion_layer[0], content="1")
-      inspect(inclusion_layer_known[1], content="true")
-      inspect(inclusion_layer[1], content="0")
       inspect(zero_bitplanes[1], content="0")
       inspect(included_before[0], content="false")
       inspect(included_before[1], content="true")
@@ -964,26 +1122,22 @@ test "parse_packet_codeblocks_with_layer_state supports per-group tagtree refs" 
 }
 
 ///|
-test "tagtree_decode_leq decodes two-leaf threshold sequence" {
-  // root=0, leaf0=0, leaf1=2 -> bits: root(1) leaf0(1) leaf1@t0(0) leaf1@t1(0) leaf1@t2(1)
-  let reader = Jpeg2000PacketBitReader::new(b"\xC8")
-  let state = match build_tagtree_state(2, 1) {
+test "tagtree_decode_leq follows opj_tgt_decode threshold semantics" {
+  // single-leaf value=2 encoded as threshold decisions: t=1 -> 0, t=2 -> 0, t=3 -> 1.
+  let reader = Jpeg2000PacketBitReader::new(b"\x20")
+  let state = match build_tagtree_state(1, 1) {
     Ok(v) => v
     Err(_) => fail("unexpected error")
   }
-  match tagtree_decode_leq(state, reader, 0, 0, 0) {
-    Ok(v) => inspect(v, content="true")
-    Err(_) => fail("unexpected error")
-  }
-  match tagtree_decode_leq(state, reader, 1, 0, 0) {
+  match tagtree_decode_leq(state, reader, 0, 0, 1) {
     Ok(v) => inspect(v, content="false")
     Err(_) => fail("unexpected error")
   }
-  match tagtree_decode_leq(state, reader, 1, 0, 1) {
+  match tagtree_decode_leq(state, reader, 0, 0, 2) {
     Ok(v) => inspect(v, content="false")
     Err(_) => fail("unexpected error")
   }
-  match tagtree_decode_leq(state, reader, 1, 0, 2) {
+  match tagtree_decode_leq(state, reader, 0, 0, 3) {
     Ok(v) => inspect(v, content="true")
     Err(_) => fail("unexpected error")
   }

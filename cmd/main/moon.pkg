@@ -1,4 +1,6 @@
 import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/strconv",
   "trkbt10/grib2_mbt" @lib,
   "moonbitlang/x/fs" @fs,
   "moonbitlang/x/sys" @sys,

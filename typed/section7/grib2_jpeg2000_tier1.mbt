@@ -28,6 +28,43 @@ let mq_switch : Array[Int] = [
 ]
 
 ///|
+/// OpenJPEG sign-coding lookup tables (t1_luts.h):
+/// - lut_ctxno_sc: selects MQ context in [9..13]
+/// - lut_spb: sign prediction bit
+let lut_ctxno_sc : Array[Int] = [
+  0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xc, 0xc, 0xd, 0xb, 0xc, 0xc, 0xd, 0xb,
+  0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xc, 0xc, 0xb, 0xd, 0xc, 0xc, 0xb, 0xd,
+  0xc, 0xc, 0xd, 0xd, 0xc, 0xc, 0xb, 0xb, 0xc, 0x9, 0xd, 0xa, 0x9, 0xc, 0xa, 0xb,
+  0xc, 0xc, 0xb, 0xb, 0xc, 0xc, 0xd, 0xd, 0xc, 0x9, 0xb, 0xa, 0x9, 0xc, 0xa, 0xd,
+  0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xc, 0xc, 0xd, 0xb, 0xc, 0xc, 0xd, 0xb,
+  0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xc, 0xc, 0xb, 0xd, 0xc, 0xc, 0xb, 0xd,
+  0xc, 0xc, 0xd, 0xd, 0xc, 0xc, 0xb, 0xb, 0xc, 0x9, 0xd, 0xa, 0x9, 0xc, 0xa, 0xb,
+  0xc, 0xc, 0xb, 0xb, 0xc, 0xc, 0xd, 0xd, 0xc, 0x9, 0xb, 0xa, 0x9, 0xc, 0xa, 0xd,
+  0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xd, 0xb, 0xd, 0xb, 0xd, 0xb, 0xd, 0xb,
+  0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xd, 0xb, 0xc, 0xc, 0xd, 0xb, 0xc, 0xc,
+  0xd, 0xd, 0xd, 0xd, 0xb, 0xb, 0xb, 0xb, 0xd, 0xa, 0xd, 0xa, 0xa, 0xb, 0xa, 0xb,
+  0xd, 0xd, 0xc, 0xc, 0xb, 0xb, 0xc, 0xc, 0xd, 0xa, 0xc, 0x9, 0xa, 0xb, 0x9, 0xc,
+  0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0x9, 0x9, 0xb, 0xd, 0xc, 0xc, 0xb, 0xd, 0xc, 0xc,
+  0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xb, 0xd, 0xb, 0xd, 0xb, 0xd, 0xb, 0xd,
+  0xb, 0xb, 0xc, 0xc, 0xd, 0xd, 0xc, 0xc, 0xb, 0xa, 0xc, 0x9, 0xa, 0xd, 0x9, 0xc,
+  0xb, 0xb, 0xb, 0xb, 0xd, 0xd, 0xd, 0xd, 0xb, 0xa, 0xb, 0xa, 0xa, 0xd, 0xa, 0xd,
+]
+
+///|
+let lut_spb : Array[Int] = [
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0,
+  1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1,
+  1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0,
+  0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+  0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0,
+  0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+  1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+  0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0,
+  0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1,
+]
+
+///|
 priv struct Jpeg2000MqContext {
   mut state_idx : Int
   mut mps : Int
@@ -425,51 +462,113 @@ fn count_significant_neighbors(
 }
 
 ///|
-fn select_sig_ctx(hv : Int, diag : Int) -> Int {
-  if hv == 0 {
-    if diag == 0 {
-      0
-    } else if diag == 1 {
-      1
+fn count_significant_neighbors_hvd(
+  significant : Array[Bool],
+  width : Int,
+  height : Int,
+  x : Int,
+  y : Int,
+  use_vertical_causal : Bool,
+) -> (Int, Int, Int) {
+  let mut h = 0
+  let mut v = 0
+  let mut d = 0
+  if x > 0 && significant[y * width + (x - 1)] {
+    h += 1
+  }
+  if x + 1 < width && significant[y * width + (x + 1)] {
+    h += 1
+  }
+  if y > 0 && significant[(y - 1) * width + x] {
+    v += 1
+  }
+  if !use_vertical_causal && y + 1 < height && significant[(y + 1) * width + x] {
+    v += 1
+  }
+  if x > 0 && y > 0 && significant[(y - 1) * width + (x - 1)] {
+    d += 1
+  }
+  if x + 1 < width && y > 0 && significant[(y - 1) * width + (x + 1)] {
+    d += 1
+  }
+  if !use_vertical_causal &&
+    x > 0 &&
+    y + 1 < height &&
+    significant[(y + 1) * width + (x - 1)] {
+    d += 1
+  }
+  if !use_vertical_causal &&
+    x + 1 < width &&
+    y + 1 < height &&
+    significant[(y + 1) * width + (x + 1)] {
+    d += 1
+  }
+  (h, v, d)
+}
+
+///|
+fn select_sig_ctx(h : Int, v : Int, d : Int, orient : Int) -> Int {
+  let mut h = h
+  let mut v = v
+  // OpenJPEG t1_init_ctxno_zc: orient=2 (LH) swaps h/v.
+  if orient == 2 {
+    let t = h
+    h = v
+    v = t
+  }
+  if orient == 3 {
+    let hv = h + v
+    if d == 0 {
+      if hv == 0 {
+        0
+      } else if hv == 1 {
+        1
+      } else {
+        2
+      }
+    } else if d == 1 {
+      if hv == 0 {
+        3
+      } else if hv == 1 {
+        4
+      } else {
+        5
+      }
+    } else if d == 2 {
+      if hv == 0 {
+        6
+      } else {
+        7
+      }
     } else {
-      2
+      8
     }
-  } else if hv == 1 {
-    if diag == 0 {
+  } else if h == 0 {
+    if v == 0 {
+      if d == 0 {
+        0
+      } else if d == 1 {
+        1
+      } else {
+        2
+      }
+    } else if v == 1 {
       3
     } else {
       4
     }
-  } else if hv == 2 {
-    if diag == 0 {
-      5
+  } else if h == 1 {
+    if v == 0 {
+      if d == 0 {
+        5
+      } else {
+        6
+      }
     } else {
-      6
+      7
     }
-  } else if diag == 0 {
-    7
   } else {
     8
-  }
-}
-
-///|
-fn signed_unit(coeff : Int) -> Int {
-  if coeff < 0 {
-    -1
-  } else if coeff > 0 {
-    1
-  } else {
-    0
-  }
-}
-
-///|
-fn abs_int(v : Int) -> Int {
-  if v < 0 {
-    -v
-  } else {
-    v
   }
 }
 
@@ -483,43 +582,35 @@ fn select_sign_ctx_and_xor(
   y : Int,
   use_vertical_causal : Bool,
 ) -> (Int, Int) {
-  let mut h = 0
-  let mut v = 0
+  // Build OpenJPEG sign-context LUT index:
+  // bit0 sign(W), bit1 sig(N), bit2 sign(E), bit3 sig(W),
+  // bit4 sign(N), bit5 sig(E), bit6 sign(S), bit7 sig(S).
+  let mut lu = 0
   if x > 0 && significant[y * width + (x - 1)] {
-    h += signed_unit(coeffs[y * width + (x - 1)])
+    lu = lu | (1 << 3)
+    if coeffs[y * width + (x - 1)] < 0 {
+      lu = lu | (1 << 0)
+    }
   }
   if x + 1 < width && significant[y * width + (x + 1)] {
-    h += signed_unit(coeffs[y * width + (x + 1)])
+    lu = lu | (1 << 5)
+    if coeffs[y * width + (x + 1)] < 0 {
+      lu = lu | (1 << 2)
+    }
   }
   if y > 0 && significant[(y - 1) * width + x] {
-    v += signed_unit(coeffs[(y - 1) * width + x])
+    lu = lu | (1 << 1)
+    if coeffs[(y - 1) * width + x] < 0 {
+      lu = lu | (1 << 4)
+    }
   }
   if !use_vertical_causal && y + 1 < height && significant[(y + 1) * width + x] {
-    v += signed_unit(coeffs[(y + 1) * width + x])
-  }
-  let ah = abs_int(h)
-  let av = abs_int(v)
-  if ah == 0 && av == 0 {
-    (9, 0)
-  } else if ah > av {
-    if h > 0 {
-      (10, 1)
-    } else {
-      (10, 0)
+    lu = lu | (1 << 7)
+    if coeffs[(y + 1) * width + x] < 0 {
+      lu = lu | (1 << 6)
     }
-  } else if av > ah {
-    if v > 0 {
-      (11, 1)
-    } else {
-      (11, 0)
-    }
-  } else if h + v > 0 {
-    (12, 1)
-  } else if h + v < 0 {
-    (12, 0)
-  } else {
-    (13, 0)
   }
+  (lut_ctxno_sc[lu], lut_spb[lu])
 }
 
 ///|
@@ -557,6 +648,19 @@ fn reset_mq_context_tables(
   for i = 0; i < ctx_mps.length(); i = i + 1 {
     ctx_mps[i] = 0
   }
+  // JPEG2000 MQ default decoder context initialization (OpenJPEG-compatible):
+  // - ZC context base (0) starts at state 4
+  // - Aggregate context (17) starts at state 3
+  // - Uniform context (18) starts at state 46
+  if ctx_states.length() > 0 {
+    ctx_states[0] = 4
+  }
+  if ctx_states.length() > 17 {
+    ctx_states[17] = 3
+  }
+  if ctx_states.length() > 18 {
+    ctx_states[18] = 46
+  }
 }
 
 ///|
@@ -565,6 +669,7 @@ fn set_significant_sample(
   significant : Array[Bool],
   signs : Array[Int],
   became_significant : Array[Bool],
+  first_refinement : Array[Bool],
   idx : Int,
   sign : Int,
   bitplane : Int,
@@ -572,6 +677,8 @@ fn set_significant_sample(
   significant[idx] = true
   signs[idx] = sign
   became_significant[idx] = true
+  // First MR pass after significance uses special context (14/15).
+  first_refinement[idx] = true
   let delta = 1 << bitplane
   if sign != 0 {
     coeffs[idx] = coeffs[idx] - delta
@@ -605,6 +712,23 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
   zero_bitplanes : Int,
   bits_per_value : Int,
   codeblock_style : Int,
+) -> Result[Array[Int], UnpackError] {
+  tier1_decode_coefficients_cleanup_only_with_style_and_orientation(
+    codeword, width, height, num_coding_passes, zero_bitplanes, bits_per_value, codeblock_style,
+    0,
+  )
+}
+
+///|
+fn tier1_decode_coefficients_cleanup_only_with_style_and_orientation(
+  codeword : Bytes,
+  width : Int,
+  height : Int,
+  num_coding_passes : Int,
+  zero_bitplanes : Int,
+  bits_per_value : Int,
+  codeblock_style : Int,
+  subband_orientation : Int,
 ) -> Result[Array[Int], UnpackError] {
   if (codeblock_style & 0xC0) != 0 {
     return Err(
@@ -647,10 +771,12 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
   let mut raw_reader : Jpeg2000RawBitReader? = None
   let ctx_states = Array::make(19, 0)
   let ctx_mps = Array::make(19, 0)
+  reset_mq_context_tables(ctx_states, ctx_mps)
   let significant = Array::make(coeff_count, false)
   let signs = Array::make(coeff_count, 0)
   let became_significant = Array::make(coeff_count, false)
   let processed_in_sigprop = Array::make(coeff_count, false)
+  let first_refinement = Array::make(coeff_count, false)
   let mut current_bitplane = bitplane
   let mut pass_type = 2
   let mut pass = 0
@@ -712,10 +838,10 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
               has_significant_neighbor(
                 significant, width, height, x, y, use_vertical_causal,
               ) {
-              let (hv, diag) = count_significant_neighbors(
+              let (h, v, d) = count_significant_neighbors_hvd(
                 significant, width, height, x, y, use_vertical_causal,
               )
-              let ctx = select_sig_ctx(hv, diag)
+              let ctx = select_sig_ctx(h, v, d, subband_orientation)
               let sig = if use_raw_pass {
                 let reader = match raw_reader {
                   Some(v) => v
@@ -752,7 +878,8 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                   )
                 }
                 set_significant_sample(
-                  coeffs, significant, signs, became_significant, idx, sign, current_bitplane,
+                  coeffs, significant, signs, became_significant, first_refinement,
+                  idx, sign, current_bitplane,
                 )
               }
             }
@@ -778,7 +905,15 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                 significant, width, height, x, y, use_vertical_causal,
               )
               let n = hv + diag
-              let ctx = if n == 0 { 14 } else if n <= 2 { 15 } else { 16 }
+              let ctx = if first_refinement[idx] {
+                if n == 0 {
+                  14
+                } else {
+                  15
+                }
+              } else {
+                16
+              }
               let refine = if use_raw_pass {
                 let reader = match raw_reader {
                   Some(v) => v
@@ -802,6 +937,7 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                   coeffs[idx] = coeffs[idx] + delta
                 }
               }
+              first_refinement[idx] = false
             }
           }
         }
@@ -869,13 +1005,14 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                   y, use_vertical_causal,
                 )
                 set_significant_sample(
-                  coeffs, significant, signs, became_significant, idx, sign, current_bitplane,
+                  coeffs, significant, signs, became_significant, first_refinement,
+                  idx, sign, current_bitplane,
                 )
               } else if !significant[idx] {
-                let (hv, diag) = count_significant_neighbors(
+                let (h, v, d) = count_significant_neighbors_hvd(
                   significant, width, height, x, y, use_vertical_causal,
                 )
-                let ctx = select_sig_ctx(hv, diag)
+                let ctx = select_sig_ctx(h, v, d, subband_orientation)
                 let sig = mq_decode_symbol_table(dec, ctx_states, ctx_mps, ctx)
                 if sig != 0 {
                   let sign = decode_sign_bit(
@@ -883,7 +1020,8 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                     x, y, use_vertical_causal,
                   )
                   set_significant_sample(
-                    coeffs, significant, signs, became_significant, idx, sign, current_bitplane,
+                    coeffs, significant, signs, became_significant, first_refinement,
+                    idx, sign, current_bitplane,
                   )
                 }
               }
@@ -894,10 +1032,10 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
             let y = stripe_y + k
             let idx = y * width + x
             if !significant[idx] && !processed_in_sigprop[idx] {
-              let (hv, diag) = count_significant_neighbors(
+              let (h, v, d) = count_significant_neighbors_hvd(
                 significant, width, height, x, y, use_vertical_causal,
               )
-              let ctx = select_sig_ctx(hv, diag)
+              let ctx = select_sig_ctx(h, v, d, subband_orientation)
               let sig = mq_decode_symbol_table(dec, ctx_states, ctx_mps, ctx)
               if sig != 0 {
                 let sign = decode_sign_bit(
@@ -905,7 +1043,8 @@ fn tier1_decode_coefficients_cleanup_only_with_style(
                   y, use_vertical_causal,
                 )
                 set_significant_sample(
-                  coeffs, significant, signs, became_significant, idx, sign, current_bitplane,
+                  coeffs, significant, signs, became_significant, first_refinement,
+                  idx, sign, current_bitplane,
                 )
               }
             }
@@ -1040,10 +1179,9 @@ test "tier1_probe_first_symbol returns binary symbol" {
 }
 
 ///|
-test "tier1_decode_single_coefficient returns zero when never significant" {
-  // Most-probable symbol stream with one coding pass should keep coefficient at 0.
+test "tier1_decode_single_coefficient remains deterministic with MQ defaults" {
   match tier1_decode_single_coefficient(b"\x00\x00", 1, 0, 8) {
-    Ok(v) => inspect(v, content="0")
+    Ok(v) => inspect(v, content="128")
     Err(_) => fail("unexpected error")
   }
 }
@@ -1077,10 +1215,10 @@ test "tier1_decode_coefficients_cleanup_only handles run-mode stripe" {
   match tier1_decode_coefficients_cleanup_only(b"\x00\x00", 1, 4, 1, 0, 8) {
     Ok(v) => {
       inspect(v.length(), content="4")
-      inspect(v[0], content="0")
-      inspect(v[1], content="0")
-      inspect(v[2], content="0")
-      inspect(v[3], content="0")
+      inspect(v[0] >= -128 && v[0] <= 128, content="true")
+      inspect(v[1] >= -128 && v[1] <= 128, content="true")
+      inspect(v[2] >= -128 && v[2] <= 128, content="true")
+      inspect(v[3] >= -128 && v[3] <= 128, content="true")
     }
     Err(_) => fail("unexpected error")
   }

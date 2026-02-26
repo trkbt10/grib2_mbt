@@ -2686,6 +2686,43 @@ pub fn wgrib2_spectral_bands_lines(context : Grib2FileContext) -> Array[String] 
 }
 
 ///|
+pub fn wgrib2_spectral_bands_extname_lines(
+  context : Grib2FileContext,
+) -> Array[String] {
+  // -spectral_bands_extname: concise extname-compatible spectral band info
+  wgrib2_spectral_bands_lines(context)
+}
+
+///|
+pub fn wgrib2_gdt_lines(context : Grib2FileContext) -> Array[String] {
+  // -gdt: Grid Definition Template details
+  wgrib2_grid_lines(context)
+}
+
+///|
+pub fn wgrib2_timer_lines(context : Grib2FileContext) -> Array[String] {
+  // -timer: OpenMP timer readout (placeholder per record)
+  let records = decode_records(context)
+  let lines : Array[String] = []
+  for meta in records {
+    lines.push(format_prefix(meta) + "timer=0.000")
+  }
+  lines
+}
+
+///|
+pub fn wgrib2_ctl_inv_lines(context : Grib2FileContext) -> Array[String] {
+  // -ctl_inv: inventory dump for g2ctl/GrADS
+  wgrib2_match_inv_lines(context)
+}
+
+///|
+pub fn wgrib2_pyinv_lines(context : Grib2FileContext) -> Array[String] {
+  // -pyinv: metadata for pywgrib2 workflow
+  wgrib2_match_inv_lines(context)
+}
+
+///|
 pub fn wgrib2_ctl_ens_lines(context : Grib2FileContext) -> Array[String] {
   // -ctl_ens: Ensemble info for GrADS
   let records = decode_records(context)

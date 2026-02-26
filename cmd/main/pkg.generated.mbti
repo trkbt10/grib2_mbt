@@ -6,6 +6,17 @@ package "trkbt10/grib2_mbt/cmd/main"
 // Errors
 
 // Types and methods
+type CliAction
+
+type CliInitOptions
+
+type ErrorFinalCountCondition
+
+type ErrorFinalOperator
+
+type WindCandidateRecord
+
+type WindDerivedMode
 
 // Type aliases
 

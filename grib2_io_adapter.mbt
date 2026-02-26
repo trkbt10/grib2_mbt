@@ -127,6 +127,11 @@ pub(all) enum Grib2InventoryMode {
   InventoryPostProcessing
   InventorySpatialProc
   InventorySpectralBands
+  InventorySpectralBandsExtname
+  InventoryGdt
+  InventoryTimer
+  InventoryCtlInv
+  InventoryPyinv
   InventoryCtlEns
   InventoryWarnOldG2
   InventoryWavePartition
@@ -313,6 +318,12 @@ pub fn render_inventory_lines(
     InventoryPostProcessing => wgrib2_post_processing_lines(context)
     InventorySpatialProc => wgrib2_spatial_proc_lines(context)
     InventorySpectralBands => wgrib2_spectral_bands_lines(context)
+    InventorySpectralBandsExtname =>
+      wgrib2_spectral_bands_extname_lines(context)
+    InventoryGdt => wgrib2_gdt_lines(context)
+    InventoryTimer => wgrib2_timer_lines(context)
+    InventoryCtlInv => wgrib2_ctl_inv_lines(context)
+    InventoryPyinv => wgrib2_pyinv_lines(context)
     InventoryCtlEns => wgrib2_ctl_ens_lines(context)
     InventoryWarnOldG2 => wgrib2_warn_old_g2_lines(context)
     InventoryWavePartition => wgrib2_wave_partition_lines(context)
