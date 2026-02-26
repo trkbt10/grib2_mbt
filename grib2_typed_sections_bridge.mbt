@@ -36,9 +36,7 @@ fn typed_message_section_bytes(
 
 ///|
 fn typed_read_u16_be_bridge(bytes : Bytes, offset : Int) -> Int {
-  let high = bytes[offset].to_uint().reinterpret_as_int()
-  let low = bytes[offset + 1].to_uint().reinterpret_as_int()
-  (high << 8) | low
+  binary_read_u16_be(bytes, offset)
 }
 
 ///|

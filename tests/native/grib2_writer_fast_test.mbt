@@ -1,7 +1,7 @@
 ///|
 test "editing API supports remove/insert while keeping strict writer valid" {
-  let path = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
-  let original_bytes = match read_fixture_bytes(path) {
+  let path = @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000()
+  let original_bytes = match @grib2support.grib2_fixture_bytes_read(path) {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
@@ -32,14 +32,17 @@ test "editing API supports remove/insert while keeping strict writer valid" {
 ///|
 test "strict writer detects invariant violations" {
   let context = match
-    parse_fixture_for_writer(
-      "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2",
+    @grib2support.grib2_fixture_context_parse(
+      @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
     ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
   let messages = [..context.messages]
-  messages[0] = message_with_offset(messages[0], messages[0].offset + 1)
+  messages[0] = @grib2support.grib2_message_with_offset(
+    messages[0],
+    messages[0].offset + 1,
+  )
   let broken : @lib.Grib2FileContext = { messages, }
   let rejected = match @lib.rebuild_strict(broken) {
     Ok(_) => false
@@ -50,8 +53,8 @@ test "strict writer detects invariant violations" {
 
 ///|
 test "strict writer rejects malformed typed section4 payload" {
-  let path = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let bytes = match read_fixture_bytes(path) {
+  let path = @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000()
+  let bytes = match @grib2support.grib2_fixture_bytes_read(path) {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
@@ -61,7 +64,9 @@ test "strict writer rejects malformed typed section4 payload" {
   }
   let section4_num_coord_offset = parsed.messages[0].submessages[0].section4.start +
     5
-  let mutated_bytes = with_u16_be(bytes, section4_num_coord_offset, 4096)
+  let mutated_bytes = @lib.binary_bytes_with_u16_be_at(
+    bytes, section4_num_coord_offset, 4096,
+  )
   let mutated = match @lib.parse_grib2_file(mutated_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
@@ -75,8 +80,8 @@ test "strict writer rejects malformed typed section4 payload" {
 
 ///|
 test "unknown template id is preserved through parse and rebuild" {
-  let path = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let bytes = match read_fixture_bytes(path) {
+  let path = @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000()
+  let bytes = match @grib2support.grib2_fixture_bytes_read(path) {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
@@ -86,7 +91,9 @@ test "unknown template id is preserved through parse and rebuild" {
   }
   let section4_template_offset = original.messages[0].submessages[0].section4.start +
     7
-  let mutated_bytes = with_u16_be(bytes, section4_template_offset, 999)
+  let mutated_bytes = @lib.binary_bytes_with_u16_be_at(
+    bytes, section4_template_offset, 999,
+  )
   let mutated = match @lib.parse_grib2_file(mutated_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
@@ -103,72 +110,23 @@ test "unknown template id is preserved through parse and rebuild" {
 }
 
 ///|
-fn fast_with_u8(bytes : Bytes, offset : Int, value : Int) -> Bytes {
-  let copy = bytes.to_array()
-  copy[offset] = value.to_byte()
-  Bytes::from_array(copy)
-}
-
-///|
-fn fast_message_with_raw(
-  message : @lib.Grib2MessageContext,
-  raw : Bytes,
-) -> @lib.Grib2MessageContext {
-  {
-    offset: message.offset,
-    total_length: message.total_length,
-    discipline: message.discipline,
-    edition: message.edition,
-    section1: message.section1,
-    section8_offset: message.section8_offset,
-    sections: message.sections,
-    submessages: message.submessages,
-    raw,
-  }
-}
-
-///|
-fn fast_message_with_section8_offset(
-  message : @lib.Grib2MessageContext,
-  section8_offset : Int,
-) -> @lib.Grib2MessageContext {
-  {
-    offset: message.offset,
-    total_length: message.total_length,
-    discipline: message.discipline,
-    edition: message.edition,
-    section1: message.section1,
-    section8_offset,
-    sections: message.sections,
-    submessages: message.submessages,
-    raw: message.raw,
-  }
-}
-
-///|
-fn fast_replace_message0(
-  context : @lib.Grib2FileContext,
-  message0 : @lib.Grib2MessageContext,
-) -> @lib.Grib2FileContext {
-  let messages = [..context.messages]
-  messages[0] = message0
-  { messages, }
-}
-
-///|
 test "strict writer rejects section0 length header mismatch" {
   let context = match
-    parse_fixture_for_writer(
-      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    @grib2support.grib2_fixture_context_parse(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
     ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
   let message0 = context.messages[0]
-  let broken_raw = with_u32_be(message0.raw, 12, message0.total_length - 1)
-  let broken = fast_replace_message0(
+  let broken_raw = @lib.binary_bytes_with_u32_be_at(
+    message0.raw,
+    12,
+    message0.total_length - 1,
+  )
+  let broken = @grib2support.grib2_context_with_replaced_message0(
     context,
-    fast_message_with_raw(message0, broken_raw),
+    @grib2support.grib2_message_with_raw(message0, broken_raw),
   )
   let rejected = match @lib.rebuild_strict(broken) {
     Ok(_) => false
@@ -180,17 +138,21 @@ test "strict writer rejects section0 length header mismatch" {
 ///|
 test "strict writer rejects broken section8 magic in raw message" {
   let context = match
-    parse_fixture_for_writer(
-      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    @grib2support.grib2_fixture_context_parse(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
     ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
   let message0 = context.messages[0]
-  let broken_raw = fast_with_u8(message0.raw, message0.raw.length() - 1, 56)
-  let broken = fast_replace_message0(
+  let broken_raw = @lib.binary_bytes_with_u8_at(
+    message0.raw,
+    message0.raw.length() - 1,
+    56,
+  )
+  let broken = @grib2support.grib2_context_with_replaced_message0(
     context,
-    fast_message_with_raw(message0, broken_raw),
+    @grib2support.grib2_message_with_raw(message0, broken_raw),
   )
   let rejected = match @lib.rebuild_strict(broken) {
     Ok(_) => false
@@ -202,16 +164,19 @@ test "strict writer rejects broken section8 magic in raw message" {
 ///|
 test "strict writer rejects section8 offset mismatch" {
   let context = match
-    parse_fixture_for_writer(
-      "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
+    @grib2support.grib2_fixture_context_parse(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
     ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
   let message0 = context.messages[0]
-  let broken = fast_replace_message0(
+  let broken = @grib2support.grib2_context_with_replaced_message0(
     context,
-    fast_message_with_section8_offset(message0, message0.section8_offset + 1),
+    @grib2support.grib2_message_with_section8_offset(
+      message0,
+      message0.section8_offset + 1,
+    ),
   )
   let rejected = match @lib.rebuild_strict(broken) {
     Ok(_) => false

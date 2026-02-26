@@ -414,7 +414,7 @@ pub fn wasm_get_latitudes(handle : Int, record_index : Int) -> String {
   match decode_submessage_section3(frame.0, frame.1) {
     Ok(s3) =>
       match generate_coordinates(s3) {
-        Some(coords) => doubles_to_f32_latin1(coords.latitudes)
+        Some(coords) => binary_encode_f32le_latin1(coords.latitudes)
         None => ""
       }
     Err(_) => ""
@@ -440,7 +440,7 @@ pub fn wasm_get_longitudes(handle : Int, record_index : Int) -> String {
   match decode_submessage_section3(frame.0, frame.1) {
     Ok(s3) =>
       match generate_coordinates(s3) {
-        Some(coords) => doubles_to_f32_latin1(coords.longitudes)
+        Some(coords) => binary_encode_f32le_latin1(coords.longitudes)
         None => ""
       }
     Err(_) => ""
@@ -464,7 +464,7 @@ pub fn wasm_get_grid_data(handle : Int, record_index : Int) -> String {
     None => return ""
   }
   match unpack_submessage_data(frame.0, frame.1) {
-    Ok(unpacked) => doubles_to_f32_latin1(unpacked.values)
+    Ok(unpacked) => binary_encode_f32le_latin1(unpacked.values)
     Err(_) => ""
   }
 }
@@ -473,19 +473,4 @@ pub fn wasm_get_grid_data(handle : Int, record_index : Int) -> String {
 /// Generate coordinates from Section 3 data.
 fn generate_coordinates(s3 : Grib2Section3Decoded) -> @typed.CoordinateGrid? {
   @typed.generate_coordinates_from_section3(s3.template)
-}
-
-///|
-/// Convert Double array to latin1 string (each byte -> char code 0-255).
-/// Uses Float32 little-endian encoding.
-fn doubles_to_f32_latin1(values : Array[Double]) -> String {
-  let buf = StringBuilder::new()
-  for value in values {
-    let f32_bits = Float::from_double(value).reinterpret_as_uint()
-    for j in 0..<4 {
-      let byte_val = ((f32_bits >> (j * 8)) & 0xFF).reinterpret_as_int()
-      buf.write_char(Char::from_int(byte_val))
-    }
-  }
-  buf.to_string()
 }

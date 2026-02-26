@@ -10,30 +10,22 @@ fn write_error(message : String) -> Grib2WriteError {
 
 ///|
 fn writer_read_u32_be(bytes : Bytes, offset : Int) -> Int {
-  bytes.unsafe_read_uint32_be(offset).reinterpret_as_int()
+  binary_read_u32_be_uint(bytes, offset).reinterpret_as_int()
 }
 
 ///|
 fn writer_read_u8_as_int(bytes : Bytes, offset : Int) -> Int {
-  bytes[offset].to_uint().reinterpret_as_int()
+  binary_read_u8_as_int(bytes, offset)
 }
 
 ///|
 fn writer_has_grib_magic(raw : Bytes) -> Bool {
-  raw.length() >= 4 &&
-  raw[0] == b'G' &&
-  raw[1] == b'R' &&
-  raw[2] == b'I' &&
-  raw[3] == b'B'
+  raw.length() >= 4 && binary_has_magic_at(raw, 0, b'G', b'R', b'I', b'B')
 }
 
 ///|
 fn writer_has_end_magic(raw : Bytes) -> Bool {
-  raw.length() >= 4 &&
-  raw[raw.length() - 4] == b'7' &&
-  raw[raw.length() - 3] == b'7' &&
-  raw[raw.length() - 2] == b'7' &&
-  raw[raw.length() - 1] == b'7'
+  binary_has_magic_tail(raw, b'7', b'7', b'7', b'7')
 }
 
 ///|

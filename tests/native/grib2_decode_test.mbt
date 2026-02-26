@@ -1,21 +1,4 @@
 ///|
-fn parse_fixture_for_decode(
-  path : String,
-) -> Result[@lib.Grib2FileContext, String] {
-  let bytes = try @fs.read_file_to_bytes(path) catch {
-    error =>
-      return Err("failed to read fixture " + path + ": " + error.to_string())
-  } noraise {
-    bytes => bytes
-  }
-  match @lib.parse_grib2_file(bytes) {
-    Ok(context) => Ok(context)
-    Err(error) =>
-      Err("failed to parse fixture " + path + ": " + error.to_string())
-  }
-}
-
-///|
 fn all_records_have_section5_template(
   records : Array[@lib.Grib2RecordMeta],
   expected_id : Int,
@@ -59,11 +42,17 @@ fn unpack_all_submessages(
 }
 
 ///|
+fn decode_fixture_context(
+  path : String,
+) -> Result[@lib.Grib2FileContext, String] {
+  @grib2support.grib2_fixture_context_parse(path)
+}
+
+///|
 test "decode records exposes context fields" {
-  let context = match
-    parse_fixture_for_decode(
-      "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2",
-    ) {
+  let context = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
+  ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -77,13 +66,13 @@ test "decode records exposes context fields" {
 
 ///|
 test "template dispatch foundation: fixture templates" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
-  )
-  let records = match context {
-    Ok(context) => @lib.decode_records(context)
+  let context = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
+  let records = @lib.decode_records(context)
   inspect(records[0].section3_template.id(), content="0")
   inspect(records[0].section4_template.id(), content="0")
   inspect(records[0].section5_template.id(), content="3")
@@ -94,23 +83,23 @@ test "template dispatch foundation: fixture templates" {
 
 ///|
 test "template dispatch foundation: eccodes jpeg2000 fixtures" {
-  let context1 = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
-  )
-  let records1 = match context1 {
-    Ok(context) => @lib.decode_records(context)
+  let context1 = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
+  let records1 = @lib.decode_records(context1)
   inspect(records1.length() > 0, content="true")
   inspect(records1[0].section5_template.id(), content="40")
   inspect(records1[0].section5_template.is_known(), content="true")
-  let context2 = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
-  )
-  let records2 = match context2 {
-    Ok(context) => @lib.decode_records(context)
+  let context2 = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
+  let records2 = @lib.decode_records(context2)
   inspect(records2.length() > 0, content="true")
   inspect(records2[0].section5_template.id(), content="40")
   inspect(records2[0].section5_template.is_known(), content="true")
@@ -118,31 +107,30 @@ test "template dispatch foundation: eccodes jpeg2000 fixtures" {
 
 ///|
 test "template dispatch foundation: eccodes jpeg2000 all records are template40" {
-  let context1 = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
-  )
-  let records1 = match context1 {
-    Ok(context) => @lib.decode_records(context)
+  let context1 = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
+  let records1 = @lib.decode_records(context1)
   inspect(all_records_have_section5_template(records1, 40), content="true")
-  let context2 = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
-  )
-  let records2 = match context2 {
-    Ok(context) => @lib.decode_records(context)
+  let context2 = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
+  let records2 = @lib.decode_records(context2)
   inspect(all_records_have_section5_template(records2, 40), content="true")
 }
 
 ///|
 test "jpeg2000 fixture unpack path succeeds" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
-  )
-  let parsed = match context {
-    Ok(v) => v
+  let parsed = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
   let message = parsed.messages[0]
@@ -158,11 +146,10 @@ test "jpeg2000 fixture unpack path succeeds" {
 
 ///|
 test "jpeg2000 reduced gaussian fixture unpack path succeeds" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
-  )
-  let parsed = match context {
-    Ok(v) => v
+  let parsed = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
   let message = parsed.messages[0]
@@ -178,11 +165,10 @@ test "jpeg2000 reduced gaussian fixture unpack path succeeds" {
 
 ///|
 test "jpeg2000 eccodes fixture all submessages unpack" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2",
-  )
-  let parsed = match context {
-    Ok(v) => v
+  let parsed = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
   match unpack_all_submessages(parsed) {
@@ -193,11 +179,10 @@ test "jpeg2000 eccodes fixture all submessages unpack" {
 
 ///|
 test "jpeg2000 reduced gaussian fixture all submessages unpack" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2",
-  )
-  let parsed = match context {
-    Ok(v) => v
+  let parsed = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
   match unpack_all_submessages(parsed) {
@@ -208,11 +193,10 @@ test "jpeg2000 reduced gaussian fixture all submessages unpack" {
 
 ///|
 test "template 5.3 gfs pgrb2b first message unpacking" {
-  let context = parse_fixture_for_decode(
-    "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2",
-  )
-  let parsed = match context {
-    Ok(v) => v
+  let parsed = match decode_fixture_context(
+    @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
+  ) {
+    Ok(context) => context
     Err(error) => fail(error)
   }
   let message = parsed.messages[0]

@@ -13,6 +13,14 @@ import {
 }
 
 // Values
+pub fn binary_bytes_with_u16_be_at(Bytes, Int, Int) -> Bytes
+
+pub fn binary_bytes_with_u32_be_at(Bytes, Int, Int) -> Bytes
+
+pub fn binary_bytes_with_u8_at(Bytes, Int, Int) -> Bytes
+
+pub fn binary_encode_f32le_latin1(Array[Double]) -> String
+
 pub fn decode_aerosol_type_name(Int) -> Grib2NameLookup
 
 pub fn decode_atmospheric_chemical_or_physical_constituent_type_name(Int) -> Grib2NameLookup

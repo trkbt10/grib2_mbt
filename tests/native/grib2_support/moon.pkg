@@ -1,0 +1,4 @@
+import {
+  "trkbt10/grib2_mbt" @lib,
+  "moonbitlang/x/fs" @fs,
+}

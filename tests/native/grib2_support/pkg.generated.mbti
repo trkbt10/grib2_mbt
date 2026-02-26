@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "trkbt10/grib2_mbt/tests/native/grib2_support"
+
+import {
+  "trkbt10/grib2_mbt",
+}
+
+// Values
+pub fn grib2_context_with_replaced_message0(@grib2_mbt.Grib2FileContext, @grib2_mbt.Grib2MessageContext) -> @grib2_mbt.Grib2FileContext
+
+pub fn grib2_fixture_bytes_read(String) -> Result[Bytes, String]
+
+pub fn grib2_fixture_context_parse(String) -> Result[@grib2_mbt.Grib2FileContext, String]
+
+pub fn grib2_fixture_path_eccodes_jpeg() -> String
+
+pub fn grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg() -> String
+
+pub fn grib2_fixture_path_jma_gsm() -> String
+
+pub fn grib2_fixture_path_noaa_gfs_pgrb2_1p00_f000() -> String
+
+pub fn grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000() -> String
+
+pub fn grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000() -> String
+
+pub fn grib2_fixture_path_noaa_gfswave_global_0p25_f000() -> String
+
+pub fn grib2_fixture_path_noaa_not_found() -> String
+
+pub fn grib2_fixture_paths_for_roundtrip() -> Array[String]
+
+pub fn grib2_io_read_bytes(String) -> Result[Bytes, String]
+
+pub fn grib2_io_write_bytes(String, Bytes) -> Result[Unit, String]
+
+pub fn grib2_message_with_offset(@grib2_mbt.Grib2MessageContext, Int) -> @grib2_mbt.Grib2MessageContext
+
+pub fn grib2_message_with_raw(@grib2_mbt.Grib2MessageContext, Bytes) -> @grib2_mbt.Grib2MessageContext
+
+pub fn grib2_message_with_section8_offset(@grib2_mbt.Grib2MessageContext, Int) -> @grib2_mbt.Grib2MessageContext
+
+pub fn grib2_snapshot_dir_jma_gsm() -> String
+
+pub fn grib2_snapshot_dir_noaa_gfs_pgrb2b_1p00_f000() -> String
+
+pub fn grib2_snapshot_dir_noaa_gfswave_atlocn_0p16_f000() -> String
+
+pub fn grib2_verify_fixture_raw_roundtrip(String, Int, Int) -> Result[Unit, String]
+
+pub fn grib2_verify_roundtrip_strict(String) -> Result[Unit, String]
+
+pub fn grib2_verify_wgrib2_snapshots(String, String) -> Result[Unit, String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
