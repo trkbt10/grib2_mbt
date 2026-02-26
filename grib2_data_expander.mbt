@@ -6,6 +6,8 @@
 ///|
 /// Re-export from @typed for local use
 pub using @typed {
+  get_section3_grid_info,
+  parse_scanning_mode,
   type UnpackedGridData,
   type UnpackError,
   unpack_ieee,
@@ -79,7 +81,12 @@ pub fn unpack_submessage_data(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  apply_bitmap_to_unpacked(message, submessage, unpacked_defined)
+  let with_bitmap = match
+    apply_bitmap_to_unpacked(message, submessage, unpacked_defined) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  normalize_unpacked_to_wgrib2_scan_order(message, submessage, with_bitmap)
 }
 
 ///|
@@ -156,6 +163,47 @@ fn apply_bitmap_to_unpacked(
     )
   }
   Ok({ values, num_points: total_points })
+}
+
+///|
+/// Normalize unpacked data ordering to wgrib2's WE:SN output convention.
+fn normalize_unpacked_to_wgrib2_scan_order(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+  unpacked : @typed.UnpackedGridData,
+) -> Result[@typed.UnpackedGridData, @typed.UnpackError] {
+  let section3 = match decode_submessage_section3(message, submessage) {
+    Ok(s3) => s3
+    Err(e) =>
+      return Err(UnsupportedTemplate("Failed to decode Section 3: \{e}"))
+  }
+  let grid_info = @typed.get_section3_grid_info(section3.template)
+  let ni = grid_info.ni
+  let nj = grid_info.nj
+  let scan_mode = grid_info.scan_mode
+  if ni <= 0 || nj <= 0 || scan_mode < 0 {
+    return Ok(unpacked)
+  }
+  if ni * nj != unpacked.values.length() {
+    return Ok(unpacked)
+  }
+  let scan = @typed.parse_scanning_mode(scan_mode)
+  // Current normalization target covers common row-major grids.
+  // Fallback to original order for less common scan permutations.
+  if scan.consecutive_j || scan.alternating_rows {
+    return Ok(unpacked)
+  }
+  let reordered : Array[Double] = Array::make(unpacked.values.length(), 0.0)
+  for j_out in 0..<nj {
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    for i_out in 0..<ni {
+      let i_in = if scan.i_negative { ni - 1 - i_out } else { i_out }
+      let dst = j_out * ni + i_out
+      let src = j_in * ni + i_in
+      reordered[dst] = unpacked.values[src]
+    }
+  }
+  Ok({ values: reordered, num_points: unpacked.num_points })
 }
 
 ///|

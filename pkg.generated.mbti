@@ -2,6 +2,7 @@
 package "trkbt10/grib2_mbt"
 
 import {
+  "trkbt10/grib2_mbt/typed",
   "trkbt10/grib2_mbt/typed/section1",
   "trkbt10/grib2_mbt/typed/section2",
   "trkbt10/grib2_mbt/typed/section3",
@@ -256,6 +257,8 @@ pub fn encode_section7_bytes(@section7.Grib2Section7Decoded) -> Bytes
 
 pub fn fib(Int) -> Int64
 
+pub fn get_section3_grid_info(@section3.Grib2Section3TemplateData) -> @typed.Section3GridInfo
+
 pub fn get_submessage_data_representation(Grib2MessageContext, Grib2SubmessageFrame) -> Result[@section5.Grib2Section5Decoded, @section7.UnpackError]
 
 pub fn get_submessage_raw_data(Grib2MessageContext, Grib2SubmessageFrame) -> Result[Bytes, @section7.UnpackError]
@@ -263,6 +266,8 @@ pub fn get_submessage_raw_data(Grib2MessageContext, Grib2SubmessageFrame) -> Res
 pub fn inventory_lines(Grib2FileContext) -> Array[String]
 
 pub fn parse_grib2_file(Bytes) -> Result[Grib2FileContext, Grib2ParseError]
+
+pub fn parse_scanning_mode(Int) -> @section3.ScanningMode
 
 pub fn parse_with_io((String) -> Result[Bytes, String], String) -> Result[Grib2FileContext, Grib2IoAdapterError]
 
@@ -484,6 +489,8 @@ pub fn wgrib2_crlf_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_ctl_ens_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_ctl_inv_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_cyclic_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_default_lines(Grib2FileContext) -> Array[String]
@@ -519,6 +526,8 @@ pub fn wgrib2_ftime_lines(Grib2FileContext) -> Array[String]
 pub fn wgrib2_ftn_api_fn0_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_full_name_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_gdt_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_geolocation_lines(Grib2FileContext) -> Array[String]
 
@@ -598,6 +607,8 @@ pub fn wgrib2_process_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_processid_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_pyinv_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_radius_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_range_lines(Grib2FileContext) -> Array[String]
@@ -628,6 +639,8 @@ pub fn wgrib2_sec_len_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_spatial_proc_lines(Grib2FileContext) -> Array[String]
 
+pub fn wgrib2_spectral_bands_extname_lines(Grib2FileContext) -> Array[String]
+
 pub fn wgrib2_spectral_bands_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_start_FT_lines(Grib2FileContext) -> Array[String]
@@ -641,6 +654,8 @@ pub fn wgrib2_subcenter_lines(Grib2FileContext) -> Array[String]
 pub fn wgrib2_t_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_table_lines(Grib2FileContext) -> Array[String]
+
+pub fn wgrib2_timer_lines(Grib2FileContext) -> Array[String]
 
 pub fn wgrib2_type_reftime_lines(Grib2FileContext) -> Array[String]
 
@@ -835,6 +850,11 @@ pub(all) enum Grib2InventoryMode {
   InventoryPostProcessing
   InventorySpatialProc
   InventorySpectralBands
+  InventorySpectralBandsExtname
+  InventoryGdt
+  InventoryTimer
+  InventoryCtlInv
+  InventoryPyinv
   InventoryCtlEns
   InventoryWarnOldG2
   InventoryWavePartition

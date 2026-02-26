@@ -72,25 +72,26 @@ fn parse_complex_groups(
   // Read NG scaled group lengths
   let lengths : Array[Int] = Array::make(ng, 0)
   for i in 0..<ng {
-    if i < ng - 1 {
-      if bits_used_for_scaled_group_lengths > 0 {
-        if not(reader.has_bits(bits_used_for_scaled_group_lengths)) {
-          return Err(
-            InsufficientData(
-              "not enough bits for group length \{i}, need \{bits_used_for_scaled_group_lengths}",
-            ),
-          )
-        }
-        let scaled = reader
-          .read_bits(bits_used_for_scaled_group_lengths)
-          .reinterpret_as_int()
-        lengths[i] = reference_group_lengths +
-          scaled * length_increment_group_lengths
-      } else {
-        lengths[i] = reference_group_lengths
+    // Template 7.2/7.3: scaled lengths are encoded for each group.
+    // The last group's decoded length must still use true_length_last_group,
+    // but we must consume its encoded scaled-length bits when present.
+    let scaled = if bits_used_for_scaled_group_lengths > 0 {
+      if not(reader.has_bits(bits_used_for_scaled_group_lengths)) {
+        return Err(
+          InsufficientData(
+            "not enough bits for group length \{i}, need \{bits_used_for_scaled_group_lengths}",
+          ),
+        )
       }
+      reader.read_bits(bits_used_for_scaled_group_lengths).reinterpret_as_int()
     } else {
-      // Last group uses true_length_last_group
+      0
+    }
+    if i < ng - 1 {
+      lengths[i] = reference_group_lengths +
+        scaled * length_increment_group_lengths
+    } else {
+      // Last group uses true_length_last_group (encoded scaled value ignored)
       lengths[i] = true_length_last_group
     }
   }
@@ -378,18 +379,6 @@ fn parse_spatial_descriptors(
 }
 
 ///|
-/// Reverse an array in place.
-fn reverse_array(arr : Array[Int]) -> Array[Int] {
-  let n = arr.length()
-  for i in 0..<(n / 2) {
-    let tmp = arr[i]
-    arr[i] = arr[n - 1 - i]
-    arr[n - 1 - i] = tmp
-  }
-  arr
-}
-
-///|
 /// Reverse spatial differencing to recover original values.
 ///
 /// According to GRIB2 spec (Template 5.3 Note A):
@@ -399,9 +388,6 @@ fn reverse_array(arr : Array[Int]) -> Array[Int] {
 /// Note B: The first 'order' values in packed array are set to zero (placeholders).
 ///
 /// Reconstruction is FORWARD: f[n] = (packed[n] + min) + 2*f[n-1] - f[n-2]
-///
-/// The file may encode the grid in reverse order (ival1/ival2 = last physical points),
-/// so we reconstruct forward and then reverse the result if needed.
 fn reverse_spatial_differencing(
   unpacked : Array[Int],
   descriptors : SpatialDiffDescriptors,
@@ -437,11 +423,7 @@ fn reverse_spatial_differencing(
         result[i - 2]
     }
   }
-  // The grid may have been encoded in reverse order.
-  // If ival1/ival2 correspond to the last physical grid points,
-  // we need to reverse the result to match the declared scan mode.
-  // For now, reverse the result to match wgrib2 output.
-  reverse_array(result)
+  result
 }
 
 ///|
@@ -664,6 +646,25 @@ test "unpack_complex basic 2 groups" {
 }
 
 ///|
+test "parse_complex_groups consumes scaled length bits for last group" {
+  // refs (2 x 1bit): 0,1 then pad to octet => 0b01000000
+  // scaled lengths (2 x 8bit): 5,9 (last scaled length is encoded but ignored)
+  // trailing marker byte must remain unread after metadata parsing
+  let data = Bytes::from_array([b'\x40', b'\x05', b'\x09', b'\xAB'])
+  let reader = BitReader::new(data)
+  let groups = match parse_complex_groups(reader, 2, 1, 0, 0, 1, 1, 8, 3) {
+    Ok(v) => v
+    Err(_) => fail("unexpected error")
+  }
+  inspect(groups.reference_values[0], content="0")
+  inspect(groups.reference_values[1], content="1")
+  inspect(groups.lengths[0], content="6")
+  inspect(groups.lengths[1], content="3")
+  inspect(groups.total_values, content="9")
+  inspect(reader.read_bits(8).reinterpret_as_int(), content="171")
+}
+
+///|
 test "reverse_spatial_differencing order 1" {
   // Order 1: cumulative sum
   // Initial: [100], minimum: -5
@@ -676,10 +677,10 @@ test "reverse_spatial_differencing order 1" {
   }
   let unpacked = [0, 10, 20, 30]
   let result = reverse_spatial_differencing(unpacked, descriptors, 1)
-  inspect(result[0], content="145")
-  inspect(result[1], content="120")
-  inspect(result[2], content="105")
-  inspect(result[3], content="100")
+  inspect(result[0], content="100")
+  inspect(result[1], content="105")
+  inspect(result[2], content="120")
+  inspect(result[3], content="145")
 }
 
 ///|
@@ -697,8 +698,8 @@ test "reverse_spatial_differencing order 2" {
   }
   let unpacked = [0, 0, 0, 0]
   let result = reverse_spatial_differencing(unpacked, descriptors, 2)
-  inspect(result[0], content="130")
-  inspect(result[1], content="120")
-  inspect(result[2], content="110")
-  inspect(result[3], content="100")
+  inspect(result[0], content="100")
+  inspect(result[1], content="110")
+  inspect(result[2], content="120")
+  inspect(result[3], content="130")
 }
