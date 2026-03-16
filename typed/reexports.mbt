@@ -493,8 +493,6 @@ pub using @section7 {
   unpack_jpeg2000,
   unpack_jpeg2000_with_external_package,
   unpack_jpeg2000_differencing,
-  get_jpeg2000_raw_bytes,
-  get_jpeg2000_params,
   unpack_png,
   get_png_raw_bytes,
   // Complex packing unpackers

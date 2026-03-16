@@ -11,10 +11,6 @@ pub fn decode_section7_bytes(Bytes, Int) -> Result[Grib2Section7Decoded, @sectio
 
 pub fn encode_section7_bytes(Grib2Section7Decoded) -> Bytes
 
-pub fn get_jpeg2000_params(@section5.Grib2DataRepresentationTemplate540) -> (Int, Int, Int, Int)
-
-pub fn get_jpeg2000_raw_bytes(Bytes) -> Bytes
-
 pub fn get_png_raw_bytes(Bytes) -> Bytes
 
 pub fn ieee754_single_to_double(Int) -> Double

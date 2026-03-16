@@ -835,17 +835,40 @@ fn probe_first_packet_header(
   use_sop : Bool,
   use_eph : Bool,
 ) -> Result[PacketHeaderProbe, UnpackError] {
+  let mut header_start = 0
+  if use_sop {
+    if payload.length() < 6 {
+      return Err(InsufficientData("SOP marker segment is truncated"))
+    }
+    if !(payload[0] == b'\xFF' && payload[1] == b'\x91') {
+      return Err(
+        UnsupportedTemplate("COD requires SOP but no SOP marker found"),
+      )
+    }
+    let lsop = (payload[2].to_uint().reinterpret_as_int() << 8) |
+      payload[3].to_uint().reinterpret_as_int()
+    if lsop != 4 {
+      return Err(UnsupportedTemplate("invalid SOP segment length: \{lsop}"))
+    }
+    header_start = 6
+  }
+  if header_start >= payload.length() {
+    return Err(InsufficientData("packet header payload is empty"))
+  }
+  let header_reader = Jpeg2000PacketBitReader::new(
+    payload[header_start:].to_bytes(),
+  )
+  let first_inclusion_bit = match header_reader.read_bit() {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
   let header = match
     parse_first_packet_single_codeblock(payload, use_sop, use_eph) {
     Ok(v) => v
     Err(e) => return Err(e)
   }
   Ok({
-    first_inclusion_bit: if header.included {
-      1
-    } else {
-      0
-    },
+    first_inclusion_bit,
     zero_bitplanes: header.zero_bitplanes,
     bytes_consumed: header.bytes_consumed,
   })

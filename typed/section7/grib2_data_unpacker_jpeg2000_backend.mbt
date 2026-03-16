@@ -2,7 +2,41 @@
 /// JPEG2000 backend bridge:
 /// - External package (`trkbt10/jpeg2000`) is used for validation checks.
 /// - The default public unpack path uses the external package for Template 5.40.
-/// - The in-package decoder is retained only as an internal implementation detail.
+/// - Template 5.41 remains a small compatibility stub because GRIB2 defines it as PNG.
+
+///|
+fn jpeg2000_pow2(n : Int) -> Double {
+  if n >= 0 {
+    let mut result = 1.0
+    for i = 0; i < n; i = i + 1 {
+      result = result * 2.0
+    }
+    result
+  } else {
+    let mut result = 1.0
+    for i = 0; i < -n; i = i + 1 {
+      result = result / 2.0
+    }
+    result
+  }
+}
+
+///|
+fn jpeg2000_pow10(n : Int) -> Double {
+  if n >= 0 {
+    let mut result = 1.0
+    for i = 0; i < n; i = i + 1 {
+      result = result * 10.0
+    }
+    result
+  } else {
+    let mut result = 1.0
+    for i = 0; i < -n; i = i + 1 {
+      result = result / 10.0
+    }
+    result
+  }
+}
 
 ///|
 fn is_raw_j2k_codestream(data : Bytes) -> Bool {
@@ -204,4 +238,14 @@ pub fn unpack_jpeg2000(
   num_points : Int,
 ) -> Result[UnpackedGridData, UnpackError] {
   unpack_jpeg2000_with_external_package(data, template, num_points)
+}
+
+///|
+/// Template 5.41 is PNG in GRIB2 and should use `unpack_png`.
+pub fn unpack_jpeg2000_differencing(
+  _data : Bytes,
+  _template : @section5.Grib2DataRepresentationTemplate541,
+  _num_points : Int,
+) -> Result[UnpackedGridData, UnpackError] {
+  Err(UnsupportedTemplate("Template 5.41 is PNG. Use unpack_png()."))
 }
