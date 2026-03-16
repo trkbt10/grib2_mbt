@@ -49,6 +49,42 @@ fn decode_fixture_context(
 }
 
 ///|
+fn unpack_flat_record(
+  context : @lib.Grib2FileContext,
+  record_number : Int,
+) -> Result[@lib.UnpackedGridData, String] {
+  if record_number <= 0 {
+    return Err("record number must be positive")
+  }
+  let mut current = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      if current == record_number {
+        match @lib.unpack_submessage_data(message, submessage) {
+          Ok(data) => return Ok(data)
+          Err(error) =>
+            match error {
+              @lib.UnpackError::UnsupportedTemplate(s) =>
+                return Err("UnsupportedTemplate: " + s)
+              @lib.UnpackError::InsufficientData(s) =>
+                return Err("InsufficientData: " + s)
+              @lib.UnpackError::InvalidBitsPerValue(s) =>
+                return Err("InvalidBitsPerValue: " + s)
+            }
+        }
+      }
+      current += 1
+    }
+  }
+  Err("record not found: " + record_number.to_string())
+}
+
+///|
+fn is_nan(value : Double) -> Bool {
+  value != value
+}
+
+///|
 fn close_enough(actual : Double, expected : Double, eps : Double) -> Bool {
   (actual - expected).abs() <= eps
 }
@@ -68,6 +104,38 @@ fn unpacked_stats(values : Array[Double]) -> (Double, Double, Double) {
     }
   }
   (min_val, max_val, sum / values.length().to_double())
+}
+
+///|
+fn unpacked_defined_stats(
+  values : Array[Double],
+) -> (Int, Double, Double, Double) {
+  let mut undef_count = 0
+  let mut found_defined = false
+  let mut min_val = 0.0
+  let mut max_val = 0.0
+  let mut sum = 0.0
+  let mut count = 0
+  for value in values {
+    if is_nan(value) {
+      undef_count += 1
+    } else {
+      if !found_defined {
+        min_val = value
+        max_val = value
+        found_defined = true
+      }
+      sum += value
+      count += 1
+      if value < min_val {
+        min_val = value
+      }
+      if value > max_val {
+        max_val = value
+      }
+    }
+  }
+  (undef_count, min_val, max_val, sum / count.to_double())
 }
 
 ///|
@@ -221,7 +289,7 @@ test "jpeg2000 eccodes fixture first message matches wgrib2 binary output" {
 }
 
 ///|
-test "jpeg2000 reduced gaussian fixture first message preserves decoded statistics" {
+test "jpeg2000 reduced gaussian fixture first message matches wgrib2 raw order" {
   let parsed = match
     decode_fixture_context(
       @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
@@ -235,9 +303,39 @@ test "jpeg2000 reduced gaussian fixture first message preserves decoded statisti
     Ok(data) => {
       inspect(data.num_points, content="6114")
       inspect(data.values.length(), content="6114")
-      // Reduced Gaussian scan-order normalization is still handled separately.
-      // Guard the decoded numeric distribution here.
       let (min_val, max_val, mean_val) = unpacked_stats(data.values)
+      inspect(
+        close_enough(data.values[0], 217.3645703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[1], 215.5545703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[19], 218.2745703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[20], 219.9045703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[6110], 250.7645703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[6111], 253.0045703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[6112], 255.3445703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[6113], 257.2745703125, 0.000000001),
+        content="true",
+      )
       inspect(
         close_enough(min_val, 210.2545703125, 0.000000001),
         content="true",
@@ -253,6 +351,44 @@ test "jpeg2000 reduced gaussian fixture first message preserves decoded statisti
     }
     Err(_) => fail("unexpected error")
   }
+}
+
+///|
+test "jpeg2000 stats lines use wgrib2-style rounded formatting" {
+  let jpeg = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let jpeg_stats = @lib.wgrib2_stats_lines(jpeg)
+  inspect(
+    jpeg_stats[0],
+    content="1:0:ndata=65160:undef=0:mean=101089:min=95224:max=103498:cos_wt_mean=101104",
+  )
+  let reduced = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let reduced_stats = @lib.wgrib2_stats_lines(reduced)
+  inspect(
+    reduced_stats[0],
+    content="1:0:ndata=6114:undef=0:mean=285.342:min=210.255:max=317.485:cos_wt_mean=290.699",
+  )
+  let gfswave = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let gfswave_stats = @lib.wgrib2_stats_lines(gfswave)
+  inspect(
+    gfswave_stats[6],
+    content="7:242905:ndata=99631:undef=70212:mean=111.369:min=0:max=360:cos_wt_mean=110.174",
+  )
 }
 
 ///|
@@ -281,6 +417,53 @@ test "jpeg2000 reduced gaussian fixture all submessages unpack" {
     Ok(count) => inspect(count > 0, content="true")
     Err(msg) => fail(msg)
   }
+}
+
+///|
+test "gfswave jpeg2000 selected records preserve wgrib2-defined values" {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let rec7 = match unpack_flat_record(parsed, 7) {
+    Ok(data) => data
+    Err(error) => fail(error)
+  }
+  inspect(rec7.num_points, content="99631")
+  inspect(rec7.values.length(), content="99631")
+  inspect(is_nan(rec7.values[0]), content="true")
+  inspect(is_nan(rec7.values[99630]), content="true")
+  let (undef7, min7, max7, mean7) = unpacked_defined_stats(rec7.values)
+  inspect(undef7, content="70212")
+  inspect(close_enough(min7, 0.0, 0.000000001), content="true")
+  inspect(close_enough(max7, 360.0, 0.000000001), content="true")
+  inspect(close_enough(mean7, 111.36929977225533, 0.000001), content="true")
+  inspect(close_enough(rec7.values[11094], 18.51, 0.000000001), content="true")
+  inspect(close_enough(rec7.values[11100], 359.91, 0.000000001), content="true")
+  inspect(close_enough(rec7.values[81782], 277.42, 0.000000001), content="true")
+  let rec18 = match unpack_flat_record(parsed, 18) {
+    Ok(data) => data
+    Err(error) => fail(error)
+  }
+  inspect(rec18.num_points, content="99631")
+  inspect(rec18.values.length(), content="99631")
+  inspect(is_nan(rec18.values[0]), content="true")
+  inspect(is_nan(rec18.values[99630]), content="true")
+  let (undef18, min18, max18, mean18) = unpacked_defined_stats(rec18.values)
+  inspect(undef18, content="86145")
+  inspect(close_enough(min18, 0.03, 0.000000001), content="true")
+  inspect(close_enough(max18, 359.98, 0.000000001), content="true")
+  inspect(close_enough(mean18, 107.39841613525108, 0.000001), content="true")
+  inspect(close_enough(rec18.values[11397], 12.55, 0.000000001), content="true")
+  inspect(close_enough(rec18.values[11400], 0.99, 0.000000001), content="true")
+  inspect(
+    close_enough(rec18.values[11701], 357.57, 0.000000001),
+    content="true",
+  )
+  inspect(close_enough(rec18.values[82081], 232.4, 0.000000001), content="true")
 }
 
 ///|

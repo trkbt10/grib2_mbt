@@ -39,6 +39,7 @@ awk -F: '
     wline[rec]=$0
     for (i=1; i<=NF; i++) {
       if ($i ~ /^mean=/) wmean[rec]=substr($i,6)
+      if ($i ~ /^cos_wt_mean=/) wcos[rec]=substr($i,13)
       if ($i ~ /^stats=error$/) werr[rec]=1
     }
     next
@@ -48,6 +49,7 @@ awk -F: '
     mline[rec]=$0
     for (i=1; i<=NF; i++) {
       if ($i ~ /^mean=/) mmean[rec]=substr($i,6)
+      if ($i ~ /^cos_wt_mean=/) mcos[rec]=substr($i,13)
       if ($i ~ /^stats=error$/) merr[rec]=1
     }
   }
@@ -55,16 +57,22 @@ awk -F: '
     split("'"$REC_RANGE"'", a, ":")
     s=a[1]+0
     e=a[2]+0
-    printf("rec\twgrib2\tmoon\t|mean_diff|\n")
+    printf("rec\twgrib2\tmoon\t|mean_diff|\t|cos_diff|\n")
     for (r=s; r<=e; r++) {
       ws = (r in werr) ? "error" : ((r in wmean) ? "ok" : "na")
       ms = (r in merr) ? "error" : ((r in mmean) ? "ok" : "na")
+      cosd = "NA"
+      if ((r in wcos) && (r in mcos)) {
+        cd = (mcos[r]+0) - (wcos[r]+0)
+        if (cd < 0) cd = -cd
+        cosd = sprintf("%.9g", cd)
+      }
       if ((r in wmean) && (r in mmean)) {
         d = (mmean[r]+0) - (wmean[r]+0)
         if (d < 0) d = -d
-        printf("%d\t%s\t%s\t%.9g\n", r, ws, ms, d)
+        printf("%d\t%s\t%s\t%.9g\t%s\n", r, ws, ms, d, cosd)
       } else {
-        printf("%d\t%s\t%s\tNA\n", r, ws, ms)
+        printf("%d\t%s\t%s\tNA\t%s\n", r, ws, ms, cosd)
       }
     }
   }

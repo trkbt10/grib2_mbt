@@ -160,6 +160,62 @@ pub fn get_section3_grid_info(
         scan_mode: g.base.scanning_mode,
         res_flags: g.base.resolution_and_component_flags,
       }
+    @section3.GridTemplate340(g) =>
+      {
+        template_id: 40,
+        ni: -1,
+        nj: g.nj,
+        la1: g.la1,
+        lo1: g.lo1,
+        la2: g.la2,
+        lo2: g.lo2,
+        di: g.di,
+        dj: -1,
+        scan_mode: g.scanning_mode,
+        res_flags: g.resolution_and_component_flags,
+      }
+    @section3.GridTemplate341(g) =>
+      {
+        template_id: 41,
+        ni: -1,
+        nj: g.base.nj,
+        la1: g.base.la1,
+        lo1: g.base.lo1,
+        la2: g.base.la2,
+        lo2: g.base.lo2,
+        di: g.base.di,
+        dj: -1,
+        scan_mode: g.base.scanning_mode,
+        res_flags: g.base.resolution_and_component_flags,
+      }
+    @section3.GridTemplate342(g) =>
+      {
+        template_id: 42,
+        ni: -1,
+        nj: g.base.nj,
+        la1: g.base.la1,
+        lo1: g.base.lo1,
+        la2: g.base.la2,
+        lo2: g.base.lo2,
+        di: g.base.di,
+        dj: -1,
+        scan_mode: g.base.scanning_mode,
+        res_flags: g.base.resolution_and_component_flags,
+      }
+    @section3.GridTemplate343(g) =>
+      {
+        template_id: 43,
+        ni: -1,
+        nj: g.base.nj,
+        la1: g.base.la1,
+        lo1: g.base.lo1,
+        la2: g.base.la2,
+        lo2: g.base.lo2,
+        di: g.base.di,
+        dj: -1,
+        scan_mode: g.base.scanning_mode,
+        res_flags: g.base.resolution_and_component_flags,
+      }
     _ =>
       {
         template_id: get_section3_template_id(template),

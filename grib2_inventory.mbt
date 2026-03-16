@@ -3651,6 +3651,195 @@ fn is_nan(v : Double) -> Bool {
 }
 
 ///|
+fn abs_double(v : Double) -> Double {
+  if v < 0.0 {
+    -v
+  } else {
+    v
+  }
+}
+
+///|
+fn sqrt_nonnegative(v : Double) -> Double {
+  if v <= 0.0 {
+    return 0.0
+  }
+  let mut guess = if v >= 1.0 { v } else { 1.0 }
+  for _ in 0..<16 {
+    guess = 0.5 * (guess + v / guess)
+  }
+  guess
+}
+
+///|
+fn legendre_polynomial_and_prev(order : Int, x : Double) -> (Double, Double) {
+  if order <= 0 {
+    return (1.0, 0.0)
+  }
+  if order == 1 {
+    return (x, 1.0)
+  }
+  let mut p_prev = 1.0
+  let mut p_curr = x
+  for n in 2..<=order {
+    let nf = n.to_double()
+    let next = ((2.0 * nf - 1.0) * x * p_curr - (nf - 1.0) * p_prev) / nf
+    p_prev = p_curr
+    p_curr = next
+  }
+  (p_curr, p_prev)
+}
+
+///|
+fn gaussian_legendre_root(order : Int, root_number : Int) -> Double {
+  let mut x = @math.cos(
+    @math.PI * (root_number.to_double() - 0.25) / (order.to_double() + 0.5),
+  )
+  for _ in 0..<24 {
+    let (pn, pn_prev) = legendre_polynomial_and_prev(order, x)
+    let derivative = order.to_double() * (x * pn - pn_prev) / (x * x - 1.0)
+    let delta = pn / derivative
+    x -= delta
+    if abs_double(delta) < 1.0e-14 {
+      break
+    }
+  }
+  x
+}
+
+///|
+fn gaussian_cosine_weights_south_to_north(n : Int) -> Array[Double]? {
+  if n <= 0 {
+    return None
+  }
+  let order = 2 * n
+  let weights : Array[Double] = Array::make(order, 0.0)
+  for index in 0..<order {
+    let root = gaussian_legendre_root(order, index + 1)
+    weights[order - 1 - index] = sqrt_nonnegative(1.0 - root * root)
+  }
+  Some(weights)
+}
+
+///|
+fn reverse_copy(values : Array[Double]) -> Array[Double] {
+  let reversed : Array[Double] = Array::make(values.length(), 0.0)
+  for index in 0..<values.length() {
+    reversed[index] = values[values.length() - 1 - index]
+  }
+  reversed
+}
+
+///|
+fn cosine_weight_from_latitude(latitude_deg : Double) -> Double {
+  @math.cos(latitude_deg * @math.PI / 180.0)
+}
+
+///|
+fn reduced_gaussian_source_cosine_weights(
+  section3 : @typed.Grib2Section3Decoded,
+) -> Array[Double]? {
+  let grid_info = @typed.get_section3_grid_info(section3.template)
+  if grid_info.template_id != 40 {
+    return None
+  }
+  let nj = grid_info.nj
+  let n = nj / 2
+  let scan_mode = grid_info.scan_mode
+  if nj <= 0 || n <= 0 || nj != 2 * n {
+    return None
+  }
+  let scan = @typed.parse_scanning_mode(scan_mode)
+  if scan.consecutive_j || scan.alternating_rows {
+    return None
+  }
+  let row_counts = match decode_reduced_gaussian_row_counts(section3, nj) {
+    Some(v) => v
+    None => return None
+  }
+  let base_weights = match gaussian_cosine_weights_south_to_north(n) {
+    Some(v) => v
+    None => return None
+  }
+  let row_weights = if scan.j_positive {
+    base_weights
+  } else {
+    reverse_copy(base_weights)
+  }
+  let weights : Array[Double] = []
+  for row in 0..<nj {
+    for _ in 0..<row_counts[row] {
+      weights.push(row_weights[row])
+    }
+  }
+  Some(weights)
+}
+
+///|
+fn cosine_weights_for_stats(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> Array[Double]? {
+  let section3 = match decode_submessage_section3(message, submessage) {
+    Ok(s3) => s3
+    Err(_) => return None
+  }
+  let source_weights = match
+    @typed.generate_coordinates_from_section3(section3.template) {
+    Some(coords) => {
+      let weights : Array[Double] = []
+      for latitude in coords.latitudes {
+        weights.push(cosine_weight_from_latitude(latitude))
+      }
+      weights
+    }
+    None =>
+      match reduced_gaussian_source_cosine_weights(section3) {
+        Some(v) => v
+        None => return None
+      }
+  }
+  let normalized = match
+    normalize_unpacked_to_wgrib2_scan_order(message, submessage, {
+      values: source_weights,
+      num_points: source_weights.length(),
+    }) {
+    Ok(v) => v
+    Err(_) => return None
+  }
+  Some(normalized.values)
+}
+
+///|
+fn cosine_weighted_mean_string(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+  data : @typed.UnpackedGridData,
+) -> String? {
+  let weights = match cosine_weights_for_stats(message, submessage) {
+    Some(v) => v
+    None => return None
+  }
+  if weights.length() != data.values.length() {
+    return None
+  }
+  let mut weighted_sum = 0.0
+  let mut weight_sum = 0.0
+  for index in 0..<data.values.length() {
+    let value = data.values[index]
+    if not(is_nan(value)) {
+      let weight = weights[index]
+      weighted_sum += value * weight
+      weight_sum += weight
+    }
+  }
+  if weight_sum == 0.0 {
+    return Some("undefined")
+  }
+  Some(format_grid_value(weighted_sum / weight_sum))
+}
+
+///|
 pub fn wgrib2_min_lines(context : Grib2FileContext) -> Array[String] {
   let lines : Array[String] = []
   let mut record_index = 1
@@ -3672,7 +3861,7 @@ pub fn wgrib2_min_lines(context : Grib2FileContext) -> Array[String] {
             }
           }
           match min_val {
-            Some(m) => lines.push(prefix + "min=" + m.to_string())
+            Some(m) => lines.push(prefix + "min=" + format_grid_value(m))
             None => lines.push(prefix + "min=undefined")
           }
         }
@@ -3706,7 +3895,7 @@ pub fn wgrib2_max_lines(context : Grib2FileContext) -> Array[String] {
             }
           }
           match max_val {
-            Some(m) => lines.push(prefix + "max=" + m.to_string())
+            Some(m) => lines.push(prefix + "max=" + format_grid_value(m))
             None => lines.push(prefix + "max=undefined")
           }
         }
@@ -3750,32 +3939,35 @@ pub fn wgrib2_stats_lines(context : Grib2FileContext) -> Array[String] {
             }
           }
           let undef_count = ndata - defined_count
-          let mean = if defined_count > 0 {
-            sum / defined_count.to_double()
+          let mean_str = if defined_count > 0 {
+            format_grid_value(sum / defined_count.to_double())
           } else {
-            0.0
+            "undefined"
           }
           let min_str = match min_val {
-            Some(m) => m.to_string()
+            Some(m) => format_grid_value(m)
             None => "undefined"
           }
           let max_str = match max_val {
-            Some(m) => m.to_string()
+            Some(m) => format_grid_value(m)
             None => "undefined"
           }
-          lines.push(
-            prefix +
+          let mut line = prefix +
             "ndata=" +
             ndata.to_string() +
             ":undef=" +
             undef_count.to_string() +
             ":mean=" +
-            mean.to_string() +
+            mean_str +
             ":min=" +
             min_str +
             ":max=" +
-            max_str,
-          )
+            max_str
+          match cosine_weighted_mean_string(message, submessage, data) {
+            Some(cos_mean) => line = line + ":cos_wt_mean=" + cos_mean
+            None => ()
+          }
+          lines.push(line)
         }
         Err(_) => lines.push(prefix + "stats=error")
       }
