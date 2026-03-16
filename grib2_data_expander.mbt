@@ -61,7 +61,11 @@ pub fn unpack_submessage_data(
     DataRepresentationTemplate54(t54) =>
       unpack_ieee(raw_data, t54, section5.number_of_data_points)
     DataRepresentationTemplate540(t540) =>
-      unpack_jpeg2000(raw_data, t540, section5.number_of_data_points)
+      @typed.unpack_jpeg2000_with_external_package(
+        raw_data,
+        t540,
+        section5.number_of_data_points,
+      )
     DataRepresentationTemplate541(t541) =>
       unpack_png(raw_data, t541, section5.number_of_data_points)
     DataRepresentationTemplate52(t52) =>

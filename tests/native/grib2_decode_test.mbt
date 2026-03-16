@@ -49,10 +49,33 @@ fn decode_fixture_context(
 }
 
 ///|
+fn close_enough(actual : Double, expected : Double, eps : Double) -> Bool {
+  (actual - expected).abs() <= eps
+}
+
+///|
+fn unpacked_stats(values : Array[Double]) -> (Double, Double, Double) {
+  let mut min_val = values[0]
+  let mut max_val = values[0]
+  let mut sum = 0.0
+  for value in values {
+    sum += value
+    if value < min_val {
+      min_val = value
+    }
+    if value > max_val {
+      max_val = value
+    }
+  }
+  (min_val, max_val, sum / values.length().to_double())
+}
+
+///|
 test "decode records exposes context fields" {
-  let context = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
-  ) {
+  let context = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfswave_atlocn_0p16_f000(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -66,9 +89,10 @@ test "decode records exposes context fields" {
 
 ///|
 test "template dispatch foundation: fixture templates" {
-  let context = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
-  ) {
+  let context = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -83,9 +107,8 @@ test "template dispatch foundation: fixture templates" {
 
 ///|
 test "template dispatch foundation: eccodes jpeg2000 fixtures" {
-  let context1 = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_jpeg(),
-  ) {
+  let context1 = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -93,9 +116,10 @@ test "template dispatch foundation: eccodes jpeg2000 fixtures" {
   inspect(records1.length() > 0, content="true")
   inspect(records1[0].section5_template.id(), content="40")
   inspect(records1[0].section5_template.is_known(), content="true")
-  let context2 = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
-  ) {
+  let context2 = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -107,17 +131,17 @@ test "template dispatch foundation: eccodes jpeg2000 fixtures" {
 
 ///|
 test "template dispatch foundation: eccodes jpeg2000 all records are template40" {
-  let context1 = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_jpeg(),
-  ) {
+  let context1 = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
     Ok(context) => context
     Err(error) => fail(error)
   }
   let records1 = @lib.decode_records(context1)
   inspect(all_records_have_section5_template(records1, 40), content="true")
-  let context2 = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
-  ) {
+  let context2 = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -127,9 +151,8 @@ test "template dispatch foundation: eccodes jpeg2000 all records are template40"
 
 ///|
 test "jpeg2000 fixture unpack path succeeds" {
-  let parsed = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_jpeg(),
-  ) {
+  let parsed = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -146,9 +169,10 @@ test "jpeg2000 fixture unpack path succeeds" {
 
 ///|
 test "jpeg2000 reduced gaussian fixture unpack path succeeds" {
-  let parsed = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
-  ) {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -164,10 +188,77 @@ test "jpeg2000 reduced gaussian fixture unpack path succeeds" {
 }
 
 ///|
+test "jpeg2000 eccodes fixture first message matches wgrib2 binary output" {
+  let parsed = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let message = parsed.messages[0]
+  let submessage = message.submessages[0]
+  match @lib.unpack_submessage_data(message, submessage) {
+    Ok(data) => {
+      inspect(data.num_points, content="65160")
+      inspect(data.values.length(), content="65160")
+      let (min_val, max_val, mean_val) = unpacked_stats(data.values)
+      inspect(
+        close_enough(data.values[0], 101456.0, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(data.values[1], 101456.0, 0.000000001),
+        content="true",
+      )
+      inspect(close_enough(min_val, 95224.0, 0.000000001), content="true")
+      inspect(close_enough(max_val, 103498.0, 0.000000001), content="true")
+      inspect(
+        close_enough(mean_val, 101089.22363413137, 0.000001),
+        content="true",
+      )
+    }
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
+test "jpeg2000 reduced gaussian fixture first message preserves decoded statistics" {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let message = parsed.messages[0]
+  let submessage = message.submessages[0]
+  match @lib.unpack_submessage_data(message, submessage) {
+    Ok(data) => {
+      inspect(data.num_points, content="6114")
+      inspect(data.values.length(), content="6114")
+      // Reduced Gaussian scan-order normalization is still handled separately.
+      // Guard the decoded numeric distribution here.
+      let (min_val, max_val, mean_val) = unpacked_stats(data.values)
+      inspect(
+        close_enough(min_val, 210.2545703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(max_val, 317.4845703125, 0.000000001),
+        content="true",
+      )
+      inspect(
+        close_enough(mean_val, 285.34226740114923, 0.000001),
+        content="true",
+      )
+    }
+    Err(_) => fail("unexpected error")
+  }
+}
+
+///|
 test "jpeg2000 eccodes fixture all submessages unpack" {
-  let parsed = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_jpeg(),
-  ) {
+  let parsed = match
+    decode_fixture_context(@grib2support.grib2_fixture_path_eccodes_jpeg()) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -179,9 +270,10 @@ test "jpeg2000 eccodes fixture all submessages unpack" {
 
 ///|
 test "jpeg2000 reduced gaussian fixture all submessages unpack" {
-  let parsed = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
-  ) {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }
@@ -193,9 +285,10 @@ test "jpeg2000 reduced gaussian fixture all submessages unpack" {
 
 ///|
 test "template 5.3 gfs pgrb2b first message unpacking" {
-  let parsed = match decode_fixture_context(
-    @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
-  ) {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
+    ) {
     Ok(context) => context
     Err(error) => fail(error)
   }

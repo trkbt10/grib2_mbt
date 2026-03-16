@@ -31,11 +31,15 @@ pub fn unpack_jpeg2000(Bytes, @section5.Grib2DataRepresentationTemplate540, Int)
 
 pub fn unpack_jpeg2000_differencing(Bytes, @section5.Grib2DataRepresentationTemplate541, Int) -> Result[UnpackedGridData, UnpackError]
 
+pub fn unpack_jpeg2000_with_external_package(Bytes, @section5.Grib2DataRepresentationTemplate540, Int) -> Result[UnpackedGridData, UnpackError]
+
 pub fn unpack_png(Bytes, @section5.Grib2DataRepresentationTemplate541, Int) -> Result[UnpackedGridData, UnpackError]
 
 pub fn unpack_simple(Bytes, Int, Int, Int, Int, Int) -> Result[UnpackedGridData, UnpackError]
 
 pub fn validate_jpeg2000_codestream(Bytes) -> Result[Unit, UnpackError]
+
+pub fn validate_jpeg2000_with_external_package(Bytes) -> Result[Unit, UnpackError]
 
 // Errors
 pub(all) suberror UnpackError {
