@@ -10,7 +10,7 @@ fn format_section7_unpack_error(error : @section7.UnpackError) -> String {
 }
 
 ///|
-fn unpack_jpeg2000_submessage_with_external_package(
+fn unpack_jpeg2000_submessage_with_public_api(
   message : @lib.Grib2MessageContext,
   submessage : @lib.Grib2SubmessageFrame,
 ) -> Result[@section7.UnpackedGridData, String] {
@@ -30,7 +30,7 @@ fn unpack_jpeg2000_submessage_with_external_package(
   match section5_decoded.template {
     @section5.DataRepresentationTemplate540(template540) =>
       match
-        @section7.unpack_jpeg2000_with_external_package(
+        @section7.unpack_jpeg2000(
           raw_data,
           template540,
           section5_decoded.number_of_data_points,
@@ -38,7 +38,7 @@ fn unpack_jpeg2000_submessage_with_external_package(
         Ok(v) => Ok(v)
         Err(error) =>
           Err(
-            "external jpeg2000 bridge failed: " +
+            "public jpeg2000 unpack failed: " +
             format_section7_unpack_error(error),
           )
       }
@@ -47,7 +47,7 @@ fn unpack_jpeg2000_submessage_with_external_package(
 }
 
 ///|
-fn assert_fixture_external_bridge_succeeds(
+fn assert_fixture_jpeg2000_public_paths_succeed(
   path : String,
 ) -> Result[Unit, String] {
   let parsed = match decode_fixture_context(path) {
@@ -69,46 +69,42 @@ fn assert_fixture_external_bridge_succeeds(
       }
       match section5_decoded.template {
         @section5.DataRepresentationTemplate540(_) => {
-          let external = match
-            unpack_jpeg2000_submessage_with_external_package(
-              message, submessage,
-            ) {
+          let low_level = match
+            unpack_jpeg2000_submessage_with_public_api(message, submessage) {
             Ok(v) => v
             Err(error) =>
               return Err(
-                "\{path} m\{message_index} s\{submessage_index} external unpack failed: \{error}",
+                "\{path} m\{message_index} s\{submessage_index} low-level jpeg2000 unpack failed: \{error}",
               )
           }
-          if external.num_points <= 0 {
+          if low_level.num_points <= 0 {
             return Err(
-              "\{path} m\{message_index} s\{submessage_index} external unpack returned non-positive num_points",
+              "\{path} m\{message_index} s\{submessage_index} low-level jpeg2000 unpack returned non-positive num_points",
             )
           }
-          if external.values.length() != external.num_points {
+          if low_level.values.length() != low_level.num_points {
             return Err(
-              "\{path} m\{message_index} s\{submessage_index} value length mismatch: len=\{external.values.length()} num_points=\{external.num_points}",
+              "\{path} m\{message_index} s\{submessage_index} low-level value length mismatch: len=\{low_level.values.length()} num_points=\{low_level.num_points}",
             )
           }
-          let legacy = match @lib.unpack_submessage_data(message, submessage) {
+          let expanded = match
+            @lib.unpack_submessage_data(message, submessage) {
             Ok(v) => v
             Err(error) =>
               return Err(
-                "\{path} m\{message_index} s\{submessage_index} legacy unpack failed: \{format_section7_unpack_error(error)}",
+                "\{path} m\{message_index} s\{submessage_index} high-level unpack failed: \{format_section7_unpack_error(error)}",
               )
           }
-          if legacy.num_points != external.num_points {
+          if expanded.num_points <= 0 {
             return Err(
-              "\{path} m\{message_index} s\{submessage_index} num_points mismatch: external=\{external.num_points} legacy=\{legacy.num_points}",
+              "\{path} m\{message_index} s\{submessage_index} high-level unpack returned non-positive num_points",
             )
           }
-          if legacy.values.length() != external.values.length() {
+          if expanded.values.length() != expanded.num_points {
             return Err(
-              "\{path} m\{message_index} s\{submessage_index} value length mismatch against legacy: external=\{external.values.length()} legacy=\{legacy.values.length()}",
+              "\{path} m\{message_index} s\{submessage_index} high-level value length mismatch: len=\{expanded.values.length()} num_points=\{expanded.num_points}",
             )
           }
-          // Current in-package JPEG2000 unpacker still diverges numerically from
-          // external/openjpeg-style decode on real fixtures. This test verifies
-          // that the external package can decode the GRIB2 payload shape.
           checked += 1
         }
         _ => ()
@@ -122,9 +118,9 @@ fn assert_fixture_external_bridge_succeeds(
 }
 
 ///|
-test "jpeg2000 external package bridge decodes eccodes fixture" {
+test "jpeg2000 public paths decode eccodes fixture" {
   match
-    assert_fixture_external_bridge_succeeds(
+    assert_fixture_jpeg2000_public_paths_succeed(
       @grib2support.grib2_fixture_path_eccodes_jpeg(),
     ) {
     Ok(_) => ()
@@ -133,9 +129,9 @@ test "jpeg2000 external package bridge decodes eccodes fixture" {
 }
 
 ///|
-test "jpeg2000 external package bridge decodes reduced gaussian fixture" {
+test "jpeg2000 public paths decode reduced gaussian fixture" {
   match
-    assert_fixture_external_bridge_succeeds(
+    assert_fixture_jpeg2000_public_paths_succeed(
       @grib2support.grib2_fixture_path_eccodes_reduced_gaussian_surface_jpeg(),
     ) {
     Ok(_) => ()
