@@ -182,13 +182,10 @@ fn normalize_unpacked_to_wgrib2_scan_order(
       return Err(UnsupportedTemplate("Failed to decode Section 3: \{e}"))
   }
   let grid_info = @typed.get_section3_grid_info(section3.template)
-  let ni = grid_info.ni
+  let template_id = grid_info.template_id
   let nj = grid_info.nj
   let scan_mode = grid_info.scan_mode
-  if ni <= 0 || nj <= 0 || scan_mode < 0 {
-    return Ok(unpacked)
-  }
-  if ni * nj != unpacked.values.length() {
+  if nj <= 0 || scan_mode < 0 {
     return Ok(unpacked)
   }
   let scan = @typed.parse_scanning_mode(scan_mode)
@@ -197,6 +194,35 @@ fn normalize_unpacked_to_wgrib2_scan_order(
   if scan.consecutive_j || scan.alternating_rows {
     return Ok(unpacked)
   }
+  if is_reduced_gaussian_template(template_id) {
+    return Ok(
+      normalize_reduced_gaussian_to_wgrib2_scan_order(
+        section3, nj, scan, unpacked,
+      ),
+    )
+  }
+  let ni = grid_info.ni
+  if ni <= 0 || ni * nj != unpacked.values.length() {
+    return Ok(unpacked)
+  }
+  Ok(normalize_regular_grid_to_wgrib2_scan_order(ni, nj, scan, unpacked))
+}
+
+///|
+fn is_reduced_gaussian_template(template_id : Int) -> Bool {
+  template_id == 40 ||
+  template_id == 41 ||
+  template_id == 42 ||
+  template_id == 43
+}
+
+///|
+fn normalize_regular_grid_to_wgrib2_scan_order(
+  ni : Int,
+  nj : Int,
+  scan : @typed.ScanningMode,
+  unpacked : @typed.UnpackedGridData,
+) -> @typed.UnpackedGridData {
   let reordered : Array[Double] = Array::make(unpacked.values.length(), 0.0)
   for j_out in 0..<nj {
     let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
@@ -207,7 +233,83 @@ fn normalize_unpacked_to_wgrib2_scan_order(
       reordered[dst] = unpacked.values[src]
     }
   }
-  Ok({ values: reordered, num_points: unpacked.num_points })
+  { values: reordered, num_points: unpacked.num_points }
+}
+
+///|
+fn normalize_reduced_gaussian_to_wgrib2_scan_order(
+  section3 : @typed.Grib2Section3Decoded,
+  nj : Int,
+  scan : @typed.ScanningMode,
+  unpacked : @typed.UnpackedGridData,
+) -> @typed.UnpackedGridData {
+  let row_counts = match decode_reduced_gaussian_row_counts(section3, nj) {
+    Some(v) => v
+    None => return unpacked
+  }
+  let input_offsets = build_row_offsets(row_counts)
+  let output_offsets : Array[Int] = Array::make(nj, 0)
+  let mut output_total = 0
+  for j_out in 0..<nj {
+    output_offsets[j_out] = output_total
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    output_total += row_counts[j_in]
+  }
+  if output_total != unpacked.values.length() {
+    return unpacked
+  }
+  let reordered : Array[Double] = Array::make(unpacked.values.length(), 0.0)
+  for j_out in 0..<nj {
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    let row_count = row_counts[j_in]
+    let src_start = input_offsets[j_in]
+    let dst_start = output_offsets[j_out]
+    for i_out in 0..<row_count {
+      let i_in = if scan.i_negative { row_count - 1 - i_out } else { i_out }
+      reordered[dst_start + i_out] = unpacked.values[src_start + i_in]
+    }
+  }
+  { values: reordered, num_points: unpacked.num_points }
+}
+
+///|
+fn decode_reduced_gaussian_row_counts(
+  section3 : @typed.Grib2Section3Decoded,
+  expected_rows : Int,
+) -> Array[Int]? {
+  let octets = section3.optional_points_octet_count
+  if expected_rows <= 0 || octets <= 0 || octets > 4 {
+    return None
+  }
+  if section3.optional_points_interpretation != 1 {
+    return None
+  }
+  let raw = section3.optional_points_raw
+  if raw.length() != expected_rows * octets {
+    return None
+  }
+  let row_counts : Array[Int] = []
+  for row in 0..<expected_rows {
+    let mut value = 0
+    let offset = row * octets
+    for byte_index in 0..<octets {
+      value = (value << 8) |
+        raw[offset + byte_index].to_uint().reinterpret_as_int()
+    }
+    row_counts.push(value)
+  }
+  Some(row_counts)
+}
+
+///|
+fn build_row_offsets(row_counts : Array[Int]) -> Array[Int] {
+  let offsets : Array[Int] = Array::make(row_counts.length(), 0)
+  let mut offset = 0
+  for index in 0..<row_counts.length() {
+    offsets[index] = offset
+    offset += row_counts[index]
+  }
+  offsets
 }
 
 ///|

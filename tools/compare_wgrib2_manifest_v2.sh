@@ -54,8 +54,13 @@ normalize_stats() {
       meanv = field_value("mean=")
       minv = field_value("min=")
       maxv = field_value("max=")
+      cosv = field_value("cos_wt_mean=")
       if (ndata != "" && undef != "" && meanv != "" && minv != "" && maxv != "") {
-        printf "%s\t%s\t%.15g\t%.15g\t%.15g\n", ndata, undef, meanv + 0, minv + 0, maxv + 0
+        if (cosv != "") {
+          printf "%s\t%s\t%.15g\t%.15g\t%.15g\t%.15g\n", ndata, undef, meanv + 0, minv + 0, maxv + 0, cosv + 0
+        } else {
+          printf "%s\t%s\t%.15g\t%.15g\t%.15g\n", ndata, undef, meanv + 0, minv + 0, maxv + 0
+        }
       }
     }
   ' "${src}" > "${out}"
@@ -87,10 +92,20 @@ compare_stats_files() {
       return abs(a - b) <= tol
     }
     {
-      if ($1 != $6 || $2 != $7) exit 1
-      if (!almost_eq($3 + 0, $8 + 0, eps_abs, eps_rel)) exit 1
-      if (!almost_eq($4 + 0, $9 + 0, eps_abs, eps_rel)) exit 1
-      if (!almost_eq($5 + 0, $10 + 0, eps_abs, eps_rel)) exit 1
+      if (NF == 10) {
+        if ($1 != $6 || $2 != $7) exit 1
+        if (!almost_eq($3 + 0, $8 + 0, eps_abs, eps_rel)) exit 1
+        if (!almost_eq($4 + 0, $9 + 0, eps_abs, eps_rel)) exit 1
+        if (!almost_eq($5 + 0, $10 + 0, eps_abs, eps_rel)) exit 1
+      } else if (NF == 12) {
+        if ($1 != $7 || $2 != $8) exit 1
+        if (!almost_eq($3 + 0, $9 + 0, eps_abs, eps_rel)) exit 1
+        if (!almost_eq($4 + 0, $10 + 0, eps_abs, eps_rel)) exit 1
+        if (!almost_eq($5 + 0, $11 + 0, eps_abs, eps_rel)) exit 1
+        if (!almost_eq($6 + 0, $12 + 0, eps_abs, eps_rel)) exit 1
+      } else {
+        exit 1
+      }
     }
     END { exit 0 }
   '
