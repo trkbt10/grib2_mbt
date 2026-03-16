@@ -1168,7 +1168,7 @@ fn half_toward_zero(v : Int) -> Int {
 /// Supports codestream packet decoding with progression orders and POC.
 /// For multi-component codestreams, all components are parsed/decoded and the
 /// first component is returned as GRIB scalar output.
-pub fn unpack_jpeg2000(
+fn unpack_jpeg2000_legacy_impl(
   data : Bytes,
   template : @section5.Grib2DataRepresentationTemplate540,
   num_points : Int,

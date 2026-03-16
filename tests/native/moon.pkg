@@ -1,5 +1,7 @@
 import {
   "trkbt10/grib2_mbt" @lib,
+  "trkbt10/grib2_mbt/typed/section5" @section5,
+  "trkbt10/grib2_mbt/typed/section7" @section7,
   "moonbitlang/x/fs" @fs,
   "trkbt10/grib2_mbt/tests/native/grib2_support" @grib2support,
 }
@@ -8,6 +10,7 @@ options(
   targets: {
     "grib2_decode_test.mbt": [ "native", "llvm" ],
     "grib2_io_adapter_test.mbt": [ "native", "llvm" ],
+    "grib2_jpeg2000_external_decode_test.mbt": [ "native", "llvm" ],
     "grib2_parser_test.mbt": [ "native", "llvm" ],
     "grib2_writer_fast_test.mbt": [ "native", "llvm" ],
     "grib2_writer_roundtrip_test.mbt": [ "native", "llvm" ],
