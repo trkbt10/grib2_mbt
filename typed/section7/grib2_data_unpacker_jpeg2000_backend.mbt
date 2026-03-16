@@ -1,8 +1,8 @@
 ///|
 /// JPEG2000 backend bridge:
 /// - External package (`trkbt10/jpeg2000`) is used for validation checks.
-/// - It also exposes an explicit verification decode bridge for Template 5.40.
-/// - Default production path remains the legacy in-package implementation.
+/// - The default public unpack path uses the external package for Template 5.40.
+/// - The in-package decoder is retained only as an internal implementation detail.
 
 ///|
 fn is_raw_j2k_codestream(data : Bytes) -> Bool {
@@ -35,12 +35,26 @@ fn external_sample_bytes_per_value(
 }
 
 ///|
+fn external_sample_top_byte_mask(bits_per_value : Int, byte_count : Int) -> Int {
+  let used_top_bits = bits_per_value - (byte_count - 1) * 8
+  if used_top_bits >= 8 {
+    0xFF
+  } else {
+    (1 << used_top_bits) - 1
+  }
+}
+
+///|
 fn decode_external_sample_value_le(
   data : Bytes,
   offset : Int,
-  byte_count : Int,
+  bits_per_value : Int,
   is_signed : Bool,
 ) -> Result[Int, UnpackError] {
+  let byte_count = match external_sample_bytes_per_value(bits_per_value) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
   if byte_count <= 0 || byte_count > 4 {
     return Err(
       InvalidBitsPerValue(
@@ -59,16 +73,23 @@ fn decode_external_sample_value_le(
   for i in 0..<(byte_count - 1) {
     value = value | (data[offset + i].to_uint().reinterpret_as_int() << (8 * i))
   }
-  let top_raw = data[offset + byte_count - 1].to_uint().reinterpret_as_int()
-  let top = if is_signed && top_raw >= 0x80 { top_raw - 0x100 } else { top_raw }
-  Ok(value | (top << (8 * (byte_count - 1))))
+  let top_mask = external_sample_top_byte_mask(bits_per_value, byte_count)
+  let top = data[offset + byte_count - 1].to_uint().reinterpret_as_int() &
+    top_mask
+  value = value | (top << (8 * (byte_count - 1)))
+  if is_signed && bits_per_value < 32 {
+    let shift = 32 - bits_per_value
+    return Ok(value << shift >> shift)
+  }
+  Ok(value)
 }
 
 ///|
-fn decode_external_sample_values(
+fn decode_and_scale_external_sample_values(
   decoded : @jpeg2000.DecodeSamplesResult,
+  template : @section5.Grib2DataRepresentationTemplate540,
   num_points : Int,
-) -> Result[Array[Int], UnpackError] {
+) -> Result[Array[Double], UnpackError] {
   let byte_count = match
     external_sample_bytes_per_value(decoded.bits_per_component) {
     Ok(v) => v
@@ -97,20 +118,23 @@ fn decode_external_sample_values(
       ),
     )
   }
-  let values : Array[Int] = []
+  let ref_value = ieee754_single_to_double(template.reference_value_ieee)
+  let binary_scale = jpeg2000_pow2(u16_to_i16(template.binary_scale_factor))
+  let decimal_scale = jpeg2000_pow10(u16_to_i16(template.decimal_scale_factor))
+  let values : Array[Double] = []
   let mut offset = 0
   for _ in 0..<coded_points {
     let value = match
       decode_external_sample_value_le(
         decoded.samples,
         offset,
-        byte_count,
+        decoded.bits_per_component,
         decoded.is_signed,
       ) {
       Ok(v) => v
       Err(e) => return Err(e)
     }
-    values.push(value)
+    values.push((ref_value + value.to_double() * binary_scale) / decimal_scale)
     offset += byte_count
   }
   Ok(values)
@@ -165,17 +189,10 @@ pub fn unpack_jpeg2000_with_external_package(
       ),
     )
   }
-  let scaled_samples = match
-    decode_external_sample_values(decoded, num_points) {
+  let values = match
+    decode_and_scale_external_sample_values(decoded, template, num_points) {
     Ok(v) => v
     Err(e) => return Err(e)
-  }
-  let ref_value = ieee754_single_to_double(template.reference_value_ieee)
-  let binary_scale = jpeg2000_pow2(u16_to_i16(template.binary_scale_factor))
-  let decimal_scale = jpeg2000_pow10(u16_to_i16(template.decimal_scale_factor))
-  let values : Array[Double] = []
-  for sample in scaled_samples {
-    values.push((ref_value + sample.to_double() * binary_scale) / decimal_scale)
   }
   Ok({ values, num_points })
 }
@@ -186,5 +203,5 @@ pub fn unpack_jpeg2000(
   template : @section5.Grib2DataRepresentationTemplate540,
   num_points : Int,
 ) -> Result[UnpackedGridData, UnpackError] {
-  unpack_jpeg2000_legacy_impl(data, template, num_points)
+  unpack_jpeg2000_with_external_package(data, template, num_points)
 }

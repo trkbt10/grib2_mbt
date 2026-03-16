@@ -2175,7 +2175,7 @@ test "unpack_jpeg2000 returns stub error" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(empty_data, template, 0) {
+  match unpack_jpeg2000_legacy_impl(empty_data, template, 0) {
     Err(_) => inspect(true, content="true")
     _ => fail("expected error")
   }
@@ -2195,7 +2195,7 @@ test "unpack_jpeg2000 decodes restricted 1x1 single-codeblock sample" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2223,7 +2223,7 @@ test "unpack_jpeg2000 supports COD progression orders 0..4" {
       Ok(v) => v
       Err(_) => fail("failed to patch progression order")
     }
-    match unpack_jpeg2000(data, template, 1) {
+    match unpack_jpeg2000_legacy_impl(data, template, 1) {
       Ok(v) => {
         inspect(v.num_points, content="1")
         inspect(v.values.length(), content="1")
@@ -2255,7 +2255,7 @@ test "unpack_jpeg2000 supports POC progression switch in main header" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2283,7 +2283,7 @@ test "unpack_jpeg2000 supports PPT packet headers in tile-part" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2312,7 +2312,7 @@ test "unpack_jpeg2000 supports PPM packet headers in main header" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2341,7 +2341,7 @@ test "unpack_jpeg2000 reorders PPM headers by Zppm" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2370,7 +2370,7 @@ test "unpack_jpeg2000 rejects PPM Zppm gap" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2390,7 +2390,7 @@ test "unpack_jpeg2000 reorders PPT headers by Zppt" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2419,7 +2419,7 @@ test "unpack_jpeg2000 rejects PPT Zppt gap" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2438,7 +2438,7 @@ test "unpack_jpeg2000 supports simultaneous PPM and PPT packet headers" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2467,7 +2467,7 @@ test "unpack_jpeg2000 validates PLT packet length" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2496,7 +2496,7 @@ test "unpack_jpeg2000 rejects trailing tile payload with PLT" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2516,7 +2516,7 @@ test "unpack_jpeg2000 supports matching TLM tile-part length" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2544,7 +2544,7 @@ test "unpack_jpeg2000 rejects PLT packet length mismatch" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2580,7 +2580,7 @@ test "unpack_jpeg2000 supports RGN maxshift marker" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2609,7 +2609,7 @@ test "unpack_jpeg2000 rejects excessive RGN maxshift" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2632,7 +2632,7 @@ test "unpack_jpeg2000 supports COD codeblock_style reset flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2663,7 +2663,7 @@ test "unpack_jpeg2000 supports COD codeblock_style segmark flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2694,7 +2694,7 @@ test "unpack_jpeg2000 supports COD codeblock_style bypass flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2725,7 +2725,7 @@ test "unpack_jpeg2000 supports COD codeblock_style termall flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2756,7 +2756,7 @@ test "unpack_jpeg2000 supports COD codeblock_style vcausal flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2787,7 +2787,7 @@ test "unpack_jpeg2000 supports COD codeblock_style pterm flag" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2818,7 +2818,7 @@ test "unpack_jpeg2000 rejects unsupported COD codeblock_style flags" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2839,7 +2839,7 @@ test "unpack_jpeg2000 decodes two-layer single-codeblock packet sequence" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2868,7 +2868,7 @@ test "unpack_jpeg2000 rejects expounded quantization with insufficient entries" 
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2888,7 +2888,7 @@ test "unpack_jpeg2000 rejects derived quantization without base step entry" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2908,7 +2908,7 @@ test "unpack_jpeg2000 decodes restricted 2x1 single-codeblock sample" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 2) {
+  match unpack_jpeg2000_legacy_impl(data, template, 2) {
     Ok(v) => {
       inspect(v.num_points, content="2")
       inspect(v.values.length(), content="2")
@@ -2933,7 +2933,7 @@ test "unpack_jpeg2000 decodes restricted 1x1 two-component sample" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -2965,7 +2965,7 @@ test "unpack_jpeg2000 rejects MCT with fewer than three components" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Err(UnsupportedTemplate(_)) => inspect(true, content="true")
     _ => fail("expected UnsupportedTemplate error")
   }
@@ -2985,7 +2985,7 @@ test "unpack_jpeg2000 supports three-component reversible MCT path" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -3014,7 +3014,7 @@ test "unpack_jpeg2000 supports component1 COC/QCC overrides" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 1) {
+  match unpack_jpeg2000_legacy_impl(data, template, 1) {
     Ok(v) => {
       inspect(v.num_points, content="1")
       inspect(v.values.length(), content="1")
@@ -3043,7 +3043,7 @@ test "unpack_jpeg2000 decodes restricted 5x1 two-codeblock sample" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 5) {
+  match unpack_jpeg2000_legacy_impl(data, template, 5) {
     Ok(v) => {
       inspect(v.num_points, content="5")
       inspect(v.values.length(), content="5")
@@ -3073,7 +3073,7 @@ test "unpack_jpeg2000 decodes decomp0 with two precinct packets" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 8) {
+  match unpack_jpeg2000_legacy_impl(data, template, 8) {
     Ok(v) => {
       inspect(v.num_points, content="8")
       inspect(v.values.length(), content="8")
@@ -3103,7 +3103,7 @@ test "unpack_jpeg2000 decodes decomp0 precinct packets across two tile-parts" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 8) {
+  match unpack_jpeg2000_legacy_impl(data, template, 8) {
     Ok(v) => {
       inspect(v.num_points, content="8")
       inspect(v.values.length(), content="8")
@@ -3133,7 +3133,7 @@ test "unpack_jpeg2000 decodes restricted 4x4 one-level LL-only sample" {
     target_compression_ratio: 0,
     reserved_tail: Bytes::new(0),
   }
-  match unpack_jpeg2000(data, template, 16) {
+  match unpack_jpeg2000_legacy_impl(data, template, 16) {
     Ok(v) => {
       inspect(v.num_points, content="16")
       inspect(v.values.length(), content="16")

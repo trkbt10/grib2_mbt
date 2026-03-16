@@ -39,14 +39,11 @@ pub fn unpack_submessage_data(
     Err(e) =>
       return Err(UnsupportedTemplate("Failed to decode Section 5: \{e}"))
   }
-  // Decode Section 7
-  let section7 = match decode_submessage_section7(message, submessage) {
-    Ok(s7) => s7
-    Err(e) =>
-      return Err(UnsupportedTemplate("Failed to decode Section 7: \{e}"))
+  let raw_data = match
+    extract_submessage_section7_raw_data(message, submessage) {
+    Ok(v) => v
+    Err(e) => return Err(e)
   }
-  // Extract raw data bytes from Section 7
-  let raw_data = extract_section7_raw_data(section7)
   // Dispatch based on Data Representation Template
   let unpacked_defined = match section5.template {
     DataRepresentationTemplate50(t50) =>
@@ -61,11 +58,7 @@ pub fn unpack_submessage_data(
     DataRepresentationTemplate54(t54) =>
       unpack_ieee(raw_data, t54, section5.number_of_data_points)
     DataRepresentationTemplate540(t540) =>
-      @typed.unpack_jpeg2000_with_external_package(
-        raw_data,
-        t540,
-        section5.number_of_data_points,
-      )
+      unpack_jpeg2000(raw_data, t540, section5.number_of_data_points)
     DataRepresentationTemplate541(t541) =>
       unpack_png(raw_data, t541, section5.number_of_data_points)
     DataRepresentationTemplate52(t52) =>
@@ -313,22 +306,31 @@ fn build_row_offsets(row_counts : Array[Int]) -> Array[Int] {
 }
 
 ///|
-/// Extract raw data bytes from Section 7 template.
-fn extract_section7_raw_data(section7 : Grib2Section7Decoded) -> Bytes {
-  match section7.template {
-    DataTemplate70(t) => t.data_values_raw
-    DataTemplate71(t) => t.data_values_raw
-    DataTemplate72(t) => t.data_values_raw
-    DataTemplate73(t) => t.data_values_raw
-    DataTemplate74(t) => t.data_values_raw
-    DataTemplate740(t) => t.data_values_raw
-    DataTemplate741(t) => t.data_values_raw
-    DataTemplate742(t) => t.data_values_raw
-    DataTemplate750(t) => t.data_values_raw
-    DataTemplate751(t) => t.data_values_raw
-    DataTemplate753(t) => t.data_values_raw
-    DataTemplateUnknown(_, data) => data
+fn extract_submessage_section7_raw_data(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> Result[Bytes, @typed.UnpackError] {
+  let frame = submessage.section7
+  if frame.section_number != 7 {
+    return Err(
+      UnsupportedTemplate(
+        "Expected Section 7 frame, got section \{frame.section_number}",
+      ),
+    )
   }
+  if frame.length < 5 {
+    return Err(InsufficientData("Section 7 too short: \{frame.length} bytes"))
+  }
+  let start = frame.start - message.offset + 5
+  let end = frame.end_offset() - message.offset
+  if start < 0 || end < start || end > message.raw.length() {
+    return Err(
+      InsufficientData(
+        "Section 7 payload slice out of bounds: start=\{start}, end=\{end}, message_len=\{message.raw.length()}",
+      ),
+    )
+  }
+  Ok(message.raw.sub(start~, end~).to_bytes())
 }
 
 ///|
@@ -338,10 +340,7 @@ pub fn get_submessage_raw_data(
   message : Grib2MessageContext,
   submessage : Grib2SubmessageFrame,
 ) -> Result[Bytes, @typed.UnpackError] {
-  match decode_submessage_section7(message, submessage) {
-    Ok(s7) => Ok(extract_section7_raw_data(s7))
-    Err(e) => Err(UnsupportedTemplate("Failed to decode Section 7: \{e}"))
-  }
+  extract_submessage_section7_raw_data(message, submessage)
 }
 
 ///|
