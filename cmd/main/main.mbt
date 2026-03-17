@@ -1211,17 +1211,32 @@ fn write_grib_out_output(
   append_mode : Bool,
 ) -> Result[Unit, String] {
   let out : Array[Byte] = []
+  let metas = @lib.decode_records(context)
   let mut record_index = 1
-  for message in context.messages {
-    let mut selected_in_message = false
-    for _ in message.submessages {
+  for message_index in 0..<context.messages.length() {
+    let message = context.messages[message_index]
+    for submessage_index in 0..<message.submessages.length() {
+      let submessage = message.submessages[submessage_index]
       if record_is_selected(record_index, selected) {
-        selected_in_message = true
+        let meta_index = record_index - 1
+        if meta_index >= metas.length() {
+          return Err(
+            "internal: record metadata missing for -grib_out record " +
+            record_index.to_string(),
+          )
+        }
+        let bytes = match
+          build_grib_out_submessage_bytes(
+            message,
+            submessage,
+            metas[meta_index],
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        append_bytes(out, bytes)
       }
       record_index += 1
-    }
-    if selected_in_message {
-      append_bytes(out, message.raw)
     }
   }
   if append_mode {
@@ -2191,10 +2206,11 @@ fn value_index_for_ij(meta : @lib.Grib2RecordMeta, i : Int, j : Int) -> Int? {
   if i < 1 || i > ni || j < 1 || j > nj {
     return None
   }
-  let scan = meta.section3_scanning_mode
-  let j_data = if (scan & 0x40) == 0 { nj - j + 1 } else { j }
-  let i_data = if (scan & 0x80) == 0 { i } else { ni - i + 1 }
-  Some((j_data - 1) * ni + (i_data - 1))
+  let scan_mode = meta.section3_scanning_mode
+  let scan = @lib.parse_scanning_mode(scan_mode)
+  let j_data = if scan.j_positive { j - 1 } else { nj - j }
+  let i_data = if scan.i_negative { ni - i } else { i - 1 }
+  Some(regular_grid_source_index_for_scan(ni, nj, scan_mode, i_data, j_data))
 }
 
 ///|
@@ -3011,13 +3027,31 @@ fn round_to_int(v : Double) -> Int {
 }
 
 ///|
-fn pow10_int(n : Int) -> Double {
-  if n <= 0 {
-    return 1.0
-  }
+fn pow2_int(n : Int) -> Double {
   let mut out = 1.0
-  for _ in 0..<n {
-    out = out * 10.0
+  if n >= 0 {
+    for _ in 0..<n {
+      out = out * 2.0
+    }
+  } else {
+    for _ in 0..<-n {
+      out = out / 2.0
+    }
+  }
+  out
+}
+
+///|
+fn pow10_int(n : Int) -> Double {
+  let mut out = 1.0
+  if n >= 0 {
+    for _ in 0..<n {
+      out = out * 10.0
+    }
+  } else {
+    for _ in 0..<-n {
+      out = out / 10.0
+    }
   }
   out
 }
@@ -3063,6 +3097,392 @@ fn pack_unsigned_values_be(values : Array[Int], bits_per_value : Int) -> Bytes {
     out.push((current & 0xFF).to_byte())
   }
   Bytes::from_array(out)
+}
+
+///|
+fn encode_i16_sign_magnitude(value : Int) -> Int {
+  let magnitude = if value < 0 { -value } else { value }
+  let bounded = if magnitude > 0x7FFF { 0x7FFF } else { magnitude }
+  if value < 0 {
+    0x8000 | bounded
+  } else {
+    bounded
+  }
+}
+
+///|
+fn section5_original_field_value_type(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+) -> Int {
+  let sec5 = section_frame_bytes(message, submessage.section5)
+  if sec5.length() > 20 {
+    sec5[20].to_uint().reinterpret_as_int()
+  } else {
+    0
+  }
+}
+
+///|
+fn regular_grid_source_index_for_scan(
+  ni : Int,
+  nj : Int,
+  scan_mode : Int,
+  i : Int,
+  j : Int,
+) -> Int {
+  let scan = @lib.parse_scanning_mode(scan_mode)
+  let j_scan = if scan.j_positive { j } else { nj - 1 - j }
+  let i_scan =
+    if scan.alternating_rows && (j_scan & 1) == 1 {
+      ni - 1 - i
+    } else {
+      i
+    }
+  let i_scan = if scan.i_negative { ni - 1 - i_scan } else { i_scan }
+  if scan.consecutive_j {
+    j_scan + i_scan * nj
+  } else {
+    i_scan + j_scan * ni
+  }
+}
+
+///|
+fn same_section_frame_for_grib_out(
+  lhs : @lib.Grib2SectionFrame,
+  rhs : @lib.Grib2SectionFrame,
+) -> Bool {
+  lhs.section_number == rhs.section_number &&
+  lhs.start == rhs.start &&
+  lhs.length == rhs.length
+}
+
+///|
+fn find_submessage_index_for_grib_out(
+  message : @lib.Grib2MessageContext,
+  target : @lib.Grib2SubmessageFrame,
+) -> Int? {
+  for index in 0..<message.submessages.length() {
+    let candidate = message.submessages[index]
+    if same_section_frame_for_grib_out(candidate.section3, target.section3) &&
+      same_section_frame_for_grib_out(candidate.section4, target.section4) &&
+      same_section_frame_for_grib_out(candidate.section5, target.section5) &&
+      same_section_frame_for_grib_out(candidate.section6, target.section6) &&
+      same_section_frame_for_grib_out(candidate.section7, target.section7) {
+      return Some(index)
+    }
+  }
+  None
+}
+
+///|
+fn resolve_bitmap_raw_for_grib_out(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  section6 : @lib.Grib2Section6Decoded,
+) -> Result[Bytes?, String] {
+  if section6.bitmap_indicator == 255 {
+    return Ok(None)
+  }
+  if section6.bitmap_indicator == 0 {
+    return Ok(Some(section6.bitmap_raw))
+  }
+  if section6.bitmap_indicator != 254 {
+    return Err(
+      "bitmap indicator not supported for -grib_out: " +
+      section6.bitmap_indicator.to_string(),
+    )
+  }
+  let submessage_index = match
+    find_submessage_index_for_grib_out(message, submessage) {
+    Some(v) => v
+    None => return Err("failed to locate submessage for bitmap reuse")
+  }
+  for previous in 0..<submessage_index {
+    let prev_index = submessage_index - 1 - previous
+    let prev_submessage = message.submessages[prev_index]
+    let prev_section6 = match
+      @lib.decode_submessage_section6(message, prev_submessage) {
+      Ok(v) => v
+      Err(_) => continue
+    }
+    if prev_section6.bitmap_indicator == 0 {
+      return Ok(Some(prev_section6.bitmap_raw))
+    }
+  }
+  Err("bitmap indicator 254 references a bitmap that is not available")
+}
+
+///|
+fn restore_input_scan_order_for_grib_out(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  values : Array[Double],
+) -> Array[Double] {
+  let section3 = match @lib.decode_submessage_section3(message, submessage) {
+    Ok(v) => v
+    Err(_) => return values
+  }
+  let grid_info = @lib.get_section3_grid_info(section3.template)
+  let ni = grid_info.ni
+  let nj = grid_info.nj
+  if ni <= 0 || nj <= 0 || ni * nj != values.length() {
+    return values
+  }
+  let scan = @lib.parse_scanning_mode(grid_info.scan_mode)
+  let reordered : Array[Double] = Array::make(values.length(), 0.0 / 0.0)
+  for j_out in 0..<nj {
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    for i_out in 0..<ni {
+      let i_in = if scan.i_negative { ni - 1 - i_out } else { i_out }
+      let normalized_index = j_out * ni + i_out
+      let raw_index = regular_grid_source_index_for_scan(
+        ni,
+        nj,
+        grid_info.scan_mode,
+        i_in,
+        j_in,
+      )
+      reordered[raw_index] = values[normalized_index]
+    }
+  }
+  reordered
+}
+
+///|
+fn collect_defined_values_for_grib_out(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  values : Array[Double],
+) -> Result[Array[Double], String] {
+  let input_order = restore_input_scan_order_for_grib_out(
+    message, submessage, values,
+  )
+  let section6 = match @lib.decode_submessage_section6(message, submessage) {
+    Ok(v) => v
+    Err(e) => return Err("failed to decode Section 6: \{e}")
+  }
+  let bitmap_raw = match
+    resolve_bitmap_raw_for_grib_out(message, submessage, section6) {
+    Ok(None) => return Ok(input_order)
+    Ok(Some(v)) => v
+    Err(e) => return Err(e)
+  }
+  if section6.bitmap_indicator == 255 {
+    return Ok(input_order)
+  }
+  let defined_values : Array[Double] = []
+  for bit_index in 0..<input_order.length() {
+    let byte_index = bit_index / 8
+    if byte_index >= bitmap_raw.length() {
+      return Err(
+        "bitmap payload too short for -grib_out at bit " + bit_index.to_string(),
+      )
+    }
+    let bit_offset = 7 - bit_index % 8
+    let mask = 1 << bit_offset
+    let byte_val = bitmap_raw[byte_index].to_uint().reinterpret_as_int()
+    if (byte_val & mask) != 0 {
+      let value = input_order[bit_index]
+      if value != value {
+        return Err(
+          "bitmap-defined point became NaN during -grib_out repack at index " +
+          bit_index.to_string(),
+        )
+      }
+      defined_values.push(value)
+    }
+  }
+  Ok(defined_values)
+}
+
+///|
+fn build_grib_out_section6_bytes(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+) -> Result[Bytes, String] {
+  let section6 = match @lib.decode_submessage_section6(message, submessage) {
+    Ok(v) => v
+    Err(e) => return Err("failed to decode Section 6: \{e}")
+  }
+  match resolve_bitmap_raw_for_grib_out(message, submessage, section6) {
+    Ok(None) => Ok(section_frame_bytes(message, submessage.section6))
+    Ok(Some(bitmap_raw)) =>
+      if section6.bitmap_indicator == 0 {
+        Ok(section_frame_bytes(message, submessage.section6))
+      } else {
+        Ok(@lib.encode_section6_bytes({ bitmap_indicator: 0, bitmap_raw }))
+      }
+    Err(e) => Err(e)
+  }
+}
+
+///|
+fn try_build_simple_packed_sections_with_scaling(
+  values : Array[Double],
+  reference_value_ieee : Int,
+  binary_scale_factor : Int,
+  decimal_scale_factor : Int,
+  original_field_value_type : Int,
+) -> (Bytes, Bytes)? {
+  let normalized_values : Array[Double] = []
+  for value in values {
+    if value != value {
+      return None
+    }
+    normalized_values.push(Float::from_double(value).to_double())
+  }
+  let mut min_value = Float::reinterpret_from_int(reference_value_ieee).to_double()
+  let mut max_value = min_value
+  if normalized_values.length() > 0 {
+    min_value = normalized_values[0]
+    max_value = normalized_values[0]
+    for value in normalized_values {
+      if value < min_value {
+        min_value = value
+      }
+      if value > max_value {
+        max_value = value
+      }
+    }
+  }
+  let constant_field = normalized_values.length() == 0 || min_value == max_value
+  let output_binary_scale_factor = if constant_field {
+    0
+  } else {
+    binary_scale_factor
+  }
+  let output_decimal_scale_factor = if constant_field {
+    0
+  } else {
+    decimal_scale_factor
+  }
+  let decimal_scale = pow10_int(output_decimal_scale_factor)
+  let output_reference_value_ieee = if normalized_values.length() == 0 {
+    reference_value_ieee
+  } else if constant_field {
+    Float::from_double(min_value).reinterpret_as_int()
+  } else {
+    Float::from_double(min_value * decimal_scale).reinterpret_as_int()
+  }
+  let reference_value = Float::reinterpret_from_int(output_reference_value_ieee).to_double()
+  let binary_scale = pow2_int(output_binary_scale_factor)
+  let packed_values : Array[Int] = []
+  let mut max_packed = 0
+  for value in normalized_values {
+    let packed = round_to_int(
+      (value * decimal_scale - reference_value) / binary_scale,
+    )
+    let nonnegative = if packed < 0 { 0 } else { packed }
+    if nonnegative > max_packed {
+      max_packed = nonnegative
+    }
+    packed_values.push(nonnegative)
+  }
+  let bits_per_value = if constant_field {
+    0
+  } else {
+    required_bits_nonnegative(max_packed)
+  }
+  if bits_per_value > 31 {
+    return None
+  }
+  let sec5 = @lib.encode_section5_bytes({
+    number_of_data_points: normalized_values.length(),
+    template: DataRepresentationTemplate50({
+      reference_value_ieee: output_reference_value_ieee,
+      binary_scale_factor: encode_i16_sign_magnitude(output_binary_scale_factor),
+      decimal_scale_factor: encode_i16_sign_magnitude(
+        output_decimal_scale_factor,
+      ),
+      bits_per_value,
+      original_field_value_type,
+      reserved_tail: b"",
+    }),
+  })
+  let sec7 = @lib.encode_section7_bytes({
+    template: DataTemplate70({
+      data_values_raw: pack_unsigned_values_be(packed_values, bits_per_value),
+    }),
+  })
+  Some((sec5, sec7))
+}
+
+///|
+fn build_grib_out_submessage_bytes(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+) -> Result[Bytes, String] {
+  let template_id = meta.section5_template.id()
+  if template_id != 0 &&
+    template_id != 2 &&
+    template_id != 3 &&
+    template_id != 40 &&
+    template_id != 41 {
+    return Err(
+      "-grib_out is not implemented for packing template " +
+      template_id.to_string(),
+    )
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) =>
+      return Err(
+        "failed to unpack record " +
+        meta.record_index.to_string() +
+        " for -grib_out",
+      )
+  }
+  let defined_values = match
+    collect_defined_values_for_grib_out(message, submessage, unpacked) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to collect defined values for -grib_out record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let (sec5, sec7) = match
+    try_build_simple_packed_sections_with_scaling(
+      defined_values,
+      meta.section5_reference_value_ieee,
+      meta.section5_binary_scale_factor,
+      meta.section5_decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for -grib_out record " +
+        meta.record_index.to_string(),
+      )
+  }
+  let sec6 = match build_grib_out_section6_bytes(message, submessage) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to resolve Section 6 for -grib_out record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  Ok(
+    build_submessage_grib_bytes_with_overrides(
+      message,
+      submessage,
+      None,
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
 }
 
 ///|

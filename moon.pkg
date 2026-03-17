@@ -22,4 +22,9 @@ options(
       "use-js-builtin-string": true,
     },
   },
+  "native-stub": [ "grib2_wgrib2_compat_stub.c" ],
+  targets: {
+    "grib2_wgrib2_compat_native.mbt": [ "native", "llvm" ],
+    "grib2_wgrib2_compat_portable.mbt": [ "wasm", "wasm-gc", "js" ],
+  },
 )

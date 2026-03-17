@@ -49,6 +49,11 @@ fn decode_fixture_context(
 }
 
 ///|
+fn derived_fixture_path(file_name : String) -> String {
+  "fixtures/grib2_derived/" + file_name
+}
+
+///|
 fn unpack_flat_record(
   context : @lib.Grib2FileContext,
   record_number : Int,
@@ -87,6 +92,23 @@ fn is_nan(value : Double) -> Bool {
 ///|
 fn close_enough(actual : Double, expected : Double, eps : Double) -> Bool {
   (actual - expected).abs() <= eps
+}
+
+///|
+fn values_prefix_matches(
+  actual : Array[Double],
+  expected : Array[Double],
+  eps : Double,
+) -> Bool {
+  if actual.length() < expected.length() {
+    return false
+  }
+  for i in 0..<expected.length() {
+    if !close_enough(actual[i], expected[i], eps) {
+      return false
+    }
+  }
+  true
 }
 
 ///|
@@ -520,6 +542,133 @@ test "template 5.3 gfs pgrb2b first message unpacking" {
     }
     Err(_) => fail("unpacking failed")
   }
+}
+
+///|
+test "template 5.3 gfs pgrb2b stats lines match wgrib2 rounding" {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2b_1p00_f000(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let stats = @lib.wgrib2_stats_lines(parsed)
+  inspect(
+    stats[5],
+    content="6:233630:ndata=65160:undef=0:mean=2.76756e-07:min=-0.000221467:max=0.000407533:cos_wt_mean=-2.24904e-10",
+  )
+  inspect(
+    stats[202],
+    content="203:10068433:ndata=65160:undef=0:mean=0.10182:min=-50.6366:max=36.7834:cos_wt_mean=0.0788723",
+  )
+  inspect(
+    stats[298],
+    content="299:15453184:ndata=65160:undef=0:mean=0.00528821:min=2.88438e-05:max=0.0168832:cos_wt_mean=0.00719937",
+  )
+  inspect(
+    stats[315],
+    content="316:16800228:ndata=65160:undef=22907:mean=25126:min=5712.55:max=83971.8:cos_wt_mean=20338.8",
+  )
+}
+
+///|
+test "derived scan fixtures match wgrib2 scan labels in grid and scan outputs" {
+  let scan32 = match
+    decode_fixture_context(
+      derived_fixture_path("noaa_gfs_pgrb2_scan32_record1.grib2"),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(
+    @lib.wgrib2_flag_table_3_4_lines(scan32)[0],
+    content="1:0:flag table 3.4=32 NS:WE",
+  )
+  inspect(
+    @lib.wgrib2_scan_lines(scan32)[0],
+    content="1:0:scan=2 input=NS:WE output=WE:SN",
+  )
+  inspect(
+    @lib.wgrib2_grid_lines(scan32)[1],
+    content="\tlat-lon grid:(360 x 181) units 1e-06 input NS:WE output WE:SN res 48",
+  )
+
+  let scan48 = match
+    decode_fixture_context(
+      derived_fixture_path("noaa_gfs_pgrb2_scan48_record1.grib2"),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(
+    @lib.wgrib2_flag_table_3_4_lines(scan48)[0],
+    content="1:0:flag table 3.4=48 NS(W|E)",
+  )
+  inspect(
+    @lib.wgrib2_scan_lines(scan48)[0],
+    content="1:0:scan=3 input=NS(W|E) output=WE:SN",
+  )
+  inspect(
+    @lib.wgrib2_grid_lines(scan48)[1],
+    content="\tlat-lon grid:(360 x 181) units 1e-06 input NS(W|E) output WE:SN res 48",
+  )
+}
+
+///|
+test "derived bitmap reuse fixture resolves Sec6 and bitmap like wgrib2" {
+  let bitmap254 = match
+    decode_fixture_context(
+      derived_fixture_path("noaa_gfswave_global_bitmap254_records5_6.grib2"),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  inspect(
+    @lib.wgrib2_sec6_lines(bitmap254)[0],
+    content="1.1:0:Sec6 length 129786 bitmap indicator 0",
+  )
+  inspect(
+    @lib.wgrib2_sec6_lines(bitmap254)[1],
+    content="1.2:0:Sec6 length 129786 bitmap indicator 0",
+  )
+  inspect(
+    @lib.wgrib2_bitmap_lines(bitmap254)[0],
+    content="1.1:0:bitmap 451119 undef pts",
+  )
+  inspect(
+    @lib.wgrib2_bitmap_lines(bitmap254)[1],
+    content="1.2:0:bitmap 451119 undef pts",
+  )
+}
+
+///|
+test "derived scan48 fixture normalizes values to wgrib2 output order" {
+  let parsed = match
+    decode_fixture_context(
+      derived_fixture_path("noaa_gfs_pgrb2_scan48_record1.grib2"),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let data = match unpack_flat_record(parsed, 1) {
+    Ok(v) => v
+    Err(error) => fail(error)
+  }
+  let expected : Array[Double] = [
+    102136.0,
+    102012.0,
+    102284.0,
+    101924.0,
+    101940.0,
+    101916.0,
+    101380.0,
+    101916.0,
+  ]
+  inspect(
+    values_prefix_matches(data.values, expected, 0.000000001),
+    content="true",
+  )
 }
 
 ///|
