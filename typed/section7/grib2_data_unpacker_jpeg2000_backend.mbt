@@ -46,15 +46,6 @@ fn is_raw_j2k_codestream(data : Bytes) -> Bool {
 }
 
 ///|
-fn bytes_to_int_array(data : Bytes) -> Array[Int] {
-  let out : Array[Int] = []
-  for b in data {
-    out.push(b.to_uint().reinterpret_as_int())
-  }
-  out
-}
-
-///|
 fn external_sample_bytes_per_value(
   bits_per_value : Int,
 ) -> Result[Int, UnpackError] {
@@ -120,7 +111,7 @@ fn decode_external_sample_value_le(
 
 ///|
 fn decode_and_scale_external_sample_values(
-  decoded : @jpeg2000.DecodeSamplesResult,
+  decoded : @jpeg2000.ImageData,
   template : @section5.Grib2DataRepresentationTemplate540,
   num_points : Int,
 ) -> Result[Array[Double], UnpackError] {
@@ -145,10 +136,10 @@ fn decode_and_scale_external_sample_values(
     )
   }
   let expected_bytes = coded_points * byte_count
-  if decoded.samples.length() != expected_bytes {
+  if decoded.data.length() != expected_bytes {
     return Err(
       InsufficientData(
-        "external jpeg2000 sample byte length mismatch: expected=\{expected_bytes}, actual=\{decoded.samples.length()}",
+        "external jpeg2000 sample byte length mismatch: expected=\{expected_bytes}, actual=\{decoded.data.length()}",
       ),
     )
   }
@@ -160,7 +151,7 @@ fn decode_and_scale_external_sample_values(
   for _ in 0..<coded_points {
     let value = match
       decode_external_sample_value_le(
-        decoded.samples,
+        decoded.data,
         offset,
         decoded.bits_per_component,
         decoded.is_signed,
@@ -178,21 +169,21 @@ fn decode_and_scale_external_sample_values(
 pub fn validate_jpeg2000_with_external_package(
   data : Bytes,
 ) -> Result[Unit, UnpackError] {
-  // Raw codestreams can be parsed directly; JP2-wrapped input is handled by
-  // the decoder bridge below, so validation remains codestream-oriented here.
   if !is_raw_j2k_codestream(data) {
     return Ok(())
   }
-  let parsed = @jpeg2000.parse_codestream(bytes_to_int_array(data))
-  match parsed {
-    Ok(_) => Ok(())
-    Err(msg) =>
+  let result = try {
+    @jpeg2000.parse(data) |> ignore
+    Ok(())
+  } catch {
+    e =>
       Err(
         UnsupportedTemplate(
-          "external jpeg2000 parser rejected codestream: \{msg}",
+          "external jpeg2000 parser rejected codestream: \{e}",
         ),
       )
   }
+  result
 }
 
 ///|
@@ -204,17 +195,11 @@ pub fn unpack_jpeg2000_with_external_package(
   if num_points < 0 {
     return Err(UnsupportedTemplate("num_points must be >= 0"))
   }
-  let decoded = match @jpeg2000.decode_samples(data) {
-    Ok(v) => v
-    Err(msg) =>
-      return Err(UnsupportedTemplate("external jpeg2000 decode failed: \{msg}"))
-  }
-  if !decoded.sample_layout.has_prefix("component0:raster:le:") {
-    return Err(
-      UnsupportedTemplate(
-        "external jpeg2000 sample layout is unsupported for GRIB2 bridge: \{decoded.sample_layout}",
-      ),
-    )
+  let decoded = try {
+    @jpeg2000.decode(data)
+  } catch {
+    e =>
+      return Err(UnsupportedTemplate("external jpeg2000 decode failed: \{e}"))
   }
   if decoded.bits_per_component != template.bits_per_value {
     return Err(
