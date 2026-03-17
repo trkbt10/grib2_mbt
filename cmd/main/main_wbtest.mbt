@@ -42,6 +42,15 @@ fn count_grib_magic(bytes : Bytes) -> Int {
 }
 
 ///|
+fn fake_section_frame(
+  section_number : Int,
+  start : Int,
+  length : Int,
+) -> @lib.Grib2SectionFrame {
+  { section_number, start, length }
+}
+
+///|
 test "parse_cli_invocation accepts init chain + action" {
   let tokens = [
     "-crlf", "-for_n", "1:5:2", "-match", "UGRD", "-not", "TMP", "-s",
@@ -1192,6 +1201,121 @@ test "run_cli applies -for_n filter to -grib output" {
   inspect(dst.length() < src.length(), content="true")
   let magic = dst.sub(start=0, end=4).to_bytes().to_string()
   inspect(magic, content="b\"GRIB\"")
+}
+
+///|
+test "run_cli repacks jpeg2000 -grib_out record to simple packing" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_grib_out_jpeg_test.grib2"
+  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out", out]
+  inspect(run_cli(args), content="0")
+  let src_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse source fixture: " + e.to_string())
+  }
+  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse -grib_out output: " + e.to_string())
+  }
+  let src_meta = @lib.decode_records(src_context)[0]
+  let out_meta = @lib.decode_records(out_context)[0]
+  inspect(src_meta.section5_template.id(), content="40")
+  inspect(out_meta.section5_template.id(), content="0")
+  inspect(
+    out_meta.section5_reference_value_ieee ==
+    src_meta.section5_reference_value_ieee,
+    content="true",
+  )
+  inspect(
+    out_meta.section5_binary_scale_factor ==
+    src_meta.section5_binary_scale_factor,
+    content="true",
+  )
+  inspect(
+    out_meta.section5_decimal_scale_factor ==
+    src_meta.section5_decimal_scale_factor,
+    content="true",
+  )
+  inspect(out_meta.section5_bits_per_value, content="11")
+}
+
+///|
+test "run_cli repacks complex -grib_out record to simple packing" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_complex_test.grib2"
+  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out", out]
+  inspect(run_cli(args), content="0")
+  let src_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse source fixture: " + e.to_string())
+  }
+  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse -grib_out output: " + e.to_string())
+  }
+  let src_meta = @lib.decode_records(src_context)[0]
+  let out_meta = @lib.decode_records(out_context)[0]
+  inspect(src_meta.section5_template.id(), content="3")
+  inspect(out_meta.section5_template.id(), content="0")
+  inspect(
+    out_meta.section5_reference_value_ieee ==
+    src_meta.section5_reference_value_ieee,
+    content="true",
+  )
+  inspect(
+    out_meta.section5_binary_scale_factor ==
+    src_meta.section5_binary_scale_factor,
+    content="true",
+  )
+  inspect(
+    out_meta.section5_decimal_scale_factor ==
+    src_meta.section5_decimal_scale_factor,
+    content="true",
+  )
+  inspect(out_meta.section5_bits_per_value, content="16")
+}
+
+///|
+test "build_grib_out_section6_bytes materializes reused bitmap" {
+  let raw = b"\x00\x00\x00\x07\x06\x00\xa0\x00\x00\x00\x06\x06\xfe"
+  let dummy3 = fake_section_frame(3, 0, 0)
+  let dummy4 = fake_section_frame(4, 0, 0)
+  let dummy5 = fake_section_frame(5, 0, 0)
+  let dummy7 = fake_section_frame(7, 0, 0)
+  let message : @lib.Grib2MessageContext = {
+    offset: 0,
+    total_length: raw.length(),
+    discipline: 0,
+    edition: 2,
+    section1: fake_section_frame(1, 0, 0),
+    section8_offset: raw.length(),
+    sections: [],
+    submessages: [
+      {
+        section2: None,
+        section3: dummy3,
+        section4: dummy4,
+        section5: dummy5,
+        section6: fake_section_frame(6, 0, 7),
+        section7: dummy7,
+      },
+      {
+        section2: None,
+        section3: dummy3,
+        section4: dummy4,
+        section5: dummy5,
+        section6: fake_section_frame(6, 7, 6),
+        section7: dummy7,
+      },
+    ],
+    raw,
+  }
+  let sec6 = match
+    build_grib_out_section6_bytes(message, message.submessages[1]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  inspect(sec6 == b"\x00\x00\x00\x07\x06\x00\xa0", content="true")
 }
 
 ///|

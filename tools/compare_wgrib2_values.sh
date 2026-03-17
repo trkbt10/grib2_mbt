@@ -10,6 +10,9 @@ FIXTURE="$1"
 REC_RANGE="${2:-1:19}"
 WGRIB2_BIN="${WGRIB2_BIN:-wgrib2}"
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+MBT_CMD="${MBT_CMD:-moon run cmd/main --target native --}"
+
+cd "${ROOT_DIR}"
 
 if [[ ! -f "$FIXTURE" ]]; then
   echo "fixture not found: $FIXTURE" >&2
@@ -24,12 +27,35 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
+quote_args() {
+  local out=""
+  local arg
+  for arg in "$@"; do
+    printf -v out '%s %q' "${out}" "${arg}"
+  done
+  printf '%s' "${out# }"
+}
+
+run_mbt_stdout() {
+  local out_file="$1"
+  shift
+  local args
+  args="$(quote_args "$@")"
+  bash -lc "${MBT_CMD} ${args}" > "${out_file}" 2>/dev/null || true
+}
+
+run_mbt_no_stdout() {
+  local args
+  args="$(quote_args "$@")"
+  bash -lc "${MBT_CMD} ${args}" >/dev/null 2>&1 || true
+}
+
 W_STATS="$TMP_DIR/w_stats.txt"
 M_STATS_RAW="$TMP_DIR/m_stats_raw.txt"
 M_STATS="$TMP_DIR/m_stats.txt"
 
 "$WGRIB2_BIN" "$FIXTURE" -stats > "$W_STATS"
-moon run cmd/main -- "$FIXTURE" -stats > "$M_STATS_RAW" 2>/dev/null || true
+run_mbt_stdout "$M_STATS_RAW" "$FIXTURE" -stats
 rg '^[0-9]+:' "$M_STATS_RAW" > "$M_STATS" || true
 
 echo "== stats compare: $FIXTURE =="
@@ -83,19 +109,53 @@ echo "== -bin compare by record: $FIXTURE =="
 s="${REC_RANGE%%:*}"
 e="${REC_RANGE##*:}"
 printf "rec\tcmp\tdiff_bytes(first cmp -l count)\n"
+bin_ok=0
+bin_ng=0
+bin_err=0
 for ((r=s; r<=e; r++)); do
   W_BIN="$TMP_DIR/w_${r}.bin"
   M_BIN="$TMP_DIR/m_${r}.bin"
   "$WGRIB2_BIN" "$FIXTURE" -for_n "${r}:${r}" -bin "$W_BIN" >/dev/null 2>&1 || true
-  moon run cmd/main -- "$FIXTURE" -for_n "${r}:${r}" -bin "$M_BIN" >/dev/null 2>&1 || true
+  run_mbt_no_stdout "$FIXTURE" -for_n "${r}:${r}" -bin "$M_BIN"
   if [[ ! -f "$W_BIN" || ! -f "$M_BIN" ]]; then
     printf "%d\tERR\tNA\n" "$r"
+    bin_err=$((bin_err + 1))
     continue
   fi
   if cmp -s "$W_BIN" "$M_BIN"; then
     printf "%d\tOK\t0\n" "$r"
+    bin_ok=$((bin_ok + 1))
   else
     diff_count="$( (cmp -l "$W_BIN" "$M_BIN" || true) | wc -l | tr -d ' ' )"
     printf "%d\tNG\t%s\n" "$r" "$diff_count"
+    bin_ng=$((bin_ng + 1))
   fi
 done
+printf "summary\tOK=%d\tNG=%d\tERR=%d\n" "${bin_ok}" "${bin_ng}" "${bin_err}"
+
+echo
+echo "== -ieee compare by record: $FIXTURE =="
+printf "rec\tcmp\tdiff_bytes(first cmp -l count)\n"
+ieee_ok=0
+ieee_ng=0
+ieee_err=0
+for ((r=s; r<=e; r++)); do
+  W_IEEE="$TMP_DIR/w_${r}.ieee"
+  M_IEEE="$TMP_DIR/m_${r}.ieee"
+  "$WGRIB2_BIN" "$FIXTURE" -for_n "${r}:${r}" -ieee "$W_IEEE" >/dev/null 2>&1 || true
+  run_mbt_no_stdout "$FIXTURE" -for_n "${r}:${r}" -ieee "$M_IEEE"
+  if [[ ! -f "$W_IEEE" || ! -f "$M_IEEE" ]]; then
+    printf "%d\tERR\tNA\n" "$r"
+    ieee_err=$((ieee_err + 1))
+    continue
+  fi
+  if cmp -s "$W_IEEE" "$M_IEEE"; then
+    printf "%d\tOK\t0\n" "$r"
+    ieee_ok=$((ieee_ok + 1))
+  else
+    diff_count="$( (cmp -l "$W_IEEE" "$M_IEEE" || true) | wc -l | tr -d ' ' )"
+    printf "%d\tNG\t%s\n" "$r" "$diff_count"
+    ieee_ng=$((ieee_ng + 1))
+  fi
+done
+printf "summary\tOK=%d\tNG=%d\tERR=%d\n" "${ieee_ok}" "${ieee_ng}" "${ieee_err}"

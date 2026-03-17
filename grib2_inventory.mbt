@@ -619,17 +619,72 @@ pub fn wgrib2_sec5_lines(context : Grib2FileContext) -> Array[String] {
 }
 
 ///|
+fn section6_display_frame_and_indicator(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> (Grib2SectionFrame, Int)? {
+  let section6 = match decode_submessage_section6(message, submessage) {
+    Ok(v) => v
+    Err(_) => return None
+  }
+  if section6.bitmap_indicator != 254 {
+    return Some((submessage.section6, section6.bitmap_indicator))
+  }
+  let submessage_index = match find_submessage_index(message, submessage) {
+    Some(v) => v
+    None => return Some((submessage.section6, section6.bitmap_indicator))
+  }
+  for previous in 0..<submessage_index {
+    let prev_index = submessage_index - 1 - previous
+    let prev_submessage = message.submessages[prev_index]
+    let prev_section6 = match
+      decode_submessage_section6(message, prev_submessage) {
+      Ok(v) => v
+      Err(_) => continue
+    }
+    if prev_section6.bitmap_indicator != 254 {
+      return Some((prev_submessage.section6, prev_section6.bitmap_indicator))
+    }
+  }
+  Some((submessage.section6, section6.bitmap_indicator))
+}
+
+///|
+fn count_bitmap_undef_points(bitmap_raw : Bytes, num_points : Int) -> Int {
+  let mut undef_points = 0
+  for bit_index in 0..<num_points {
+    let byte_index = bit_index >> 3
+    let bit_in_byte = 7 - (bit_index & 7)
+    let byte_val = bitmap_raw[byte_index].to_uint().reinterpret_as_int()
+    if ((byte_val >> bit_in_byte) & 1) == 0 {
+      undef_points += 1
+    }
+  }
+  undef_points
+}
+
+///|
 pub fn wgrib2_sec6_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
-  for meta in records {
-    lines.push(
-      format_prefix(meta) +
-      "Sec6 length " +
-      meta.section6_length.to_string() +
-      " bitmap indicator " +
-      meta.section6_bitmap_indicator.to_string(),
-    )
+  let mut record_index = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      let meta = records[record_index]
+      let (frame, indicator) = match
+        section6_display_frame_and_indicator(message, submessage) {
+        Some(v) => v
+        None => (submessage.section6, meta.section6_bitmap_indicator)
+      }
+      lines.push(
+        format_prefix(meta) +
+        "Sec6 length " +
+        frame.length.to_string() +
+        " bitmap indicator " +
+        indicator.to_string(),
+      )
+      record_index += 1
+    }
   }
   lines
 }
@@ -684,7 +739,9 @@ pub fn wgrib2_grid_lines(context : Grib2FileContext) -> Array[String] {
         meta.section3_ni.to_string() +
         " x " +
         meta.section3_nj.to_string() +
-        ") units 1e-06 input WE:NS output WE:SN res " +
+        ") units 1e-06 input " +
+        scanning_mode_label(meta.section3_scanning_mode) +
+        " output WE:SN res " +
         meta.section3_resolution_flags.to_string(),
       )
       lines.push(
@@ -831,15 +888,35 @@ pub fn wgrib2_packing_lines(context : Grib2FileContext) -> Array[String] {
 pub fn wgrib2_bitmap_lines(context : Grib2FileContext) -> Array[String] {
   let records = decode_records(context)
   let lines : Array[String] = []
-  for meta in records {
-    let text = if meta.section6_bitmap_indicator == 255 {
-      "no bitmap"
-    } else if meta.section6_bitmap_indicator == 0 {
-      "bitmap " + meta.section6_undef_points.to_string() + " undef pts"
-    } else {
-      "bitmap code table 6.0=" + meta.section6_bitmap_indicator.to_string()
+  let mut record_index = 0
+  for message in context.messages {
+    for submessage in message.submessages {
+      let meta = records[record_index]
+      let (_, indicator) = match
+        section6_display_frame_and_indicator(message, submessage) {
+        Some(v) => v
+        None => (submessage.section6, meta.section6_bitmap_indicator)
+      }
+      let text = if indicator == 255 {
+        "no bitmap"
+      } else if indicator == 0 {
+        let undef_points = match
+          decode_submessage_section6(message, submessage) {
+          Ok(section6) =>
+            match resolve_bitmap_raw(message, submessage, section6) {
+              Ok(Some(bitmap_raw)) =>
+                count_bitmap_undef_points(bitmap_raw, meta.section3_npts)
+              _ => meta.section6_undef_points
+            }
+          Err(_) => meta.section6_undef_points
+        }
+        "bitmap " + undef_points.to_string() + " undef pts"
+      } else {
+        "bitmap code table 6.0=" + indicator.to_string()
+      }
+      lines.push(format_prefix(meta) + text)
+      record_index += 1
     }
-    lines.push(format_prefix(meta) + text)
   }
   lines
 }
@@ -1060,22 +1137,29 @@ pub fn wgrib2_flag_table_3_3_lines(context : Grib2FileContext) -> Array[String] 
 
 ///|
 fn scanning_mode_label(mode : Int) -> String {
-  // Bit 1: i direction (0=positive/+i, 1=negative/-i)
-  // Bit 2: j direction (0=negative/-j, 1=positive/+j)
-  // Bit 3: adjacent points (0=i direction consecutive, 1=j direction consecutive)
-  let i_dir = if (mode & 0x80) != 0 { "-i" } else { "+i" }
-  let j_dir = if (mode & 0x40) != 0 { "+j" } else { "-j" }
-  // Common labels
-  if mode == 0 {
-    "WE:NS"
-  } else if mode == 64 {
-    "WE:SN"
-  } else if mode == 128 {
-    "EW:NS"
-  } else if mode == 192 {
-    "EW:SN"
-  } else {
-    i_dir + ":" + j_dir
+  let index = if mode < 0 { -1 } else { (mode >> 4) & 0xF }
+  match index {
+    0 => "WE:NS"
+    1 => "WE|EW:NS"
+    2 => "NS:WE"
+    3 => "NS(W|E)"
+    4 => "WE:SN"
+    5 => "WE|EW:SN"
+    6 => "SN:WE"
+    7 => "SN(W|E)"
+    8 => "EW:NS"
+    9 => "EW|WE:NS"
+    10 => "NS:EW"
+    11 => "NS(E|W)"
+    12 => "EW:SN"
+    13 => "EW|WE:SN"
+    14 => "SN:EW"
+    15 => "SN(E|W)"
+    _ => {
+      let i_dir = if (mode & 0x80) != 0 { "-i" } else { "+i" }
+      let j_dir = if (mode & 0x40) != 0 { "+j" } else { "-j" }
+      i_dir + ":" + j_dir
+    }
   }
 }
 
@@ -1100,15 +1184,19 @@ pub fn wgrib2_scan_lines(context : Grib2FileContext) -> Array[String] {
   for meta in records {
     let mode = meta.section3_scanning_mode
     let input_label = scanning_mode_label(mode)
-    // wgrib2 outputs transformed to WE:SN
-    lines.push(
-      format_prefix(meta) +
-      "scan=" +
-      mode.to_string() +
-      " input=" +
-      input_label +
-      " output=WE:SN",
-    )
+    let scan = if mode < 0 { -1 } else { (mode >> 4) & 0xF }
+    if scan < 0 {
+      lines.push(format_prefix(meta) + "scan=? ????")
+    } else {
+      lines.push(
+        format_prefix(meta) +
+        "scan=" +
+        scan.to_string() +
+        " input=" +
+        input_label +
+        " output=WE:SN",
+      )
+    }
   }
   lines
 }
@@ -3732,7 +3820,7 @@ fn reverse_copy(values : Array[Double]) -> Array[Double] {
 
 ///|
 fn cosine_weight_from_latitude(latitude_deg : Double) -> Double {
-  @math.cos(latitude_deg * @math.PI / 180.0)
+  wgrib2_compatible_cosine_weight_from_latitude(latitude_deg)
 }
 
 ///|
@@ -3826,7 +3914,7 @@ fn cosine_weighted_mean_string(
   let mut weighted_sum = 0.0
   let mut weight_sum = 0.0
   for index in 0..<data.values.length() {
-    let value = data.values[index]
+    let value = quantize_wgrib2_stats_value(data.values[index])
     if not(is_nan(value)) {
       let weight = weights[index]
       weighted_sum += value * weight
@@ -3852,7 +3940,8 @@ pub fn wgrib2_min_lines(context : Grib2FileContext) -> Array[String] {
       match unpack_submessage_data(message, submessage) {
         Ok(data) => {
           let mut min_val : Double? = None
-          for v in data.values {
+          for raw in data.values {
+            let v = quantize_wgrib2_stats_value(raw)
             if not(is_nan(v)) {
               match min_val {
                 None => min_val = Some(v)
@@ -3886,7 +3975,8 @@ pub fn wgrib2_max_lines(context : Grib2FileContext) -> Array[String] {
       match unpack_submessage_data(message, submessage) {
         Ok(data) => {
           let mut max_val : Double? = None
-          for v in data.values {
+          for raw in data.values {
+            let v = quantize_wgrib2_stats_value(raw)
             if not(is_nan(v)) {
               match max_val {
                 None => max_val = Some(v)
@@ -3924,7 +4014,8 @@ pub fn wgrib2_stats_lines(context : Grib2FileContext) -> Array[String] {
           let mut sum = 0.0
           let mut min_val : Double? = None
           let mut max_val : Double? = None
-          for v in data.values {
+          for raw in data.values {
+            let v = quantize_wgrib2_stats_value(raw)
             if not(is_nan(v)) {
               defined_count += 1
               sum += v
@@ -4081,15 +4172,17 @@ fn grid_ij_to_index(meta : Grib2RecordMeta, i : Int, j : Int) -> Int? {
   let scan = meta.section3_scanning_mode
   // wgrib2 uses output convention WE:SN (j=1 is south)
   // For input WE:NS (scan bit 2 = 0), flip j coordinate to get data index
-  let j_data = if (scan & 0x40) == 0 { nj - j + 1 } else { j }
-  // Bit 4 (0x10): 0 = row-major (i varies fastest), 1 = column-major
-  if (scan & 0x10) == 0 {
-    // Row-major: index = (j_data-1) * ni + (i-1)
-    Some((j_data - 1) * ni + (i - 1))
-  } else {
-    // Column-major: index = (i-1) * nj + (j_data-1)
-    Some((i - 1) * nj + (j_data - 1))
-  }
+  let j_data = if (scan & 0x40) == 0 { nj - j } else { j - 1 }
+  let i_data = if (scan & 0x80) == 0 { i - 1 } else { ni - i }
+  Some(
+    regular_grid_scan_source_index(
+      ni,
+      nj,
+      @typed.parse_scanning_mode(scan),
+      i_data,
+      j_data,
+    ),
+  )
 }
 
 ///|
@@ -4108,6 +4201,15 @@ fn format_grid_value(v : Double) -> String {
   // Round to 6 significant figures
   let formatted = format_with_precision(v, 6)
   formatted
+}
+
+///|
+fn quantize_wgrib2_stats_value(v : Double) -> Double {
+  if is_nan(v) || v > 9.99e19 {
+    v
+  } else {
+    Float::from_double(v).to_double()
+  }
 }
 
 ///|

@@ -1,11 +1,13 @@
 {
   "name": "trkbt10/grib2_mbt",
   "version": "0.1.0",
+  "preferred-target": "native",
   "deps": {
     "moonbitlang/x": "0.4.40",
     "gmlewis/io": "0.23.1",
     "gmlewis/flate": "0.36.1",
-    "gmlewis/zlib": "0.21.1"
+    "gmlewis/zlib": "0.21.1",
+    "trkbt10/jpeg2000": { "path": "../jpeg2000" }
   },
   "readme": "README.mbt.md",
   "repository": "",

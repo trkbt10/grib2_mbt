@@ -2,12 +2,14 @@
 
 .PHONY: build build-wasm test smoke-test clean demo
 
+MOON ?= ./scripts/moon-serial.sh
+
 # Default target
 all: build-wasm smoke-test
 
 # Build for native target
 build:
-	moon build
+	$(MOON) build
 
 # Build WASM and copy to npm directories
 build-wasm:
@@ -15,7 +17,7 @@ build-wasm:
 
 # Run MoonBit tests
 test:
-	moon test
+	$(MOON) test
 
 # Run WASM smoke test (checks exports)
 smoke-test: build-wasm
@@ -23,7 +25,7 @@ smoke-test: build-wasm
 
 # Clean build artifacts
 clean:
-	moon clean
+	$(MOON) clean
 
 # Start demo development server
 demo: build-wasm
@@ -31,11 +33,11 @@ demo: build-wasm
 
 # Format code
 fmt:
-	moon fmt
+	$(MOON) fmt
 
 # Check without modifying
 check:
-	moon check
+	$(MOON) check
 
 # Full CI pipeline
 ci: build test smoke-test

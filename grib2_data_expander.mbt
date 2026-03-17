@@ -92,6 +92,76 @@ fn nan_value() -> Double {
 }
 
 ///|
+fn same_section_frame(lhs : Grib2SectionFrame, rhs : Grib2SectionFrame) -> Bool {
+  lhs.section_number == rhs.section_number &&
+  lhs.start == rhs.start &&
+  lhs.length == rhs.length
+}
+
+///|
+fn find_submessage_index(
+  message : Grib2MessageContext,
+  target : Grib2SubmessageFrame,
+) -> Int? {
+  for index in 0..<message.submessages.length() {
+    let candidate = message.submessages[index]
+    if same_section_frame(candidate.section3, target.section3) &&
+      same_section_frame(candidate.section4, target.section4) &&
+      same_section_frame(candidate.section5, target.section5) &&
+      same_section_frame(candidate.section6, target.section6) &&
+      same_section_frame(candidate.section7, target.section7) {
+      return Some(index)
+    }
+  }
+  None
+}
+
+///|
+fn resolve_bitmap_raw(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+  section6 : @typed.Grib2Section6Decoded,
+) -> Result[Bytes?, @typed.UnpackError] {
+  if section6.bitmap_indicator == 255 {
+    return Ok(None)
+  }
+  if section6.bitmap_indicator == 0 {
+    return Ok(Some(section6.bitmap_raw))
+  }
+  if section6.bitmap_indicator != 254 {
+    return Err(
+      UnsupportedTemplate(
+        "Bitmap indicator not supported for unpacking: \{section6.bitmap_indicator}",
+      ),
+    )
+  }
+  let submessage_index = match find_submessage_index(message, submessage) {
+    Some(v) => v
+    None =>
+      return Err(
+        UnsupportedTemplate("Failed to locate submessage for bitmap reuse"),
+      )
+  }
+  for previous in 0..<submessage_index {
+    let prev_index = submessage_index - 1 - previous
+    let prev_submessage = message.submessages[prev_index]
+    let prev_section6 = match
+      decode_submessage_section6(message, prev_submessage) {
+      Ok(v) => v
+      Err(_) => continue
+    }
+    if prev_section6.bitmap_indicator == 0 {
+      return Ok(Some(prev_section6.bitmap_raw))
+    }
+  }
+  Err(
+    UnsupportedTemplate(
+      "Bitmap indicator 254 references a bitmap that is not available",
+    ),
+  )
+}
+
+///|
 fn apply_bitmap_to_unpacked(
   message : Grib2MessageContext,
   submessage : Grib2SubmessageFrame,
@@ -102,15 +172,10 @@ fn apply_bitmap_to_unpacked(
     Err(e) =>
       return Err(UnsupportedTemplate("Failed to decode Section 6: \{e}"))
   }
-  if section6.bitmap_indicator == 255 {
-    return Ok(unpacked_defined)
-  }
-  if section6.bitmap_indicator != 0 {
-    return Err(
-      UnsupportedTemplate(
-        "Bitmap indicator not supported for unpacking: \{section6.bitmap_indicator}",
-      ),
-    )
+  let bitmap_raw = match resolve_bitmap_raw(message, submessage, section6) {
+    Ok(None) => return Ok(unpacked_defined)
+    Ok(Some(v)) => v
+    Err(e) => return Err(e)
   }
   let section3 = match decode_submessage_section3(message, submessage) {
     Ok(s3) => s3
@@ -127,18 +192,16 @@ fn apply_bitmap_to_unpacked(
   let mut source_index = 0
   for bit_index = 0; bit_index < total_points; bit_index = bit_index + 1 {
     let byte_index = bit_index / 8
-    if byte_index >= section6.bitmap_raw.length() {
+    if byte_index >= bitmap_raw.length() {
       return Err(
         InsufficientData(
-          "bitmap payload too short: need bit \{bit_index}, have \{section6.bitmap_raw.length() * 8} bits",
+          "bitmap payload too short: need bit \{bit_index}, have \{bitmap_raw.length() * 8} bits",
         ),
       )
     }
     let bit_offset = 7 - bit_index % 8
     let mask = 1 << bit_offset
-    let byte_val = section6.bitmap_raw[byte_index]
-      .to_uint()
-      .reinterpret_as_int()
+    let byte_val = bitmap_raw[byte_index].to_uint().reinterpret_as_int()
     let defined = (byte_val & mask) != 0
     if defined {
       if source_index >= unpacked_defined.values.length() {
@@ -182,12 +245,10 @@ fn normalize_unpacked_to_wgrib2_scan_order(
     return Ok(unpacked)
   }
   let scan = @typed.parse_scanning_mode(scan_mode)
-  // Current normalization target covers common row-major grids.
-  // Fallback to original order for less common scan permutations.
-  if scan.consecutive_j || scan.alternating_rows {
-    return Ok(unpacked)
-  }
   if is_reduced_gaussian_template(template_id) {
+    if scan.consecutive_j || scan.alternating_rows {
+      return Ok(unpacked)
+    }
     return Ok(
       normalize_reduced_gaussian_to_wgrib2_scan_order(
         section3, nj, scan, unpacked,
@@ -210,6 +271,29 @@ fn is_reduced_gaussian_template(template_id : Int) -> Bool {
 }
 
 ///|
+fn regular_grid_scan_source_index(
+  ni : Int,
+  nj : Int,
+  scan : @typed.ScanningMode,
+  i : Int,
+  j : Int,
+) -> Int {
+  let j_scan = if scan.j_positive { j } else { nj - 1 - j }
+  let i_scan =
+    if scan.alternating_rows && (j_scan & 1) == 1 {
+      ni - 1 - i
+    } else {
+      i
+    }
+  let i_scan = if scan.i_negative { ni - 1 - i_scan } else { i_scan }
+  if scan.consecutive_j {
+    j_scan + i_scan * nj
+  } else {
+    i_scan + j_scan * ni
+  }
+}
+
+///|
 fn normalize_regular_grid_to_wgrib2_scan_order(
   ni : Int,
   nj : Int,
@@ -218,11 +302,9 @@ fn normalize_regular_grid_to_wgrib2_scan_order(
 ) -> @typed.UnpackedGridData {
   let reordered : Array[Double] = Array::make(unpacked.values.length(), 0.0)
   for j_out in 0..<nj {
-    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
     for i_out in 0..<ni {
-      let i_in = if scan.i_negative { ni - 1 - i_out } else { i_out }
       let dst = j_out * ni + i_out
-      let src = j_in * ni + i_in
+      let src = regular_grid_scan_source_index(ni, nj, scan, i_out, j_out)
       reordered[dst] = unpacked.values[src]
     }
   }

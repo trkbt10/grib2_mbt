@@ -75,10 +75,12 @@ pub fn generate_latlon_coordinates(
   if scan.consecutive_j {
     // Points are consecutive in j direction
     for i = 0; i < ni; i = i + 1 {
-      let lon = lo1 + i.to_double() * di_signed
-      for j = 0; j < nj; j = j + 1 {
+      let reverse_j = scan.alternating_rows && (i & 1) == 1
+      for j_scan = 0; j_scan < nj; j_scan = j_scan + 1 {
+        let j = if reverse_j { nj - 1 - j_scan } else { j_scan }
+        let lon = lo1 + i.to_double() * di_signed
         let lat = la1 + j.to_double() * dj_signed
-        let idx = i * nj + j
+        let idx = i * nj + j_scan
         latitudes[idx] = lat
         longitudes[idx] = normalize_longitude(lon)
       }
@@ -87,9 +89,11 @@ pub fn generate_latlon_coordinates(
     // Points are consecutive in i direction (default)
     for j = 0; j < nj; j = j + 1 {
       let lat = la1 + j.to_double() * dj_signed
-      for i = 0; i < ni; i = i + 1 {
+      let reverse_i = scan.alternating_rows && (j & 1) == 1
+      for i_scan = 0; i_scan < ni; i_scan = i_scan + 1 {
+        let i = if reverse_i { ni - 1 - i_scan } else { i_scan }
         let lon = lo1 + i.to_double() * di_signed
-        let idx = j * ni + i
+        let idx = j * ni + i_scan
         latitudes[idx] = lat
         longitudes[idx] = normalize_longitude(lon)
       }
@@ -198,6 +202,71 @@ test "generate_latlon_coordinates j_positive" {
   // j=0: lat=30, j=1: lat=31 (increasing)
   inspect(coords.get_lat(0, 0), content="30")
   inspect(coords.get_lat(0, 1), content="31")
+}
+
+///|
+test "generate_latlon_coordinates alternating rows" {
+  let grid : Grib2GridTemplate30 = {
+    shape_of_earth: 6,
+    scale_factor_radius: 0,
+    scaled_value_radius: 0,
+    scale_factor_major_axis: 0,
+    scaled_value_major_axis: 0,
+    scale_factor_minor_axis: 0,
+    scaled_value_minor_axis: 0,
+    ni: 2,
+    nj: 3,
+    basic_angle: 0,
+    subdivisions_of_basic_angle: 0,
+    la1: 3000000,
+    lo1: 10000000,
+    resolution_and_component_flags: 48,
+    la2: 1000000,
+    lo2: 11000000,
+    di: 1000000,
+    dj: 1000000,
+    scanning_mode: 16,
+  }
+  let coords = generate_latlon_coordinates(grid)
+  inspect(coords.latitudes[0], content="3")
+  inspect(coords.latitudes[2], content="2")
+  inspect(coords.latitudes[4], content="1")
+  inspect(coords.longitudes[0], content="10")
+  inspect(coords.longitudes[2], content="11")
+  inspect(coords.longitudes[3], content="10")
+}
+
+///|
+test "generate_latlon_coordinates consecutive_j alternating columns" {
+  let grid : Grib2GridTemplate30 = {
+    shape_of_earth: 6,
+    scale_factor_radius: 0,
+    scaled_value_radius: 0,
+    scale_factor_major_axis: 0,
+    scaled_value_major_axis: 0,
+    scale_factor_minor_axis: 0,
+    scaled_value_minor_axis: 0,
+    ni: 2,
+    nj: 3,
+    basic_angle: 0,
+    subdivisions_of_basic_angle: 0,
+    la1: 3000000,
+    lo1: 10000000,
+    resolution_and_component_flags: 48,
+    la2: 1000000,
+    lo2: 11000000,
+    di: 1000000,
+    dj: 1000000,
+    scanning_mode: 48,
+  }
+  let coords = generate_latlon_coordinates(grid)
+  inspect(coords.latitudes[0], content="3")
+  inspect(coords.latitudes[2], content="1")
+  inspect(coords.latitudes[3], content="1")
+  inspect(coords.latitudes[5], content="3")
+  inspect(coords.longitudes[0], content="10")
+  inspect(coords.longitudes[3], content="11")
+  inspect(coords.longitudes[5], content="11")
 }
 
 ///|
