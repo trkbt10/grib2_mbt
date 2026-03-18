@@ -51,6 +51,42 @@ fn fake_section_frame(
 }
 
 ///|
+fn sample_grib_out_test_section3_bytes(
+  ni : Int,
+  nj : Int,
+  scanning_mode : Int,
+) -> Bytes {
+  @lib.encode_section3_bytes({
+    source_of_grid_definition: 0,
+    number_of_data_points: ni * nj,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: GridTemplate30({
+      shape_of_earth: 6,
+      scale_factor_radius: 0,
+      scaled_value_radius: 0,
+      scale_factor_major_axis: 0,
+      scaled_value_major_axis: 0,
+      scale_factor_minor_axis: 0,
+      scaled_value_minor_axis: 0,
+      ni,
+      nj,
+      basic_angle: 0,
+      subdivisions_of_basic_angle: 0,
+      la1: 1000000,
+      lo1: 0,
+      resolution_and_component_flags: 48,
+      la2: 0,
+      lo2: 2000000,
+      di: 1000000,
+      dj: 1000000,
+      scanning_mode,
+    }),
+    optional_points_raw: b"",
+  })
+}
+
+///|
 test "parse_cli_invocation accepts init chain + action" {
   let tokens = [
     "-crlf", "-for_n", "1:5:2", "-match", "UGRD", "-not", "TMP", "-s",
@@ -165,7 +201,7 @@ test "parse_cli_invocation accepts write_sec action" {
 }
 
 ///|
-test "parse_cli_invocation supports out aliases grib_out/csv_long" {
+test "parse_cli_invocation supports grib_out alias and csv_long action" {
   let p1 = match parse_cli_invocation(["-grib_out", "target/o.grb2"]) {
     Ok(v) => v
     Err(e) => fail(e)
@@ -183,7 +219,7 @@ test "parse_cli_invocation supports out aliases grib_out/csv_long" {
   }
   let (_, a2) = p2
   let ok2 = match a2 {
-    WriteCsv("target/o.csv") => true
+    WriteCsv("target/o.csv", true) => true
     _ => false
   }
   inspect(ok2, content="true")
@@ -223,6 +259,73 @@ test "parse_cli_invocation supports AAIG aliases" {
     _ => false
   }
   inspect(ok2, content="true")
+}
+
+///|
+test "format_data_value normalizes JMA text output through float32" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse JMA fixture: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(_) => fail("failed to unpack JMA record")
+  }
+  let idx = match value_index_for_ij(meta, 1, 2) {
+    Some(v) => v
+    None => fail("failed to resolve ij index for JMA record")
+  }
+  inspect(format_data_value(unpacked.values[idx]), content="102634")
+}
+
+///|
+test "format_data_value rounds exact .5 values to even" {
+  inspect(format_data_value(102634.5), content="102634")
+  inspect(format_data_value(102659.5), content="102660")
+  inspect(format_data_value(102609.5), content="102610")
+  inspect(format_data_value(102559.5), content="102560")
+}
+
+///|
+test "format_data_value matches JMA tie points on second row" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse JMA fixture: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(_) => fail("failed to unpack JMA record")
+  }
+  let idx16 = match value_index_for_ij(meta, 16, 2) {
+    Some(v) => v
+    None => fail("failed to resolve ij index for JMA tie point 16,2")
+  }
+  let idx139 = match value_index_for_ij(meta, 139, 2) {
+    Some(v) => v
+    None => fail("failed to resolve ij index for JMA tie point 139,2")
+  }
+  let idx201 = match value_index_for_ij(meta, 201, 2) {
+    Some(v) => v
+    None => fail("failed to resolve ij index for JMA tie point 201,2")
+  }
+  let v16 = unpacked.values[idx16]
+  let v139 = unpacked.values[idx139]
+  let v201 = unpacked.values[idx201]
+  inspect(format_data_value(v16), content="102660")
+  inspect(format_data_value(v139), content="102610")
+  inspect(format_data_value(v201), content="102560")
 }
 
 ///|
@@ -842,7 +945,7 @@ test "run_cli supports -config output to file" {
 }
 
 ///|
-test "run_cli supports -AAIG output" {
+test "run_cli supports -AAIG output with wgrib2 layout" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_aaig_test.asc"
   let exit = run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-AAIG", out])
@@ -850,9 +953,21 @@ test "run_cli supports -AAIG output" {
   let body = @fs.read_file_to_string(out) catch {
     e => fail("failed to read aaig output: " + e.to_string())
   }
-  inspect(body.contains("ncols "), content="true")
-  inspect(body.contains("nrows "), content="true")
-  inspect(body.contains("NODATA_value"), content="true")
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let text = line.to_string()
+    if text.length() > 0 {
+      lines.push(text)
+    }
+  }
+  inspect(line_count(out), content="65166")
+  inspect(lines[0], content="ncols 360")
+  inspect(lines[1], content="nrows 181")
+  inspect(lines[2], content="xllcenter 0.000000")
+  inspect(lines[3], content="yllcenter -90.000000")
+  inspect(lines[4], content="cellsize 1.000000")
+  inspect(lines[5], content="NODATA_VALUE 9.999e20")
+  inspect(lines[6], content="102271.843750")
 }
 
 ///|
@@ -867,7 +982,37 @@ test "run_cli supports -AAIGlong output with .asc suffix" {
   let body = @fs.read_file_to_string(out) catch {
     e => fail("failed to read aaiglong output: " + e.to_string())
   }
-  inspect(body.contains("ncols "), content="true")
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let text = line.to_string()
+    if text.length() > 0 {
+      lines.push(text)
+    }
+  }
+  inspect(lines[0], content="ncols 360")
+  inspect(lines[5], content="NODATA_VALUE 9.999e20")
+}
+
+///|
+test "run_cli supports -AAIG output with wrapped lon and nodata rendering" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_aaig_gfswave_test.asc"
+  let exit = run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-AAIG", out])
+  inspect(exit, content="0")
+  let body = @fs.read_file_to_string(out) catch {
+    e => fail("failed to read gfswave aaig output: " + e.to_string())
+  }
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let text = line.to_string()
+    if text.length() > 0 {
+      lines.push(text)
+    }
+  }
+  inspect(line_count(out), content="99637")
+  inspect(lines[2], content="xllcenter -100.000000")
+  inspect(lines[3], content="yllcenter 0.000000")
+  inspect(lines[6], content="999900026055400882176.000000")
 }
 
 ///|
@@ -890,14 +1035,58 @@ test "run_cli supports -grib_ieee split outputs" {
   let h = @fs.read_file_to_string(base + ".h") catch {
     e => fail("failed to read .h: " + e.to_string())
   }
-  inspect(grb.length() > 16, content="true")
-  inspect(head.length() > 16, content="true")
+  inspect(grb.length(), content="260810")
+  inspect(head.length(), content="166")
   inspect(tail.length(), content="4")
-  inspect(h.contains("GRIB_IEEE_RECORDS"), content="true")
+  inspect(grb.length() > head.length() + tail.length(), content="true")
+  inspect(head[head.length() - 1].to_int(), content="7")
+  inspect(h.contains("unsigned char head[] = {"), content="true")
+  inspect(h.contains("#define NDATA 65160"), content="true")
+  inspect(h.contains("#define SEC7 161"), content="true")
+  inspect(
+    h.contains("unsigned char sec7[4] = {55, 55, 55, 55};"),
+    content="true",
+  )
   inspect(grb[0].to_int(), content="71")
   inspect(grb[1].to_int(), content="82")
   inspect(grb[2].to_int(), content="73")
   inspect(grb[3].to_int(), content="66")
+}
+
+///|
+test "run_cli grib_ieee uses first selected record" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let base_first = "target/cmd_main_grib_ieee_first_only"
+  let base_range = "target/cmd_main_grib_ieee_range"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_ieee", base_first]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-grib_ieee", base_range]),
+    content="0",
+  )
+  let first_grb = @fs.read_file_to_bytes(base_first + ".grb") catch {
+    e => fail("failed to read first .grb: " + e.to_string())
+  }
+  let range_grb = @fs.read_file_to_bytes(base_range + ".grb") catch {
+    e => fail("failed to read range .grb: " + e.to_string())
+  }
+  let first_head = @fs.read_file_to_bytes(base_first + ".head") catch {
+    e => fail("failed to read first .head: " + e.to_string())
+  }
+  let range_head = @fs.read_file_to_bytes(base_range + ".head") catch {
+    e => fail("failed to read range .head: " + e.to_string())
+  }
+  let first_h = @fs.read_file_to_string(base_first + ".h") catch {
+    e => fail("failed to read first .h: " + e.to_string())
+  }
+  let range_h = @fs.read_file_to_string(base_range + ".h") catch {
+    e => fail("failed to read range .h: " + e.to_string())
+  }
+  inspect(first_grb == range_grb, content="true")
+  inspect(first_head == range_head, content="true")
+  inspect(first_h == range_h, content="true")
 }
 
 ///|
@@ -1319,6 +1508,63 @@ test "build_grib_out_section6_bytes materializes reused bitmap" {
 }
 
 ///|
+test "restore_input_scan_order_for_grib_out inverts WE:SN normalization" {
+  let section3 = sample_grib_out_test_section3_bytes(3, 2, 0)
+  let dummy4 = fake_section_frame(4, 0, 0)
+  let dummy5 = fake_section_frame(5, 0, 0)
+  let dummy6 = fake_section_frame(6, 0, 0)
+  let dummy7 = fake_section_frame(7, 0, 0)
+  let message : @lib.Grib2MessageContext = {
+    offset: 0,
+    total_length: section3.length(),
+    discipline: 0,
+    edition: 2,
+    section1: fake_section_frame(1, 0, 0),
+    section8_offset: section3.length(),
+    sections: [],
+    submessages: [
+      {
+        section2: None,
+        section3: fake_section_frame(3, 0, section3.length()),
+        section4: dummy4,
+        section5: dummy5,
+        section6: dummy6,
+        section7: dummy7,
+      },
+    ],
+    raw: section3,
+  }
+  let restored = restore_input_scan_order_for_grib_out(
+    message,
+    message.submessages[0],
+    [20.0, 21.0, 22.0, 10.0, 11.0, 12.0],
+  )
+  inspect(restored.length(), content="6")
+  inspect(restored[0] == 10.0, content="true")
+  inspect(restored[1] == 11.0, content="true")
+  inspect(restored[2] == 12.0, content="true")
+  inspect(restored[3] == 20.0, content="true")
+  inspect(restored[4] == 21.0, content="true")
+  inspect(restored[5] == 22.0, content="true")
+}
+
+///|
+test "run_cli repacks bitmaped simple-packed -grib_out record" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_bitmap_test.grib2"
+  let args = ["grib2_mbt", fixture, "-for_n", "266:266:1", "-grib_out", out]
+  inspect(run_cli(args), content="0")
+  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse bitmap -grib_out output: " + e.to_string())
+  }
+  let out_meta = @lib.decode_records(out_context)[0]
+  inspect(out_meta.section5_template.id(), content="0")
+  inspect(out_meta.section6_bitmap_indicator, content="0")
+  inspect(out_meta.section5_bits_per_value, content="10")
+}
+
+///|
 test "run_cli supports -tosubmsg alias output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_tosubmsg_test.grib2"
@@ -1383,36 +1629,196 @@ test "run_cli supports -lola identity remap mode=grib" {
 }
 
 ///|
-test "run_cli supports -grib_out_irr limited compatibility output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let out = "target/cmd_main_grib_out_irr_test.grib2"
+test "run_cli writes -grib_out_irr template 130 output for regular latlon input" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_irr_pgrb2_test.grib2"
   let args = [
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr", "all", out,
   ]
   inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read grib_out_irr output: " + e.to_string())
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse grib_out_irr output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
-  let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
-  inspect(magic, content="b\"GRIB\"")
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="130")
+  inspect(meta.section3_length, content="521310")
+  inspect(meta.section3_npts, content="65160")
+  inspect(meta.section5_num_defined_points, content="65160")
+  inspect(meta.section6_bitmap_indicator, content="255")
+  let sec3 = section_frame_bytes(
+    context.messages[0],
+    context.messages[0].submessages[0].section3,
+  )
+  inspect(sec3[30], content="b'\\x85'")
+  inspect(sec3[31], content="b'\\x5D'")
+  inspect(sec3[32], content="b'\\x4A'")
+  inspect(sec3[33], content="b'\\x80'")
+  inspect(sec3[34], content="b'\\x00'")
+  inspect(sec3[35], content="b'\\x00'")
+  inspect(sec3[36], content="b'\\x00'")
+  inspect(sec3[37], content="b'\\x00'")
 }
 
 ///|
-test "run_cli supports -grib_out_irr2 limited compatibility output" {
+test "run_cli writes -grib_out_irr bitmap output for undefined irregular points" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let out = "target/cmd_main_grib_out_irr2_test.grib2"
+  let out = "target/cmd_main_grib_out_irr_gfswave_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr", "all", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse grib_out_irr bitmap output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="130")
+  inspect(meta.section3_length, content="797078")
+  inspect(meta.section3_npts, content="99631")
+  inspect(meta.section5_num_defined_points, content="29419")
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section6_length, content="12460")
+  inspect(meta.section6_undef_points, content="70212")
+  let section6 = match
+    @lib.decode_submessage_section6(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode grib_out_irr section6: " + e.to_string())
+  }
+  inspect(section6.bitmap_raw.length(), content="12454")
+  let sec3 = section_frame_bytes(
+    context.messages[0],
+    context.messages[0].submessages[0].section3,
+  )
+  inspect(sec3[2438], content="b'\\x00'")
+  inspect(sec3[2439], content="b'\\x02'")
+  inspect(sec3[2440], content="b'\\x8B'")
+  inspect(sec3[2441], content="b'\\x0A'")
+}
+
+///|
+test "run_cli writes -grib_out_irr defined-point output without bitmap" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_irr_pgrb2b_defined_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "266:266:1", "-grib_out_irr", "defined", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse grib_out_irr defined output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="130")
+  inspect(meta.section3_length, content="176598")
+  inspect(meta.section3_npts, content="22071")
+  inspect(meta.section5_num_defined_points, content="22071")
+  inspect(meta.section6_bitmap_indicator, content="255")
+}
+
+///|
+test "run_cli writes -grib_out_irr2 template 101 output for defined points" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_irr2_defined_test.grib2"
   let args = [
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr2", "10", "1", "0", "00000000-0000-0000-0000-000000000000",
     out,
   ]
   inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read grib_out_irr2 output: " + e.to_string())
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse grib_out_irr2 output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
-  let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
-  inspect(magic, content="b\"GRIB\"")
+  let records = @lib.decode_records(context)
+  inspect(records.length(), content="1")
+  let meta = records[0]
+  inspect(meta.section3_template.id(), content="101")
+  inspect(meta.section3_npts, content="10")
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section5_num_defined_points, content="10")
+  inspect(meta.section5_bits_per_value, content="0")
+  inspect(meta.section6_bitmap_indicator, content="255")
+  let section3 = match
+    @lib.decode_submessage_section3(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode irr2 section3: " + e.to_string())
+  }
+  match section3.template {
+    @section3.GridTemplate3101(template) => {
+      inspect(template.shape_of_earth, content="6")
+      inspect(template.number_of_grid_used, content="1")
+      inspect(template.number_of_grid_in_reference, content="0")
+      inspect(template.uuid_of_horizontal_grid.length(), content="16")
+    }
+    _ => fail("expected template 3.101")
+  }
+}
+
+///|
+test "run_cli writes -grib_out_irr2 bitmap for undefined points" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_grib_out_irr2_bitmap_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr2", "10", "1", "0", "00000000-0000-0000-0000-000000000000",
+    out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse grib_out_irr2 bitmap output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="101")
+  inspect(meta.section3_npts, content="10")
+  inspect(meta.section5_num_defined_points, content="0")
+  inspect(meta.section5_reference_value_ieee, content="0")
+  inspect(meta.section5_bits_per_value, content="0")
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section6_length, content="8")
+  inspect(meta.section6_undef_points, content="10")
+  let section6 = match
+    @lib.decode_submessage_section6(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode irr2 section6: " + e.to_string())
+  }
+  inspect(section6.bitmap_raw.length(), content="2")
+  inspect(section6.bitmap_raw[0], content="b'\\x00'")
+  inspect(section6.bitmap_raw[1], content="b'\\x00'")
+}
+
+///|
+test "run_cli pads -grib_out_irr2 beyond source size with undefined points" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_grib_out_irr2_padded_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr2", "70000", "1", "0",
+    "00000000-0000-0000-0000-000000000000", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse padded grib_out_irr2 output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="101")
+  inspect(meta.section3_npts, content="70000")
+  inspect(meta.section5_num_defined_points, content="65160")
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section6_undef_points, content="4840")
+  inspect(meta.section6_length, content="8756")
 }
 
 ///|
@@ -1611,6 +2017,62 @@ test "run_cli supports -wind_uv derived output from speed/dir input" {
 }
 
 ///|
+test "run_cli supports -wind_speed on jpeg2000 U/V input" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_wind_speed_jpeg_test.grb2"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "3:4", "-wind_speed", out]),
+    content="0",
+  )
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse wind_speed jpeg output: " + e.to_string())
+  }
+  let records = @lib.decode_records(context)
+  inspect(records.length(), content="1")
+  inspect(records[0].section4_parameter_category, content="2")
+  inspect(records[0].section4_parameter_number, content="1")
+}
+
+///|
+test "run_cli supports -wind_dir on jpeg2000 U/V input" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_wind_dir_jpeg_test.grb2"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "3:4", "-wind_dir", out]),
+    content="0",
+  )
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse wind_dir jpeg output: " + e.to_string())
+  }
+  let records = @lib.decode_records(context)
+  inspect(records.length(), content="1")
+  inspect(records[0].section4_parameter_category, content="2")
+  inspect(records[0].section4_parameter_number, content="0")
+}
+
+///|
+test "run_cli supports -wind_uv on jpeg2000 speed dir input" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_wind_uv_jpeg_test.grb2"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2", "-wind_uv", out]),
+    content="0",
+  )
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse wind_uv jpeg output: " + e.to_string())
+  }
+  let records = @lib.decode_records(context)
+  inspect(records.length(), content="2")
+  inspect(records[0].section4_parameter_category, content="2")
+  inspect(records[0].section4_parameter_number, content="2")
+  inspect(records[1].section4_parameter_category, content="2")
+  inspect(records[1].section4_parameter_number, content="3")
+}
+
+///|
 test "run_cli supports -wind_speed on complex packing output" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_wind_speed_complex_test.grb2"
@@ -1761,8 +2223,8 @@ test "run_cli supports -gridout output" {
       lines.push(s)
     }
   }
-  inspect(lines.length() > 1, content="true")
-  inspect(lines[0], content="i j lat lon")
+  inspect(lines.length() > 0, content="true")
+  inspect(lines[0], content="         1,         1, 0.000, 260.000")
 }
 
 ///|
@@ -1781,9 +2243,56 @@ test "run_cli supports -export_lonlat output with expected pair count" {
   let bytes = @fs.read_file_to_bytes(out_bin) catch {
     e => fail("failed to read lonlat output: " + e.to_string())
   }
-  let points = line_count(out_txt) - 1
+  let points = line_count(out_txt)
   inspect(points > 0, content="true")
   inspect(bytes.length(), content=(points * 8).to_string())
+}
+
+///|
+test "run_cli supports -text output with wgrib2 layout" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_text_test.txt"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-text", out]),
+    content="0",
+  )
+  let body = @fs.read_file_to_string(out) catch {
+    e => fail("failed to read text output: " + e.to_string())
+  }
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let s = line.to_string()
+    if s.length() > 0 {
+      lines.push(s)
+    }
+  }
+  inspect(lines[0], content="360 181")
+  inspect(lines[1], content="102136")
+  inspect(lines[2], content="102136")
+}
+
+///|
+test "run_cli supports -text -no_header -text_col" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_text_no_header_test.txt"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-no_header", "-text_col", "4", "-text",
+      out,
+    ]),
+    content="0",
+  )
+  let body = @fs.read_file_to_string(out) catch {
+    e => fail("failed to read text_col output: " + e.to_string())
+  }
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let s = line.to_string()
+    if s.length() > 0 {
+      lines.push(s)
+    }
+  }
+  inspect(lines[0], content="102136 102136 102136 102136")
 }
 
 ///|
@@ -1803,22 +2312,18 @@ test "run_cli supports -csv output with init record filtering" {
       lines.push(s)
     }
   }
-  inspect(lines.length() > 1, content="true")
-  inspect(lines[0], content="record,point,value")
-  for i = 1; i < lines.length(); i = i + 1 {
-    let row = lines[i]
-    inspect(row.has_prefix("1,"), content="true")
-  }
+  inspect(lines.length() > 0, content="true")
+  inspect(
+    lines[0],
+    content="\"2026-02-21 00:00:00\",\"2026-02-21 00:00:00\",\"PRMSL\",\"mean sea level\",0,-90,102136",
+  )
 }
 
 ///|
-test "run_cli supports -csv -no_header -text_fmt" {
+test "run_cli supports -csv_long output with wgrib2 layout" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let out = "target/cmd_main_csv_no_header_test.csv"
-  let args = [
-    "grib2_mbt", fixture, "-for_n", "1:1:1", "-no_header", "-text_fmt", "%.2f", "-csv",
-    out,
-  ]
+  let out = "target/cmd_main_csv_long_test.csv"
+  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-csv_long", out]
   let exit = run_cli(args)
   inspect(exit, content="0")
   let body = @fs.read_file_to_string(out) catch {
@@ -1832,8 +2337,66 @@ test "run_cli supports -csv -no_header -text_fmt" {
     }
   }
   inspect(lines.length() > 0, content="true")
-  inspect(lines[0] == "record,point,value", content="false")
-  inspect(lines[0].has_prefix("1,1,"), content="true")
+  inspect(
+    lines[0],
+    content="\"2026-02-21 00:00:00\",\"2026-02-21 00:00:00\",\"2026-02-21 00:00:00\",\"PRMSL\",\"anl\",\"mean sea level\",0,-90,102136",
+  )
+}
+
+///|
+test "run_cli supports -csv_long verification columns for forecast data" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let out = "target/cmd_main_csv_long_forecast_test.csv"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-csv_long", out]),
+    content="0",
+  )
+  let body = @fs.read_file_to_string(out) catch {
+    e => fail("failed to read output: " + e.to_string())
+  }
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let s = line.to_string()
+    if s.length() > 0 {
+      lines.push(s)
+    }
+  }
+  if lines.length() == 0 {
+    fail("missing csv_long output")
+  }
+  let first_line = lines[0]
+  let parts : Array[String] = []
+  for part in first_line.split(",") {
+    parts.push(part.to_string())
+  }
+  inspect(parts[0], content="\"2024-12-06 00:00:00\"")
+  inspect(parts[1], content="\"2024-12-06 18:00:00\"")
+  inspect(parts[2], content="\"2024-12-06 18:00:00\"")
+  inspect(parts[3], content="\"HGT\"")
+  inspect(parts[4], content="\"18 hour fcst\"")
+  inspect(parts[5], content="\"1000 mb\"")
+}
+
+///|
+test "run_cli supports -spread output with wgrib2 header" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_spread_test.txt"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-spread", out]),
+    content="0",
+  )
+  let body = @fs.read_file_to_string(out) catch {
+    e => fail("failed to read spread output: " + e.to_string())
+  }
+  let lines : Array[String] = []
+  for line in body.split("\n") {
+    let s = line.to_string()
+    if s.length() > 0 {
+      lines.push(s)
+    }
+  }
+  inspect(lines[0], content="lon,lat,WIND surface d=2026022100 anl")
+  inspect(lines[1], content="303.000000,6.000000,6.28")
 }
 
 ///|
@@ -1875,19 +2438,19 @@ test "run_cli supports append mode for csv output" {
 ///|
 test "run_cli supports text_fmt scientific styles" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let out_e = "target/cmd_main_csv_scientific_e.csv"
-  let out_g = "target/cmd_main_csv_scientific_g.csv"
+  let out_e = "target/cmd_main_text_scientific_e.txt"
+  let out_g = "target/cmd_main_text_scientific_g.txt"
   inspect(
     run_cli([
-      "grib2_mbt", fixture, "-for_n", "1:1:1", "-no_header", "-text_fmt", "%.3e",
-      "-csv", out_e,
+      "grib2_mbt", fixture, "-for_n", "11:11:1", "-no_header", "-text_fmt", "%.3e",
+      "-text", out_e,
     ]),
     content="0",
   )
   inspect(
     run_cli([
-      "grib2_mbt", fixture, "-for_n", "1:1:1", "-no_header", "-text_fmt", "%.4G",
-      "-csv", out_g,
+      "grib2_mbt", fixture, "-for_n", "11:11:1", "-no_header", "-text_fmt", "%.4G",
+      "-text", out_g,
     ]),
     content="0",
   )

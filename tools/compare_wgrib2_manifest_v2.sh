@@ -6,7 +6,8 @@ cd "${ROOT_DIR}"
 
 WGRIB2_BIN="${WGRIB2_BIN:-/opt/homebrew/bin/wgrib2}"
 MBT_CMD="${MBT_CMD:-moon run cmd/main --target native --}"
-MANIFEST="${MANIFEST:-fixtures/wgrib2_snapshots/manifest_v2.tsv}"
+DEFAULT_COMPARE_MANIFEST="fixtures/wgrib2_snapshots/manifest_v2.tsv"
+COMPARE_MANIFEST="${MANIFEST:-${DEFAULT_COMPARE_MANIFEST}}"
 TMP_DIR="${TMP_DIR:-$(mktemp -d)}"
 KEEP_TMP="${KEEP_TMP:-0}"
 
@@ -14,8 +15,9 @@ if [[ ! -x "${WGRIB2_BIN}" ]]; then
   echo "error: wgrib2 not found or not executable: ${WGRIB2_BIN}" >&2
   exit 1
 fi
-if [[ ! -f "${MANIFEST}" ]]; then
-  echo "error: manifest not found: ${MANIFEST}" >&2
+if [[ ! -f "${COMPARE_MANIFEST}" ]]; then
+  echo "error: compare manifest not found: ${COMPARE_MANIFEST}" >&2
+  echo "hint: compare_wgrib2_manifest_v2.sh defaults to ${DEFAULT_COMPARE_MANIFEST}; fixtures/wgrib2_snapshots/manifest.tsv is the legacy snapshot mapping." >&2
   exit 1
 fi
 
@@ -113,6 +115,24 @@ compare_stats_files() {
   '
 }
 
+compare_multi_file_outputs() {
+  local base_w="$1"
+  local base_m="$2"
+  local expected_ref="$3"
+  local ext
+
+  IFS=',' read -r -a exts <<< "${expected_ref}"
+  if [[ "${#exts[@]}" -eq 0 ]]; then
+    return 1
+  fi
+  for ext in "${exts[@]}"; do
+    if [[ ! -f "${base_w}.${ext}" || ! -f "${base_m}.${ext}" ]]; then
+      return 1
+    fi
+    cmp -s "${base_w}.${ext}" "${base_m}.${ext}" || return 1
+  done
+}
+
 run_case() {
   local case_id="$1"
   local fixture_path="$2"
@@ -120,6 +140,7 @@ run_case() {
   local wcmd_t="$4"
   local mcmd_t="$5"
   local mode="$6"
+  local expected_ref="$7"
   local case_dir="${TMP_DIR}/${case_id}"
   mkdir -p "${case_dir}"
 
@@ -155,6 +176,12 @@ run_case() {
       bash -lc "${mcmd}" > /dev/null
       cmp -s "${out_w}" "${out_m}"
       ;;
+    multi_file)
+      rm -f "${out_w}"* "${out_m}"*
+      bash -lc "${wcmd}" > /dev/null
+      bash -lc "${mcmd}" > /dev/null
+      compare_multi_file_outputs "${out_w}" "${out_m}" "${expected_ref}"
+      ;;
     *)
       echo "error: unknown compare_mode: ${mode} (case=${case_id})" >&2
       return 2
@@ -174,14 +201,14 @@ while IFS= read -r line; do
   mbt_cmd="$(printf '%s' "${line}" | cut -f6)"
   compare_mode="$(printf '%s' "${line}" | cut -f7)"
   expected_ref="$(printf '%s' "${line}" | cut -f8)"
-  if run_case "${case_id}" "${fixture_path}" "${prep}" "${wgrib2_cmd}" "${mbt_cmd}" "${compare_mode}"; then
+  if run_case "${case_id}" "${fixture_path}" "${prep}" "${wgrib2_cmd}" "${mbt_cmd}" "${compare_mode}" "${expected_ref}"; then
     echo "OK ${case_id}"
     ok=$((ok + 1))
   else
     echo "NG ${case_id} (mode=${compare_mode})"
     ng=$((ng + 1))
   fi
-done < <(tail -n +2 "${MANIFEST}")
+done < <(tail -n +2 "${COMPARE_MANIFEST}")
 
 echo "SUMMARY OK=${ok} NG=${ng} TMP=${TMP_DIR}"
 if [[ "${ng}" -ne 0 ]]; then

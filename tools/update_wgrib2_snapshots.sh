@@ -7,6 +7,8 @@ cd "${ROOT_DIR}"
 WGRIB2_BIN="${WGRIB2_BIN:-/opt/homebrew/bin/wgrib2}"
 MBT_CMD="${MBT_CMD:-moon run cmd/main --target native --}"
 OUT_DIR="fixtures/wgrib2_snapshots"
+LEGACY_SNAPSHOT_MANIFEST="${OUT_DIR}/manifest.tsv"
+COMPARE_MANIFEST_V2="${OUT_DIR}/manifest_v2.tsv"
 
 if [[ ! -x "${WGRIB2_BIN}" ]]; then
   echo "error: wgrib2 not found or not executable: ${WGRIB2_BIN}" >&2
@@ -130,6 +132,9 @@ generate_targeted \
   Sec6 \
   bitmap
 
+#
+# Legacy snapshot mapping used by the original text_diff-only workflow.
+# compare_wgrib2_manifest_v2.sh does not read this file.
 {
   echo -e "fixture_id\tfixture_path\tcommand\tsnapshot_path"
   for id in jma_gsm noaa_gfs_pgrb2b_1p00_f000 noaa_gfswave_atlocn_0p16_f000; do
@@ -160,8 +165,10 @@ generate_targeted \
   echo -e "derived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\tdefault\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/default.txt"
   echo -e "derived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\tSec6\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/Sec6.txt"
   echo -e "derived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\tbitmap\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/bitmap.txt"
-} > "${OUT_DIR}/manifest.tsv"
+} > "${LEGACY_SNAPSHOT_MANIFEST}"
 
+#
+# Canonical compare manifest for tools/compare_wgrib2_manifest_v2.sh.
 {
   echo -e "case_id\tfixture_id\tfixture_path\tprep\twgrib2_cmd\tmbt_cmd\tcompare_mode\texpected_ref"
 
@@ -203,32 +210,84 @@ generate_targeted \
 
     echo -e "${id}_grib_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -grib {out}\t{MBT} {fixture} -grib {out}\tbinary_cmp\t"
     echo -e "${id}_grib_out_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -grib_out {out}\t{MBT} {fixture} -grib_out {out}\tbinary_cmp\t"
+    echo -e "${id}_grib_ieee_multi\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1 -grib_ieee {out}\t{MBT} {fixture} -for_n 1:1 -grib_ieee {out}\tmulti_file\tgrb,head,tail,h"
+    echo -e "${id}_bin_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -bin {out}\t{MBT} {fixture} -bin {out}\tbinary_cmp\t"
+    echo -e "${id}_ieee_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -ieee {out}\t{MBT} {fixture} -ieee {out}\tbinary_cmp\t"
     echo -e "${id}_tosubmsg_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -tosubmsg {out}\t{MBT} {fixture} -tosubmsg {out}\tbinary_cmp\t"
     echo -e "${id}_write_sec0_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -write_sec 0 {out}\t{MBT} {fixture} -write_sec 0 {out}\tbinary_cmp\t"
     echo -e "${id}_write_sec8_bin\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -write_sec 8 {out}\t{MBT} {fixture} -write_sec 8 {out}\tbinary_cmp\t"
+    echo -e "${id}_aaig_out\t${id}\t${fixture}\t\tfixture_path=\"\$(pwd)/{fixture}\" && cd {tmp} && {WGRIB2} \"\${fixture_path}\" -for_n 1:1:1 -AAIG >/dev/null && mv *.asc {out}\t{MBT} {fixture} -for_n 1:1:1 -AAIG {out}\tbinary_cmp\t"
+    echo -e "${id}_aaiglong_out\t${id}\t${fixture}\t\tfixture_path=\"\$(pwd)/{fixture}\" && cd {tmp} && {WGRIB2} \"\${fixture_path}\" -for_n 1:1:1 -AAIGlong >/dev/null && mv *.asc {out}\t{MBT} {fixture} -for_n 1:1:1 -AAIGlong {out} && mv {out}.asc {out}\tbinary_cmp\t"
+    if [[ "${id}" == "jma_gsm" ]]; then
+      echo -e "${id}_text_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -text {out}\t{MBT} {fixture} -for_n 1:1:1 -text {out}\tbinary_cmp\t"
+      echo -e "${id}_csv_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}\t{MBT} {fixture} -for_n 1:1:1 -csv {out}\tbinary_cmp\t"
+      echo -e "${id}_csv_long_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}\t{MBT} {fixture} -for_n 1:1:1 -csv_long {out}\tbinary_cmp\t"
+      echo -e "${id}_spread_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}\t{MBT} {fixture} -for_n 1:1:1 -spread {out}\tbinary_cmp\t"
+      echo -e "${id}_gridout_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}\t{MBT} {fixture} -for_n 1:1:1 -gridout {out}\tbinary_cmp\t"
+    fi
+    if [[ "${id}" == "noaa_gfs_pgrb2b_1p00_f000" || "${id}" == "noaa_gfswave_atlocn_0p16_f000" ]]; then
+      echo -e "${id}_text_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -text {out}\t{MBT} {fixture} -for_n 1:1:1 -text {out}\tbinary_cmp\t"
+      echo -e "${id}_csv_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}\t{MBT} {fixture} -for_n 1:1:1 -csv {out}\tbinary_cmp\t"
+      echo -e "${id}_csv_long_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}\t{MBT} {fixture} -for_n 1:1:1 -csv_long {out}\tbinary_cmp\t"
+      echo -e "${id}_spread_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}\t{MBT} {fixture} -for_n 1:1:1 -spread {out}\tbinary_cmp\t"
+      echo -e "${id}_gridout_out\t${id}\t${fixture}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}\t{MBT} {fixture} -for_n 1:1:1 -gridout {out}\tbinary_cmp\t"
+    fi
   done
+
+  uuid="00000000-0000-0000-0000-000000000000"
+  echo -e "jma_gsm_grib_out_irr_bin\tjma_gsm\tfixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\tbinary_cmp\t"
+  echo -e "pgrb2b_grib_out_irr_defined_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 266:266:1 -grib_out_irr defined {out}\t{MBT} {fixture} -for_n 266:266:1 -grib_out_irr defined {out}\tbinary_cmp\t"
+  echo -e "gfswave_grib_out_irr_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\tbinary_cmp\t"
+  echo -e "jma_gsm_grib_out_irr2_bin\tjma_gsm\tfixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\tbinary_cmp\t"
+  echo -e "pgrb2b_grib_out_irr2_bitmap_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 266:266:1 -grib_out_irr2 10 1 0 ${uuid} {out}\t{MBT} {fixture} -for_n 266:266:1 -grib_out_irr2 10 1 0 ${uuid} {out}\tbinary_cmp\t"
+  echo -e "gfswave_grib_out_irr2_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\tbinary_cmp\t"
 
   # Value-validation focused derived-wind cases on known U/V source fixture.
   src="fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  echo -e "pgrb2_grib_out_irr_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr all {out}\tbinary_cmp\t"
+  echo -e "pgrb2_grib_out_irr2_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr2 10 1 0 ${uuid} {out}\tbinary_cmp\t"
+  echo -e "pgrb2_grib_out_irr2_pad_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -grib_out_irr2 70000 1 0 ${uuid} {out}\t{MBT} {fixture} -for_n 1:1:1 -grib_out_irr2 70000 1 0 ${uuid} {out}\tbinary_cmp\t"
+  echo -e "pgrb2_text_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -text {out}\t{MBT} {fixture} -for_n 1:1:1 -text {out}\tbinary_cmp\t"
+  echo -e "pgrb2_csv_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}\t{MBT} {fixture} -for_n 1:1:1 -csv {out}\tbinary_cmp\t"
+  echo -e "pgrb2_csv_long_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}\t{MBT} {fixture} -for_n 1:1:1 -csv_long {out}\tbinary_cmp\t"
+  echo -e "pgrb2_spread_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}\t{MBT} {fixture} -for_n 1:1:1 -spread {out}\tbinary_cmp\t"
+  echo -e "pgrb2_gridout_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}\t{MBT} {fixture} -for_n 1:1:1 -gridout {out}\tbinary_cmp\t"
+  echo -e "pgrb2_aaig_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\tfixture_path=\"\$(pwd)/{fixture}\" && cd {tmp} && {WGRIB2} \"\${fixture_path}\" -for_n 1:1:1 -AAIG >/dev/null && mv *.asc {out}\t{MBT} {fixture} -for_n 1:1:1 -AAIG {out}\tbinary_cmp\t"
+  echo -e "pgrb2_aaiglong_out\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\tfixture_path=\"\$(pwd)/{fixture}\" && cd {tmp} && {WGRIB2} \"\${fixture_path}\" -for_n 1:1:1 -AAIGlong >/dev/null && mv *.asc {out}\t{MBT} {fixture} -for_n 1:1:1 -AAIGlong {out} && mv {out}.asc {out}\tbinary_cmp\t"
   echo -e "wind_speed_stats\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 11:12 -wind_speed {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 11:12 -wind_speed {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
   echo -e "wind_dir_stats\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 11:12 -wind_dir {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 11:12 -wind_dir {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
   echo -e "wind_uv_stats\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t{WGRIB2} {fixture} -for_n 11:12 -wind_speed {tmp}/spd_dir.grb2 && {WGRIB2} {fixture} -for_n 11:12 -append -wind_dir {tmp}/spd_dir.grb2\t{WGRIB2} {tmp}/spd_dir.grb2 -for_n 1:2 -wind_uv {out} && {WGRIB2} {out} -stats\t{MBT} {tmp}/spd_dir.grb2 -for_n 1:2 -wind_uv {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_speed_jma_stats\tjma_gsm\tfixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin\t\t{WGRIB2} {fixture} -for_n 3:4 -wind_speed {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 3:4 -wind_speed {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_dir_jma_stats\tjma_gsm\tfixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin\t\t{WGRIB2} {fixture} -for_n 3:4 -wind_dir {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 3:4 -wind_dir {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_speed_pgrb2b_stats\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 4:5 -wind_speed {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 4:5 -wind_speed {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_dir_pgrb2b_stats\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 4:5 -wind_dir {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 4:5 -wind_dir {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_speed_gfswave_stats\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 3:4 -wind_speed {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 3:4 -wind_speed {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_dir_gfswave_stats\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 3:4 -wind_dir {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 3:4 -wind_dir {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
+  echo -e "wind_uv_gfswave_stats\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:2 -wind_uv {out} && {WGRIB2} {out} -stats\t{MBT} {fixture} -for_n 1:2 -wind_uv {out} >/dev/null && {WGRIB2} {out} -stats\tstats_diff\t"
 
   echo -e "derived_gfs_scan32_default\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture}\t{MBT} {fixture}\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfs_scan32/default.txt"
   echo -e "derived_gfs_scan32_grid\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture} -grid\t{MBT} {fixture} -grid\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfs_scan32/grid.txt"
   echo -e "derived_gfs_scan32_stats\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture} -stats\t{MBT} {fixture} -stats\tstats_diff\t"
   echo -e "derived_gfs_scan32_grib_out_bin\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture} -grib_out {out}\t{MBT} {fixture} -grib_out {out}\tbinary_cmp\t"
+  echo -e "derived_gfs_scan32_bin_bin\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture} -bin {out}\t{MBT} {fixture} -bin {out}\tbinary_cmp\t"
+  echo -e "derived_gfs_scan32_ieee_bin\tderived_gfs_scan32\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2\t\t{WGRIB2} {fixture} -ieee {out}\t{MBT} {fixture} -ieee {out}\tbinary_cmp\t"
 
   echo -e "derived_gfs_scan48_default\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture}\t{MBT} {fixture}\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfs_scan48/default.txt"
   echo -e "derived_gfs_scan48_grid\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture} -grid\t{MBT} {fixture} -grid\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfs_scan48/grid.txt"
   echo -e "derived_gfs_scan48_stats\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture} -stats\t{MBT} {fixture} -stats\tstats_diff\t"
   echo -e "derived_gfs_scan48_grib_out_bin\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture} -grib_out {out}\t{MBT} {fixture} -grib_out {out}\tbinary_cmp\t"
+  echo -e "derived_gfs_scan48_bin_bin\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture} -bin {out}\t{MBT} {fixture} -bin {out}\tbinary_cmp\t"
+  echo -e "derived_gfs_scan48_ieee_bin\tderived_gfs_scan48\tfixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2\t\t{WGRIB2} {fixture} -ieee {out}\t{MBT} {fixture} -ieee {out}\tbinary_cmp\t"
 
   echo -e "derived_gfswave_bitmap254_default\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture}\t{MBT} {fixture}\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/default.txt"
   echo -e "derived_gfswave_bitmap254_sec6\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -Sec6\t{MBT} {fixture} -Sec6\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/Sec6.txt"
   echo -e "derived_gfswave_bitmap254_bitmap\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -bitmap\t{MBT} {fixture} -bitmap\ttext_diff\tfixtures/wgrib2_snapshots/derived_gfswave_bitmap254/bitmap.txt"
   echo -e "derived_gfswave_bitmap254_stats\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -stats\t{MBT} {fixture} -stats\tstats_diff\t"
   echo -e "derived_gfswave_bitmap254_grib_out_bin\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -grib_out {out}\t{MBT} {fixture} -grib_out {out}\tbinary_cmp\t"
-} > "${OUT_DIR}/manifest_v2.tsv"
+  echo -e "derived_gfswave_bitmap254_bin_bin\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -bin {out}\t{MBT} {fixture} -bin {out}\tbinary_cmp\t"
+  echo -e "derived_gfswave_bitmap254_ieee_bin\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -ieee {out}\t{MBT} {fixture} -ieee {out}\tbinary_cmp\t"
+} > "${COMPARE_MANIFEST_V2}"
 
 echo "done: ${OUT_DIR}"
+echo "  legacy snapshot manifest : ${LEGACY_SNAPSHOT_MANIFEST}"
+echo "  compare manifest v2     : ${COMPARE_MANIFEST_V2}"
