@@ -279,12 +279,11 @@ fn regular_grid_scan_source_index(
   j : Int,
 ) -> Int {
   let j_scan = if scan.j_positive { j } else { nj - 1 - j }
-  let i_scan =
-    if scan.alternating_rows && (j_scan & 1) == 1 {
-      ni - 1 - i
-    } else {
-      i
-    }
+  let i_scan = if scan.alternating_rows && (j_scan & 1) == 1 {
+    ni - 1 - i
+  } else {
+    i
+  }
   let i_scan = if scan.i_negative { ni - 1 - i_scan } else { i_scan }
   if scan.consecutive_j {
     j_scan + i_scan * nj

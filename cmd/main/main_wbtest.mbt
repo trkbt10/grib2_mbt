@@ -42,6 +42,58 @@ fn count_grib_magic(bytes : Bytes) -> Int {
 }
 
 ///|
+fn decode_single_template48_output(
+  path : String,
+) -> Result[(@lib.Grib2RecordMeta, @section4.Grib2ProductTemplate48), String] {
+  let context = match @lib.parse_with_io(native_read_bytes, path) {
+    Ok(v) => v
+    Err(e) => return Err("failed to parse output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  if metas.length() != 1 {
+    return Err("expected single-record output")
+  }
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(e) => return Err("failed to decode output section4: " + e.to_string())
+  }
+  match section4.template {
+    @section4.ProductTemplate48(template48) => Ok((metas[0], template48))
+    _ => Err("expected template4.8 output")
+  }
+}
+
+///|
+fn decode_template48_outputs(
+  path : String,
+) -> Result[
+  (Array[@lib.Grib2RecordMeta], Array[@section4.Grib2ProductTemplate48]),
+  String,
+] {
+  let context = match @lib.parse_with_io(native_read_bytes, path) {
+    Ok(v) => v
+    Err(e) => return Err("failed to parse output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let templates : Array[@section4.Grib2ProductTemplate48] = []
+  for index in 0..<metas.length() {
+    let message = context.messages[index]
+    let submessage = message.submessages[0]
+    let section4 = match @lib.decode_submessage_section4(message, submessage) {
+      Ok(v) => v
+      Err(e) => return Err("failed to decode output section4: " + e.to_string())
+    }
+    match section4.template {
+      @section4.ProductTemplate48(template48) => templates.push(template48)
+      _ => return Err("expected template4.8 output")
+    }
+  }
+  Ok((metas, templates))
+}
+
+///|
 fn fake_section_frame(
   section_number : Int,
   start : Int,
@@ -407,7 +459,51 @@ test "parse_cli_invocation supports lola output" {
 }
 
 ///|
-test "parse_cli_invocation supports grib_out_irr/grib_out_irr2/new_grid_order" {
+test "parse_cli_invocation supports cress_lola output" {
+  let p = match
+    parse_cli_invocation([
+      "-cress_lola", "0:360:1", "-90:181:1", "target/cress_lola.grb2", "1:2",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a) = p
+  let ok = match a {
+    WriteCressLola("0:360:1", "-90:181:1", "target/cress_lola.grb2", "1:2") =>
+      true
+    _ => false
+  }
+  inspect(ok, content="true")
+}
+
+///|
+test "parse_cli_invocation supports cubeface/irr_grid/grib_out_irr/grib_out_irr2/new_grid/new_grid_order" {
+  let pc = match
+    parse_cli_invocation(["-cubeface2global", "0", "target/cubeface.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, ac) = pc
+  let okc = match ac {
+    WriteCubeface2Global => true
+    _ => false
+  }
+  inspect(okc, content="true")
+
+  let p0 = match
+    parse_cli_invocation([
+      "-irr_grid", "0:90:1:89", "100", "target/irr_grid.grb2",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a0) = p0
+  let ok0 = match a0 {
+    WriteIrrGrid("0:90:1:89", "100", "target/irr_grid.grb2") => true
+    _ => false
+  }
+  inspect(ok0, content="true")
+
   let p1 = match
     parse_cli_invocation(["-grib_out_irr", "all", "target/irr.grb2"]) {
     Ok(v) => v
@@ -442,14 +538,87 @@ test "parse_cli_invocation supports grib_out_irr/grib_out_irr2/new_grid_order" {
 
   let p3 = match
     parse_cli_invocation([
-      "-new_grid_order", "target/order_out.grb2", "target/order_out2.grb2",
+      "-new_grid", "latlon", "0:360:1", "-90:181:1", "target/new_grid.grb2",
     ]) {
     Ok(v) => v
     Err(e) => fail(e)
   }
   let (_, a3) = p3
   let ok3 = match a3 {
+    WriteNewGrid("latlon", "0:360:1", "-90:181:1", "target/new_grid.grb2") =>
+      true
+    _ => false
+  }
+  inspect(ok3, content="true")
+
+  let p4 = match
+    parse_cli_invocation([
+      "-new_grid_order", "target/order_out.grb2", "target/order_out2.grb2",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a4) = p4
+  let ok4 = match a4 {
     WriteNewGridOrder("target/order_out.grb2", "target/order_out2.grb2") => true
+    _ => false
+  }
+  inspect(ok4, content="true")
+
+  let p5 = match parse_cli_invocation(["-netcdf", "target/out.nc"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a5) = p5
+  let ok5 = match a5 {
+    WriteNetcdf("target/out.nc") => true
+    _ => false
+  }
+  inspect(ok5, content="true")
+}
+
+///|
+test "parse_cli_invocation supports mysql unavailable actions" {
+  let p1 = match
+    parse_cli_invocation([
+      "-mysql", "H=localhost", "U=user", "P=pass", "D=db", "T=table",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a1) = p1
+  let ok1 = match a1 {
+    WriteMysql => true
+    _ => false
+  }
+  inspect(ok1, content="true")
+
+  let p2 = match
+    parse_cli_invocation([
+      "-mysql_dump", "H=localhost", "U=user", "P=pass", "D=db", "T=table", "W=0",
+      "PV=0",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a2) = p2
+  let ok2 = match a2 {
+    WriteMysqlDump => true
+    _ => false
+  }
+  inspect(ok2, content="true")
+
+  let p3 = match
+    parse_cli_invocation([
+      "-mysql_speed", "H=localhost", "U=user", "P=pass", "D=db", "T=table", "W=0",
+      "PV=0",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a3) = p3
+  let ok3 = match a3 {
+    WriteMysqlSpeed => true
     _ => false
   }
   inspect(ok3, content="true")
@@ -536,6 +705,113 @@ test "parse_cli_invocation supports ncep_norm/merge_fcst/unmerge_fcst" {
 }
 
 ///|
+test "parse_cli_invocation supports ave/fcst_ave/time_processing out options" {
+  let p1 = match parse_cli_invocation(["-ave", "6hr", "target/ave.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a1) = p1
+  let ok1 = match a1 {
+    WriteAve("6hr", "target/ave.grb2") => true
+    _ => false
+  }
+  inspect(ok1, content="true")
+
+  let p2 = match parse_cli_invocation(["-ave0", "6hr", "target/ave0.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a2) = p2
+  let ok2 = match a2 {
+    WriteAve0("6hr", "target/ave0.grb2") => true
+    _ => false
+  }
+  inspect(ok2, content="true")
+
+  let p3 = match
+    parse_cli_invocation(["-ave_var", "6hr", "target/ave_var.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a3) = p3
+  let ok3 = match a3 {
+    WriteAveVar("6hr", "target/ave_var.grb2") => true
+    _ => false
+  }
+  inspect(ok3, content="true")
+
+  let p3 = match
+    parse_cli_invocation(["-fcst_ave", "6hr", "target/fcst_ave.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a4) = p3
+  let ok4 = match a4 {
+    WriteFcstAve("6hr", "target/fcst_ave.grb2") => true
+    _ => false
+  }
+  inspect(ok4, content="true")
+
+  let p4 = match
+    parse_cli_invocation(["-fcst_ave0", "6hr", "target/fcst_ave0.grb2"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a5) = p4
+  let ok5 = match a5 {
+    WriteFcstAve0("6hr", "target/fcst_ave0.grb2") => true
+    _ => false
+  }
+  inspect(ok5, content="true")
+
+  let p5 = match
+    parse_cli_invocation([
+      "-time_processing", "0", "1", "6hr", "target/timep.grb2",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a6) = p5
+  let ok6 = match a6 {
+    WriteTimeProcessing("0", "1", "6hr", "target/timep.grb2") => true
+    _ => false
+  }
+  inspect(ok6, content="true")
+
+  let p6 = match
+    parse_cli_invocation(["-ens_processing", "target/ens.grb2", "0"]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a7) = p6
+  let ok7 = match a7 {
+    WriteEnsProcessing("target/ens.grb2", "0") => true
+    _ => false
+  }
+  inspect(ok7, content="true")
+
+  let p7 = match
+    parse_cli_invocation([
+      "-ens_qc", "target/stats.grb2", "target/extreme.grb2", "target/extreme.txt",
+      "1",
+    ]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let (_, a8) = p7
+  let ok8 = match a8 {
+    WriteEnsQc(
+      "target/stats.grb2",
+      "target/extreme.grb2",
+      "target/extreme.txt",
+      "1"
+    ) => true
+    _ => false
+  }
+  inspect(ok8, content="true")
+}
+
+///|
 test "parse_cli_invocation supports wind derived out options" {
   let p1 = match parse_cli_invocation(["-wind_speed", "target/ws.grb2"]) {
     Ok(v) => v
@@ -569,6 +845,22 @@ test "parse_cli_invocation supports wind derived out options" {
     _ => false
   }
   inspect(ok3, content="true")
+}
+
+///|
+test "unavailable_out_action_lines matches wgrib2 messages" {
+  inspect(
+    unavailable_out_action_lines(WriteCubeface2Global),
+    content="Some([\"\", \"*** FATAL ERROR: cubeface2global: not installed ***\", \"\"])",
+  )
+  inspect(
+    unavailable_out_action_lines(WriteMysql),
+    content="Some([\"mysql package not installed\"])",
+  )
+  inspect(
+    unavailable_out_action_lines(WriteText("target/out.txt")),
+    content="None",
+  )
 }
 
 ///|
@@ -1100,7 +1392,7 @@ test "run_cli supports -ijbox text mode" {
   let body = @fs.read_file_to_string(out) catch {
     e => fail("failed to read ijbox text output: " + e.to_string())
   }
-  inspect(body.contains("1:1:1:"), content="true")
+  inspect(body, content="2 2\n102136\n102136\n102011\n102011\n")
 }
 
 ///|
@@ -1114,7 +1406,16 @@ test "run_cli supports -ijbox spread mode" {
   let body = @fs.read_file_to_string(out) catch {
     e => fail("failed to read ijbox spread output: " + e.to_string())
   }
-  inspect(body.contains(","), content="true")
+  inspect(
+    body,
+    content=" i-index, j-index, value,\n" +
+      "1, 1, 102136,\n" +
+      "2, 1, 102136,\n" +
+      "3, 1, 102136,\n" +
+      "1, 2, 102011,\n" +
+      "2, 2, 102011,\n" +
+      "3, 2, 102008,\n",
+  )
 }
 
 ///|
@@ -1128,7 +1429,15 @@ test "run_cli supports -ijbox bin mode" {
   let bytes = @fs.read_file_to_bytes(out) catch {
     e => fail("failed to read ijbox bin output: " + e.to_string())
   }
-  inspect(bytes.length(), content="16")
+  inspect(bytes.length(), content="24")
+  inspect(bytes[0].to_int(), content="16")
+  inspect(bytes[1].to_int(), content="0")
+  inspect(bytes[2].to_int(), content="0")
+  inspect(bytes[3].to_int(), content="0")
+  inspect(bytes[20].to_int(), content="16")
+  inspect(bytes[21].to_int(), content="0")
+  inspect(bytes[22].to_int(), content="0")
+  inspect(bytes[23].to_int(), content="0")
 }
 
 ///|
@@ -1587,12 +1896,13 @@ test "run_cli supports -ijsmall_grib full-domain limited mode" {
     out,
   ]
   inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read ijsmall_grib output: " + e.to_string())
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ijsmall_grib output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
-  let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
-  inspect(magic, content="b\"GRIB\"")
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
 }
 
 ///|
@@ -1603,12 +1913,13 @@ test "run_cli supports -small_grib full-domain limited mode" {
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-small_grib", "0:359", "-90:90", out,
   ]
   inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read small_grib output: " + e.to_string())
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse small_grib output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
-  let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
-  inspect(magic, content="b\"GRIB\"")
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
 }
 
 ///|
@@ -1620,12 +1931,101 @@ test "run_cli supports -lola identity remap mode=grib" {
     "grib",
   ]
   inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read lola output: " + e.to_string())
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse lola output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
-  let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
-  inspect(magic, content="b\"GRIB\"")
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
+}
+
+///|
+test "run_cli supports -cress_lola identity/all-defined limited mode" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let out = "target/cmd_main_cress_lola_jma_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0:720:0.5", "-90:361:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse cress_lola output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
+}
+
+///|
+test "run_cli rejects invalid -cress_lola radius list" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_bad.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0:360:1", "-90:181:1",
+    out, "0:2",
+  ]
+  inspect(run_cli(args), content="2")
+}
+
+///|
+test "run_cli supports -irr_grid nearest-neighbor template 130 output" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_irr_grid_pgrb2_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-irr_grid", "0:90:1:89", "100", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse irr_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="130")
+  inspect(meta.section3_length, content="46")
+  inspect(meta.section3_npts, content="2")
+  inspect(meta.section5_num_defined_points, content="2")
+  inspect(meta.section6_bitmap_indicator, content="255")
+  let section6 = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v.values
+    Err(_) => fail("failed to unpack irr_grid output")
+  }
+  inspect(section6.length(), content="2")
+  let sec3 = section_frame_bytes(
+    context.messages[0],
+    context.messages[0].submessages[0].section3,
+  )
+  inspect(sec3[30], content="b'\\x05'")
+  inspect(sec3[31], content="b'\\x5D'")
+  inspect(sec3[32], content="b'\\x4A'")
+  inspect(sec3[33], content="b'\\x80'")
+  inspect(sec3[34], content="b'\\x00'")
+  inspect(sec3[35], content="b'\\x00'")
+  inspect(sec3[36], content="b'\\x00'")
+  inspect(sec3[37], content="b'\\x00'")
+  inspect(sec3[38], content="b'\\x05'")
+  inspect(sec3[39], content="b'\\x4E'")
+  inspect(sec3[40], content="b'\\x08'")
+  inspect(sec3[41], content="b'\\x40'")
+  inspect(sec3[42], content="b'\\x00'")
+  inspect(sec3[43], content="b'\\x0F'")
+  inspect(sec3[44], content="b'\\x42'")
+  inspect(sec3[45], content="b'\\x40'")
+}
+
+///|
+test "run_cli validates -irr_grid point list" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_irr_grid_bad.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-irr_grid", "0:90:1", "100", out,
+  ]
+  inspect(run_cli(args), content="2")
 }
 
 ///|
@@ -1843,6 +2243,180 @@ test "run_cli supports -new_grid_order limited compatibility output" {
 }
 
 ///|
+test "run_cli supports -new_grid latlon identity output" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_new_grid_identity_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "0:360:1", "-90:181:1",
+    out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read new_grid output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="1")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse new_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="0")
+  inspect(meta.section3_ni, content="360")
+  inspect(meta.section3_nj, content="181")
+}
+
+///|
+test "run_cli supports -new_grid latlon identity output with bitmap field" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_bitmap_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-new_grid", "latlon", "260:301:0.166667",
+    "0:331:0.166667", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse bitmap new_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section5_num_defined_points, content="29419")
+  inspect(meta.section6_undef_points, content="70212")
+}
+
+///|
+test "run_cli rejects -new_grid non-latlon projection" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_new_grid_bad_projection.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "mercator", "0:360:1",
+    "-90:181:1", out,
+  ]
+  inspect(run_cli(args), content="2")
+}
+
+///|
+test "run_cli rejects -new_grid vector field in limited identity mode" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_vector_reject.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "260:301:0.166667",
+    "0:331:0.166667", out,
+  ]
+  inspect(run_cli(args), content="2")
+}
+
+///|
+test "build_netcdf axis values match wgrib2 rounding for gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse gfswave fixture: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let latitudes = match build_netcdf_latitude_values(meta) {
+    Ok(v) => v
+    Err(e) => fail("failed to build netcdf latitude values: " + e)
+  }
+  let longitudes = match build_netcdf_longitude_values(meta) {
+    Ok(v) => v
+    Err(e) => fail("failed to build netcdf longitude values: " + e)
+  }
+  inspect(
+    latitudes[0].reinterpret_as_uint64().to_string(),
+    content="4389742999291035648",
+  )
+  inspect(
+    latitudes[1].reinterpret_as_uint64().to_string(),
+    content="4595172819793696195",
+  )
+  inspect(
+    latitudes[205].reinterpret_as_uint64().to_string(),
+    content="4630005348161639765",
+  )
+  inspect(
+    longitudes[0].reinterpret_as_uint64().to_string(),
+    content="13860109328209412096",
+  )
+  inspect(
+    longitudes[1].reinterpret_as_uint64().to_string(),
+    content="13860097600085382484",
+  )
+  inspect(
+    longitudes[2].reinterpret_as_uint64().to_string(),
+    content="13860085871961352872",
+  )
+}
+
+///|
+test "netcdf forecast helpers preserve verification metadata and unit mapping" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse forecast fixture: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(netcdf_record_reference_time_type(meta), content="3")
+  inspect(
+    netcdf_record_reference_time_description(meta),
+    content="forecast or accumulated, reference date is fixed",
+  )
+  inspect(netcdf_variable_name(meta), content="HGT_1000mb")
+  let (long_name, units) = netcdf_long_name_units(meta)
+  inspect(long_name, content="Geopotential Height")
+  inspect(units, content="m")
+  inspect(netcdf_verification_time_unix(meta).to_string(), content="1733508000")
+}
+
+///|
+test "run_cli supports -netcdf output and validates selection constraints" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_netcdf_test.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read netcdf output: " + e.to_string())
+  }
+  inspect(
+    bytes.sub(start=0, end=4).to_bytes().to_string(),
+    content="b\"CDF\\x01\"",
+  )
+  inspect(bytes.length() > 1000, content="true")
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-netcdf", "target/cmd_main_netcdf_multi.nc"]),
+    content="2",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "1:1:1", "-netcdf", "target/cmd_main_netcdf_append.nc",
+    ]),
+    content="2",
+  )
+}
+
+///|
+test "run_cli reports cubeface2global unavailable like wgrib2" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cubeface_unavailable.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1", "-cubeface2global", "0", out,
+  ]
+  inspect(run_cli(args), content="8")
+}
+
+///|
+test "run_cli reports mysql unavailable like wgrib2" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1", "-mysql", "H=localhost", "U=user", "P=pass",
+    "D=db", "T=table",
+  ]
+  inspect(run_cli(args), content="8")
+}
+
+///|
 test "run_cli validates -grib_out_irr selector" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_grib_out_irr_bad.grib2"
@@ -1853,35 +2427,190 @@ test "run_cli validates -grib_out_irr selector" {
 }
 
 ///|
-test "run_cli supports -submsg_uv limited compatibility output" {
+test "run_cli supports -submsg_uv U/V pair combine" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_submsg_uv_test.grib2"
-  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-submsg_uv", out]
+  let args = ["grib2_mbt", fixture, "-for_n", "3:4:1", "-submsg_uv", out]
   inspect(run_cli(args), content="0")
   let bytes = @fs.read_file_to_bytes(out) catch {
     e => fail("failed to read submsg_uv output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
+  inspect(count_grib_magic(bytes), content="1")
   let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
   inspect(magic, content="b\"GRIB\"")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse submsg_uv output: " + e.to_string())
+  }
+  inspect(context.messages.length(), content="1")
+  inspect(context.messages[0].submessages.length(), content="2")
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section4_parameter_number, content="2")
+  inspect(metas[1].section4_parameter_number, content="3")
 }
 
 ///|
-test "run_cli supports -ncep_uv limited compatibility output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+test "run_cli supports -ncep_uv U/V pair combine" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
   let out = "target/cmd_main_ncep_uv_test.grib2"
-  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-ncep_uv", out]
+  let args = ["grib2_mbt", fixture, "-for_n", "4:5:1", "-ncep_uv", out]
   inspect(run_cli(args), content="0")
   let bytes = @fs.read_file_to_bytes(out) catch {
     e => fail("failed to read ncep_uv output: " + e.to_string())
   }
-  inspect(bytes.length() > 16, content="true")
+  inspect(count_grib_magic(bytes), content="1")
   let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
   inspect(magic, content="b\"GRIB\"")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ncep_uv output: " + e.to_string())
+  }
+  inspect(context.messages.length(), content="1")
+  inspect(context.messages[0].submessages.length(), content="2")
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section4_parameter_number, content="2")
+  inspect(metas[1].section4_parameter_number, content="3")
 }
 
 ///|
-test "run_cli supports -reduced_gaussian_grid limited compatibility output" {
+test "run_cli -submsg_uv leaves unpaired records raw and merges U/V pair" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_submsg_uv_mixed_test.grib2"
+  let args = ["grib2_mbt", fixture, "-for_n", "1:4:1", "-submsg_uv", out]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read mixed submsg_uv output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="3")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse mixed submsg_uv output: " + e.to_string())
+  }
+  inspect(context.messages.length(), content="3")
+  inspect(context.messages[0].submessages.length(), content="1")
+  inspect(context.messages[1].submessages.length(), content="1")
+  inspect(context.messages[2].submessages.length(), content="2")
+}
+
+///|
+test "run_cli supports -reduced_gaussian_grid neighbor output" {
+  let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
+  let out = "target/cmd_main_reduced_gaussian_grid_neighbor.grb2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1", "-reduced_gaussian_grid", out, "-1", "neighbor",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse reduced_gaussian_grid neighbor output: " +
+        e.to_string(),
+      )
+  }
+  inspect(context.messages.length(), content="1")
+  inspect(context.messages[0].submessages.length(), content="1")
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="40")
+  inspect(metas[0].section5_template.id(), content="0")
+  let section3 = match
+    @lib.decode_submessage_section3(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to decode reduced_gaussian_grid neighbor Section 3: " +
+        e.to_string(),
+      )
+  }
+  match section3.template {
+    GridTemplate340(grid) => {
+      inspect(grid.ni, content="128")
+      inspect(grid.nj, content="64")
+    }
+    _ =>
+      fail("expected GridTemplate340 for reduced_gaussian_grid neighbor output")
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to unpack reduced_gaussian_grid neighbor output: " +
+        unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.num_points, content="8192")
+  inspect(unpacked.values.length(), content="8192")
+}
+
+///|
+test "run_cli supports -reduced_gaussian_grid linear output" {
+  let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
+  let out = "target/cmd_main_reduced_gaussian_grid_linear.grb2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1", "-reduced_gaussian_grid", out, "-1", "linear",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse reduced_gaussian_grid linear output: " + e.to_string(),
+      )
+  }
+  inspect(context.messages.length(), content="1")
+  inspect(context.messages[0].submessages.length(), content="1")
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="40")
+  inspect(metas[0].section5_template.id(), content="0")
+  let section3 = match
+    @lib.decode_submessage_section3(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to decode reduced_gaussian_grid linear Section 3: " +
+        e.to_string(),
+      )
+  }
+  match section3.template {
+    GridTemplate340(grid) => {
+      inspect(grid.ni, content="128")
+      inspect(grid.nj, content="64")
+    }
+    _ =>
+      fail("expected GridTemplate340 for reduced_gaussian_grid linear output")
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to unpack reduced_gaussian_grid linear output: " +
+        unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.num_points, content="8192")
+  inspect(unpacked.values.length(), content="8192")
+}
+
+///|
+test "run_cli supports -reduced_gaussian_grid non-Gaussian empty output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_reduced_gaussian_grid_test.grb2"
   let args = [
@@ -1916,6 +2645,386 @@ test "run_cli supports -ncep_norm limited compatibility output" {
     e => fail("failed to read ncep_norm output: " + e.to_string())
   }
   inspect(bytes.length(), content="0")
+}
+
+///|
+test "run_cli supports -ave/-ave0/time_processing single-record transform" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let ave_out = "target/cmd_main_ave_test.grb2"
+  let ave0_out = "target/cmd_main_ave0_test.grb2"
+  let timep_out = "target/cmd_main_time_processing_test.grb2"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-ave", "6hr", ave_out]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-ave0", "6hr", ave0_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-time_processing", "0", "1", "6hr",
+      timep_out,
+    ]),
+    content="0",
+  )
+  let (ave_meta, ave_template) = match
+    decode_single_template48_output(ave_out) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  inspect(ave_meta.section4_template.id(), content="8")
+  inspect(ave_meta.section5_template.id(), content="0")
+  inspect(ave_template.base.minutes_of_observational_data_cutoff, content="255")
+  inspect(ave_template.time_range_specs.length(), content="1")
+  inspect(ave_template.time_range_specs[0].statistical_process, content="0")
+  inspect(ave_template.time_range_specs[0].type_of_time_increment, content="1")
+  inspect(ave_template.time_range_specs[0].time_increment_length, content="6")
+  let (_, ave0_template) = match decode_single_template48_output(ave0_out) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  inspect(ave0_template.base.minutes_of_observational_data_cutoff, content="0")
+  let ave_bytes = @fs.read_file_to_bytes(ave_out) catch {
+    e => fail("failed to read ave output: " + e.to_string())
+  }
+  let timep_bytes = @fs.read_file_to_bytes(timep_out) catch {
+    e => fail("failed to read time_processing output: " + e.to_string())
+  }
+  inspect(ave_bytes == timep_bytes, content="true")
+}
+
+///|
+test "run_cli supports -fcst_ave/-fcst_ave0 single-record transform" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let fcst_ave_out = "target/cmd_main_fcst_ave_test.grb2"
+  let fcst_ave0_out = "target/cmd_main_fcst_ave0_test.grb2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-fcst_ave", "6hr", fcst_ave_out,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-fcst_ave0", "6hr", fcst_ave0_out,
+    ]),
+    content="0",
+  )
+  let (fcst_meta, fcst_template) = match
+    decode_single_template48_output(fcst_ave_out) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  inspect(fcst_meta.section4_template.id(), content="8")
+  inspect(fcst_meta.section5_template.id(), content="0")
+  inspect(
+    fcst_template.base.minutes_of_observational_data_cutoff,
+    content="255",
+  )
+  inspect(fcst_template.time_range_specs.length(), content="1")
+  inspect(fcst_template.time_range_specs[0].statistical_process, content="0")
+  inspect(fcst_template.time_range_specs[0].type_of_time_increment, content="2")
+  inspect(fcst_template.time_range_specs[0].time_increment_length, content="6")
+  let (_, fcst0_template) = match
+    decode_single_template48_output(fcst_ave0_out) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  inspect(fcst0_template.base.minutes_of_observational_data_cutoff, content="0")
+}
+
+///|
+test "run_cli validates -ave time step" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_ave_bad_step.grb2"
+  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-ave", "bad", out]
+  inspect(run_cli(args), content="2")
+}
+
+///|
+test "run_cli supports -ave_var multi-record transform" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let out = "target/cmd_main_ave_var_test.grb2"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-ave_var", "6hr", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read ave_var output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="4")
+  let (metas, templates) = match decode_template48_outputs(out) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse source: " + e.to_string())
+  }
+  let source_section4 = match
+    @lib.decode_submessage_section4(
+      source_context.messages[0],
+      source_context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode source section4: " + e.to_string())
+  }
+  let source_cutoff = match source_section4.template {
+    @section4.ProductTemplate40(template40) =>
+      template40.minutes_of_observational_data_cutoff
+    _ => fail("expected template4.0 source")
+  }
+  inspect(metas.length(), content="4")
+  inspect(metas[0].section5_template.id(), content="0")
+  inspect(metas[1].section5_template.id(), content="0")
+  inspect(metas[2].section5_template.id(), content="0")
+  inspect(metas[3].section5_template.id(), content="0")
+  inspect(templates[0].time_range_specs[0].statistical_process, content="0")
+  inspect(templates[1].time_range_specs[0].statistical_process, content="6")
+  inspect(templates[2].time_range_specs[0].statistical_process, content="3")
+  inspect(templates[3].time_range_specs[0].statistical_process, content="2")
+  inspect(
+    templates[0].base.minutes_of_observational_data_cutoff,
+    content=source_cutoff.to_string(),
+  )
+  inspect(
+    templates[1].base.minutes_of_observational_data_cutoff,
+    content=source_cutoff.to_string(),
+  )
+  inspect(metas[1].section5_num_defined_points, content="0")
+  inspect(metas[1].section6_bitmap_indicator, content="0")
+  inspect(
+    metas[1].section6_undef_points == metas[1].section3_npts,
+    content="true",
+  )
+}
+
+///|
+test "run_cli supports -ens_processing multi-message transform" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_ens_processing_test.grb2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-ens_processing", out, "0",
+    ]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read ens_processing output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="9")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ens_processing output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse source: " + e.to_string())
+  }
+  let source_metas = @lib.decode_records(source_context)
+  let derived_codes : Array[Int] = []
+  let member_counts : Array[Int] = []
+  let percentile_values : Array[Int] = []
+  let process_codes : Array[Int] = []
+  for index in 0..<metas.length() {
+    let section4 = match
+      @lib.decode_submessage_section4(
+        context.messages[index],
+        context.messages[index].submessages[0],
+      ) {
+      Ok(v) => v
+      Err(e) => fail("failed to decode output section4: " + e.to_string())
+    }
+    match section4.template {
+      @section4.ProductTemplate42(template42) => {
+        derived_codes.push(template42.derived_forecast)
+        member_counts.push(template42.number_of_forecasts_in_ensemble)
+        process_codes.push(template42.base.type_of_generating_process)
+      }
+      @section4.ProductTemplate46(template46) => {
+        percentile_values.push(template46.percentile_value)
+        process_codes.push(template46.base.type_of_generating_process)
+      }
+      _ => fail("expected template4.2 or 4.6")
+    }
+  }
+  inspect(metas.length(), content="9")
+  inspect(derived_codes.to_string(), content="[8, 9, 0, 4]")
+  inspect(member_counts.to_string(), content="[1, 1, 1, 1]")
+  inspect(percentile_values.to_string(), content="[10, 25, 50, 75, 90]")
+  inspect(
+    process_codes.to_string(),
+    content="[2, 2, 2, 2, 199, 199, 199, 199, 199]",
+  )
+  inspect(metas[0].section5_template.id(), content="0")
+  inspect(metas[3].section5_template.id(), content="0")
+  inspect(
+    metas[3].section5_num_defined_points.to_string(),
+    content=source_metas[0].section5_num_defined_points.to_string(),
+  )
+  inspect(
+    metas[3].section6_bitmap_indicator.to_string(),
+    content=source_metas[0].section6_bitmap_indicator.to_string(),
+  )
+  inspect(
+    metas[3].section6_undef_points.to_string(),
+    content=source_metas[0].section6_undef_points.to_string(),
+  )
+  inspect(metas[3].section5_bits_per_value, content="0")
+}
+
+///|
+test "run_cli validates -ens_processing mode" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_ens_processing_bad.grb2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-ens_processing", out, "bad",
+    ]),
+    content="2",
+  )
+}
+
+///|
+test "run_cli supports -ens_qc outputs for gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let stats_out = "target/cmd_main_ens_qc_gfswave_stats.grb2"
+  let extreme_out = "target/cmd_main_ens_qc_gfswave_extreme.grb2"
+  let txt_out = "target/cmd_main_ens_qc_gfswave_extreme.txt"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-ens_qc", stats_out, extreme_out,
+      txt_out, "1",
+    ]),
+    content="0",
+  )
+  let stats_bytes = @fs.read_file_to_bytes(stats_out) catch {
+    e => fail("failed to read ens_qc stats output: " + e.to_string())
+  }
+  let extreme_bytes = @fs.read_file_to_bytes(extreme_out) catch {
+    e => fail("failed to read ens_qc extreme output: " + e.to_string())
+  }
+  let txt_body = @fs.read_file_to_string(txt_out) catch {
+    e => fail("failed to read ens_qc txt output: " + e.to_string())
+  }
+  inspect(count_grib_magic(stats_bytes), content="4")
+  inspect(count_grib_magic(extreme_bytes), content="1")
+  inspect(txt_body, content="WIND:surface:max scaled extreme=0.000000\n")
+  let stats_context = match @lib.parse_with_io(native_read_bytes, stats_out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ens_qc stats output: " + e.to_string())
+  }
+  let extreme_context = match
+    @lib.parse_with_io(native_read_bytes, extreme_out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ens_qc extreme output: " + e.to_string())
+  }
+  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse ens_qc source fixture: " + e.to_string())
+  }
+  let stats_metas = @lib.decode_records(stats_context)
+  let extreme_metas = @lib.decode_records(extreme_context)
+  let source_metas = @lib.decode_records(source_context)
+  let stats_derived_codes : Array[Int] = []
+  for index in 0..<stats_metas.length() {
+    let section4 = match
+      @lib.decode_submessage_section4(
+        stats_context.messages[index],
+        stats_context.messages[index].submessages[0],
+      ) {
+      Ok(v) => v
+      Err(e) => fail("failed to decode ens_qc stats section4: " + e.to_string())
+    }
+    match section4.template {
+      @section4.ProductTemplate42(template42) =>
+        stats_derived_codes.push(template42.derived_forecast)
+      _ => fail("expected template 4.2 for ens_qc stats")
+    }
+  }
+  let extreme_section4 = match
+    @lib.decode_submessage_section4(
+      extreme_context.messages[0],
+      extreme_context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode ens_qc extreme section4: " + e.to_string())
+  }
+  let extreme_derived_code = match extreme_section4.template {
+    @section4.ProductTemplate42(template42) => template42.derived_forecast
+    _ => fail("expected template 4.2 for ens_qc extreme")
+  }
+  inspect(stats_metas.length(), content="4")
+  inspect(extreme_metas.length(), content="1")
+  inspect(stats_derived_codes.to_string(), content="[8, 9, 0, 4]")
+  inspect(extreme_derived_code, content="199")
+  inspect(
+    stats_metas[0].section6_bitmap_indicator.to_string(),
+    content=source_metas[0].section6_bitmap_indicator.to_string(),
+  )
+  inspect(
+    stats_metas[0].section6_undef_points.to_string(),
+    content=source_metas[0].section6_undef_points.to_string(),
+  )
+  inspect(stats_metas[3].section6_bitmap_indicator, content="255")
+  inspect(stats_metas[3].section5_bits_per_value, content="0")
+  inspect(
+    stats_metas[3].section5_num_defined_points.to_string(),
+    content=stats_metas[3].section3_npts.to_string(),
+  )
+  inspect(stats_metas[3].section6_undef_points, content="0")
+  inspect(extreme_metas[0].section6_bitmap_indicator, content="0")
+  inspect(extreme_metas[0].section5_bits_per_value, content="0")
+  inspect(extreme_metas[0].section5_num_defined_points, content="0")
+  inspect(
+    extreme_metas[0].section6_undef_points.to_string(),
+    content=extreme_metas[0].section3_npts.to_string(),
+  )
+}
+
+///|
+test "run_cli supports -ens_qc empty extreme output for jma" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let stats_out = "target/cmd_main_ens_qc_jma_stats.grb2"
+  let extreme_out = "target/cmd_main_ens_qc_jma_extreme.grb2"
+  let txt_out = "target/cmd_main_ens_qc_jma_extreme.txt"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-ens_qc", stats_out, extreme_out,
+      txt_out, "1",
+    ]),
+    content="0",
+  )
+  let stats_bytes = @fs.read_file_to_bytes(stats_out) catch {
+    e => fail("failed to read ens_qc jma stats output: " + e.to_string())
+  }
+  let extreme_bytes = @fs.read_file_to_bytes(extreme_out) catch {
+    e => fail("failed to read ens_qc jma extreme output: " + e.to_string())
+  }
+  let txt_body = @fs.read_file_to_string(txt_out) catch {
+    e => fail("failed to read ens_qc jma txt output: " + e.to_string())
+  }
+  inspect(count_grib_magic(stats_bytes), content="4")
+  inspect(extreme_bytes.length(), content="0")
+  inspect(
+    txt_body,
+    content="PRMSL:mean sea level:max scaled extreme=0.000000\n",
+  )
+}
+
+///|
+test "run_cli validates -ens_qc version" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-ens_qc", "target/cmd_main_ens_qc_bad_stats.grb2",
+      "target/cmd_main_ens_qc_bad_extreme.grb2", "target/cmd_main_ens_qc_bad_extreme.txt",
+      "0",
+    ]),
+    content="2",
+  )
 }
 
 ///|
@@ -2134,15 +3243,16 @@ test "run_cli supports -write_sec 8 output with 7777 marker" {
 
 ///|
 test "run_cli supports -gribtable_used output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
   let out = "target/cmd_main_gribtable_used_test.txt"
-  let exit = run_cli(["grib2_mbt", fixture, "-gribtable_used", out])
+  let exit = run_cli([
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-gribtable_used", out,
+  ])
   inspect(exit, content="0")
   let body = @fs.read_file_to_string(out) catch {
     e => fail("failed to read output: " + e.to_string())
   }
-  inspect(body.contains("# disc:cat:param:name"), content="true")
-  inspect(body.contains(":"), content="true")
+  inspect(body, content="0:1:0:255:34:1:3:1:PRMSL:Pressure Reduced to MSL:Pa\n")
 }
 
 ///|
@@ -2156,7 +3266,7 @@ test "run_cli applies -for_n to -gribtable_used output" {
   )
   inspect(
     run_cli([
-      "grib2_mbt", fixture, "-for_n", "1:1:1", "-gribtable_used", out_one,
+      "grib2_mbt", fixture, "-for_n", "7:7:1", "-gribtable_used", out_one,
     ]),
     content="0",
   )
@@ -2166,16 +3276,15 @@ test "run_cli applies -for_n to -gribtable_used output" {
   let one_body = @fs.read_file_to_string(out_one) catch {
     e => fail("failed to read one output: " + e.to_string())
   }
-  let all_lines = line_count(out_all)
-  let one_lines = line_count(out_one)
-  inspect(all_body.contains("# disc:cat:param:name"), content="true")
-  inspect(one_body.contains("# disc:cat:param:name"), content="true")
-  inspect(one_lines >= 2, content="true")
-  inspect(one_lines <= all_lines, content="true")
+  inspect(one_body, content="0:0:0:255:7:1:16:195:REFD:Reflectivity:dB\n")
+  inspect(
+    all_body.contains("0:0:0:255:7:1:16:195:REFD:Reflectivity:dB"),
+    content="true",
+  )
 }
 
 ///|
-test "run_cli gribtable_used append does not duplicate header" {
+test "run_cli gribtable_used append preserves record lines" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_gribtable_used_append.txt"
   inspect(
@@ -2185,7 +3294,6 @@ test "run_cli gribtable_used append does not duplicate header" {
   let first = @fs.read_file_to_string(out) catch {
     e => fail("failed to read first output: " + e.to_string())
   }
-  let first_lines = line_count(out)
   inspect(
     run_cli([
       "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-gribtable_used", out,
@@ -2195,16 +3303,11 @@ test "run_cli gribtable_used append does not duplicate header" {
   let second = @fs.read_file_to_string(out) catch {
     e => fail("failed to read second output: " + e.to_string())
   }
-  let second_lines = line_count(out)
-  let mut header_count = 0
-  for line in second.split("\n") {
-    if line.to_string() == "# disc:cat:param:name" {
-      header_count += 1
-    }
-  }
-  inspect(first.contains("# disc:cat:param:name"), content="true")
-  inspect(second_lines >= first_lines, content="true")
-  inspect(header_count, content="1")
+  inspect(first, content="0:1:0:255:7:1:3:1:PRMSL:Pressure Reduced to MSL:Pa\n")
+  inspect(
+    second,
+    content="0:1:0:255:7:1:3:1:PRMSL:Pressure Reduced to MSL:Pa\n0:1:0:255:7:1:1:22:CLMR:Cloud Mixing Ratio:kg/kg\n",
+  )
 }
 
 ///|

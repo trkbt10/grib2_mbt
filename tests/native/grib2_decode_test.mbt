@@ -656,14 +656,7 @@ test "derived scan48 fixture normalizes values to wgrib2 output order" {
     Err(error) => fail(error)
   }
   let expected : Array[Double] = [
-    102136.0,
-    102012.0,
-    102284.0,
-    101924.0,
-    101940.0,
-    101916.0,
-    101380.0,
-    101916.0,
+    102136.0, 102012.0, 102284.0, 101924.0, 101940.0, 101916.0, 101380.0, 101916.0,
   ]
   inspect(
     values_prefix_matches(data.values, expected, 0.000000001),

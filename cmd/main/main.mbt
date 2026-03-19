@@ -222,17 +222,35 @@ fn print_usage() -> Unit {
   println("  -small_grib lonW:lonE latS:latN file  small-domain grib (limited)")
   println("  -lola X Y file mode  lon-lat grid output (identity remap only)")
   println(
+    "  -cress_lola X Y file R  Cressman lon-lat grid output (identity/all-defined limited)",
+  )
+  println(
+    "  -cubeface2global X file  current build reports unavailable like wgrib2",
+  )
+  println(
+    "  -irr_grid X Y file  irregular grid output (nearest-neighbor, template 3.130)",
+  )
+  println(
     "  -grib_out_irr all|defined file  irregular-grid grib (template 3.130 compat)",
   )
   println(
     "  -grib_out_irr2 N G R UUID file  irregular-grid grib2 (template 3.101 compat)",
   )
-  println("  -new_grid_order out out2  vector ordering compat (limited)")
-  println("  -submsg_uv file  vector submessage combine (raw compat)")
-  println("  -ncep_uv file  NCEP-style UV combine (raw compat)")
   println(
-    "  -reduced_gaussian_grid out -1 method  reduced Gaussian (limited compat)",
+    "  -new_grid projection xspec yspec out  limited latlon identity remap",
   )
+  println("  -new_grid_order out out2  vector ordering compat (limited)")
+  println("  -submsg_uv file  vector submessage combine (UGRD/VGRD pairs)")
+  println("  -ncep_uv file  NCEP-style UV combine (UGRD/VGRD pairs)")
+  println("  -reduced_gaussian_grid out -1 method  reduced Gaussian grid")
+  println("  -ave step out  average/time-processing metadata transform")
+  println("  -ave0 step out  average transform with zero cutoff metadata")
+  println("  -ave_var step out  ave/stddev/min/max metadata transform")
+  println("  -fcst_ave step out  forecast-average metadata transform")
+  println("  -fcst_ave0 step out  forecast-average transform with zero cutoff")
+  println("  -time_processing p i step out  generic time-processing transform")
+  println("  -ens_processing out mode  ensemble stats/percentiles transform")
+  println("  -ens_qc stats extreme txt version  ensemble qc compat transform")
   println("  -ncep_norm out  normalize NCEP ave/acc (limited compat)")
   println("  -merge_fcst n out  merge fcst intervals (limited compat)")
   println("  -unmerge_fcst out t z  unmerge fcst (limited compat)")
@@ -243,7 +261,15 @@ fn print_usage() -> Unit {
     "  -tosubmsg file  convert message to submessage stream (discipline-aware)",
   )
   println("  -gridout file  write i j lat lon table for selected record")
+  println("  -netcdf file  write NetCDF classic (single-record regular grid)")
   println("  -gribtable_used file  write derived parameter table entries")
+  println("  -mysql H U P D T  current build reports unavailable like wgrib2")
+  println(
+    "  -mysql_dump H U P D T W PV  current build reports unavailable like wgrib2",
+  )
+  println(
+    "  -mysql_speed H U P D T W PV  current build reports unavailable like wgrib2",
+  )
   println("  -write_sec N file  write concatenated section N bytes (0-8)")
   println("  -append  append mode for output files")
   println("  -no_append  disable append mode (default)")
@@ -330,12 +356,24 @@ enum CliAction {
   WriteIjsmallGrib(String, String, String)
   WriteSmallGrib(String, String, String)
   WriteLola(String, String, String, String)
+  WriteCressLola(String, String, String, String)
+  WriteCubeface2Global
+  WriteIrrGrid(String, String, String)
   WriteGribOutIrr(String, String)
   WriteGribOutIrr2(String, String, String, String, String)
+  WriteNewGrid(String, String, String, String)
   WriteNewGridOrder(String, String)
   WriteSubmsgUv(String)
   WriteNcepUv(String)
   WriteReducedGaussianGrid(String, String, String)
+  WriteAve(String, String)
+  WriteAve0(String, String)
+  WriteAveVar(String, String)
+  WriteFcstAve(String, String)
+  WriteFcstAve0(String, String)
+  WriteTimeProcessing(String, String, String, String)
+  WriteEnsProcessing(String, String)
+  WriteEnsQc(String, String, String, String)
   WriteNcepNorm(String)
   WriteMergeFcst(String, String)
   WriteUnmergeFcst(String, String, String)
@@ -345,8 +383,24 @@ enum CliAction {
   WriteToSubmsg(String)
   WriteSection(Int, String)
   WriteGridout(String)
+  WriteNetcdf(String)
   WriteGribtableUsed(String)
+  WriteMysql
+  WriteMysqlDump
+  WriteMysqlSpeed
   WriteExportLonlat(String)
+}
+
+///|
+fn unavailable_out_action_lines(action : CliAction) -> Array[String]? {
+  match action {
+    WriteCubeface2Global =>
+      Some(["", "*** FATAL ERROR: cubeface2global: not installed ***", ""])
+    WriteMysql => Some(["mysql package not installed"])
+    WriteMysqlDump => Some(["mysql package not installed"])
+    WriteMysqlSpeed => Some(["mysql package not installed"])
+    _ => None
+  }
 }
 
 ///|
@@ -394,6 +448,12 @@ struct CliInitOptions {
   print_out_path : String?
   stop_after_first : Bool
   error_final_count : ErrorFinalCountCondition?
+}
+
+///|
+struct IrrGridRequestedPoint {
+  lon_microdeg : Int
+  lat_microdeg : Int
 }
 
 ///|
@@ -763,6 +823,27 @@ fn parse_cli_invocation(
       ),
     )
   }
+  if action_tokens.length() == 5 && action_tokens[0] == "-cress_lola" {
+    return Ok(
+      (
+        init,
+        WriteCressLola(
+          action_tokens[1],
+          action_tokens[2],
+          action_tokens[3],
+          action_tokens[4],
+        ),
+      ),
+    )
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-cubeface2global" {
+    return Ok((init, WriteCubeface2Global))
+  }
+  if action_tokens.length() == 4 && action_tokens[0] == "-irr_grid" {
+    return Ok(
+      (init, WriteIrrGrid(action_tokens[1], action_tokens[2], action_tokens[3])),
+    )
+  }
   if action_tokens.length() == 3 && action_tokens[0] == "-grib_out_irr" {
     return Ok((init, WriteGribOutIrr(action_tokens[1], action_tokens[2])))
   }
@@ -776,6 +857,19 @@ fn parse_cli_invocation(
           action_tokens[3],
           action_tokens[4],
           action_tokens[5],
+        ),
+      ),
+    )
+  }
+  if action_tokens.length() == 5 && action_tokens[0] == "-new_grid" {
+    return Ok(
+      (
+        init,
+        WriteNewGrid(
+          action_tokens[1],
+          action_tokens[2],
+          action_tokens[3],
+          action_tokens[4],
         ),
       ),
     )
@@ -797,6 +891,50 @@ fn parse_cli_invocation(
           action_tokens[1],
           action_tokens[2],
           action_tokens[3],
+        ),
+      ),
+    )
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-ave" {
+    return Ok((init, WriteAve(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-ave0" {
+    return Ok((init, WriteAve0(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-ave_var" {
+    return Ok((init, WriteAveVar(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-fcst_ave" {
+    return Ok((init, WriteFcstAve(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-fcst_ave0" {
+    return Ok((init, WriteFcstAve0(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 5 && action_tokens[0] == "-time_processing" {
+    return Ok(
+      (
+        init,
+        WriteTimeProcessing(
+          action_tokens[1],
+          action_tokens[2],
+          action_tokens[3],
+          action_tokens[4],
+        ),
+      ),
+    )
+  }
+  if action_tokens.length() == 3 && action_tokens[0] == "-ens_processing" {
+    return Ok((init, WriteEnsProcessing(action_tokens[1], action_tokens[2])))
+  }
+  if action_tokens.length() == 5 && action_tokens[0] == "-ens_qc" {
+    return Ok(
+      (
+        init,
+        WriteEnsQc(
+          action_tokens[1],
+          action_tokens[2],
+          action_tokens[3],
+          action_tokens[4],
         ),
       ),
     )
@@ -845,8 +983,20 @@ fn parse_cli_invocation(
   if action_tokens.length() == 2 && action_tokens[0] == "-gridout" {
     return Ok((init, WriteGridout(action_tokens[1])))
   }
+  if action_tokens.length() == 2 && action_tokens[0] == "-netcdf" {
+    return Ok((init, WriteNetcdf(action_tokens[1])))
+  }
   if action_tokens.length() == 2 && action_tokens[0] == "-gribtable_used" {
     return Ok((init, WriteGribtableUsed(action_tokens[1])))
+  }
+  if action_tokens.length() == 6 && action_tokens[0] == "-mysql" {
+    return Ok((init, WriteMysql))
+  }
+  if action_tokens.length() == 8 && action_tokens[0] == "-mysql_dump" {
+    return Ok((init, WriteMysqlDump))
+  }
+  if action_tokens.length() == 8 && action_tokens[0] == "-mysql_speed" {
+    return Ok((init, WriteMysqlSpeed))
   }
   if action_tokens.length() == 2 && action_tokens[0] == "-export_lonlat" {
     return Ok((init, WriteExportLonlat(action_tokens[1])))
@@ -2957,43 +3107,59 @@ fn write_ijbox_output(
             " (ijbox output)",
           )
       }
+      let ni = (i_end - i_start) / i_step + 1
+      let nj = (j_end - j_start) / j_step + 1
       if mode == "spread" {
+        text_lines.push(" i-index, j-index, value,")
         for j = j_start; j <= j_end; j = j + j_step {
-          let row : Array[String] = []
           for i = i_start; i <= i_end; i = i + i_step {
             let idx = match value_index_for_ij(meta, i, j) {
               Some(v) => v
               None => return Err("invalid ij point in -ijbox")
             }
-            row.push(format_data_value(values[idx]))
+            text_lines.push(
+              i.to_string() +
+              ", " +
+              j.to_string() +
+              ", " +
+              format_data_value(values[idx]) +
+              ",",
+            )
           }
-          text_lines.push(row.join(","))
         }
+      } else if mode == "text" {
+        let ordered : Array[Double] = []
+        text_lines.push(ni.to_string() + " " + nj.to_string())
+        for j = j_start; j <= j_end; j = j + j_step {
+          for i = i_start; i <= i_end; i = i + i_step {
+            let idx = match value_index_for_ij(meta, i, j) {
+              Some(v) => v
+              None => return Err("invalid ij point in -ijbox")
+            }
+            ordered.push(values[idx])
+          }
+        }
+        append_text_value_lines(text_lines, ordered, 1, None)
+      } else if mode == "bin" {
+        let payload : Array[Byte] = []
+        for j = j_start; j <= j_end; j = j + j_step {
+          for i = i_start; i <= i_end; i = i + i_step {
+            let idx = match value_index_for_ij(meta, i, j) {
+              Some(v) => v
+              None => return Err("invalid ij point in -ijbox")
+            }
+            append_f32_bytes(
+              payload,
+              normalize_binary_output_value(values[idx]),
+              false,
+            )
+          }
+        }
+        append_u32_bytes(out_bytes, payload.length(), false)
+        append_bytes(out_bytes, Bytes::from_array(payload))
+        append_u32_bytes(out_bytes, payload.length(), false)
       } else {
-        for j = j_start; j <= j_end; j = j + j_step {
-          for i = i_start; i <= i_end; i = i + i_step {
-            let idx = match value_index_for_ij(meta, i, j) {
-              Some(v) => v
-              None => return Err("invalid ij point in -ijbox")
-            }
-            let value = values[idx]
-            if mode == "bin" {
-              append_f32_bytes(out_bytes, value, false)
-            } else if mode == "text" {
-              text_lines.push(
-                record_index.to_string() +
-                ":" +
-                i.to_string() +
-                ":" +
-                j.to_string() +
-                ":" +
-                format_data_value(value),
-              )
-            } else {
-              return Err("unsupported -ijbox mode: " + mode)
-            }
-          }
-        }
+        return Err("unsupported -ijbox mode: " + mode)
       }
       record_index += 1
     }
@@ -3068,7 +3234,9 @@ fn write_ijsmall_grib_output(
       record_index += 1
     }
   }
-  write_raw_output(destination, context, selected, append_mode)
+  write_identity_full_domain_grib_output(
+    "-ijsmall_grib", destination, context, selected, append_mode,
+  )
 }
 
 ///|
@@ -3089,8 +3257,106 @@ fn parse_small_grib_bounds(spec : String) -> (Double, Double)? {
 }
 
 ///|
+fn format_microdegree_decimal(value_microdeg : Int) -> String {
+  format_fixed(value_microdeg.to_double() / 1000000.0, 6)
+}
+
+///|
+fn full_domain_lola_specs_for_meta(
+  meta : @lib.Grib2RecordMeta,
+) -> (String, String)? {
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return None
+  }
+  let lon1 = meta.section3_lon1_microdeg
+  let lon2 = meta.section3_lon2_microdeg
+  let lat1 = meta.section3_lat1_microdeg
+  let lat2 = meta.section3_lat2_microdeg
+  let lon_min = if lon1 < lon2 { lon1 } else { lon2 }
+  let lat_min = if lat1 < lat2 { lat1 } else { lat2 }
+  let di = if meta.section3_di_microdeg < 0 {
+    -meta.section3_di_microdeg
+  } else {
+    meta.section3_di_microdeg
+  }
+  let dj = if meta.section3_dj_microdeg < 0 {
+    -meta.section3_dj_microdeg
+  } else {
+    meta.section3_dj_microdeg
+  }
+  Some(
+    (
+      format_microdegree_decimal(lon_min) +
+      ":" +
+      meta.section3_ni.to_string() +
+      ":" +
+      format_microdegree_decimal(di),
+      format_microdegree_decimal(lat_min) +
+      ":" +
+      meta.section3_nj.to_string() +
+      ":" +
+      format_microdegree_decimal(dj),
+    ),
+  )
+}
+
+///|
 fn nearly_equal(a : Double, b : Double, eps : Double) -> Bool {
   (a - b).abs() <= eps
+}
+
+///|
+fn write_identity_full_domain_grib_output(
+  option_name : String,
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let out : Array[Byte] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      if !record_is_selected(record_index, selected) {
+        record_index += 1
+        continue
+      }
+      let meta = match find_record_meta(context, record_index) {
+        Some(v) => v
+        None =>
+          return Err(
+            "record not found for " +
+            option_name +
+            ": " +
+            record_index.to_string(),
+          )
+      }
+      let (lon_spec, lat_spec) = match full_domain_lola_specs_for_meta(meta) {
+        Some(v) => v
+        None =>
+          return Err(
+            option_name +
+            " currently supports regular lat/lon grid (template 3.0)",
+          )
+      }
+      let bytes = match
+        build_identity_lola_submessage_bytes(
+          option_name, lon_spec, lat_spec, message, submessage, meta,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(out, bytes)
+      record_index += 1
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -3159,7 +3425,9 @@ fn write_small_grib_output(
       record_index += 1
     }
   }
-  write_raw_output(destination, context, selected, append_mode)
+  write_identity_full_domain_grib_output(
+    "-small_grib", destination, context, selected, append_mode,
+  )
 }
 
 ///|
@@ -3207,6 +3475,9 @@ fn lola_matches_meta(
   }
   let (lon_start, nlon, dlon) = lon
   let (lat_start, nlat, dlat) = lat
+  if dlon <= 0.0 || dlat <= 0.0 {
+    return false
+  }
   if nlon != meta.section3_ni || nlat != meta.section3_nj {
     return false
   }
@@ -3223,6 +3494,311 @@ fn lola_matches_meta(
   nearly_equal(lat_start, lat_min, eps) &&
   nearly_equal(dlon.abs(), di, eps) &&
   nearly_equal(dlat.abs(), dj, eps)
+}
+
+///|
+fn parse_cress_lola_radii(spec : String) -> Array[Double]? {
+  let parts : Array[StringView] = [..spec.split(":")]
+  if parts.length() == 0 {
+    return None
+  }
+  let radii : Array[Double] = []
+  for part in parts {
+    let radius = match parse_double_option(part.to_string()) {
+      Some(v) => v
+      None => return None
+    }
+    if radius <= 0.0 {
+      return None
+    }
+    radii.push(radius)
+  }
+  Some(radii)
+}
+
+///|
+fn encode_template30_coord(
+  value : Double,
+  basic_angle : Int,
+  subdivisions_of_basic_angle : Int,
+) -> Int {
+  let scaled = if basic_angle == 0 || subdivisions_of_basic_angle == 0 {
+    value * 1000000.0
+  } else {
+    value *
+    subdivisions_of_basic_angle.to_double() *
+    1000000.0 /
+    basic_angle.to_double()
+  }
+  if scaled >= 0.0 {
+    @math.floor(scaled + 0.5).to_int()
+  } else {
+    -@math.floor(-scaled + 0.5).to_int()
+  }
+}
+
+///|
+fn build_identity_lola_section3_bytes(
+  option_name : String,
+  source_section3 : @lib.Grib2Section3Decoded,
+  lon_spec : String,
+  lat_spec : String,
+) -> Result[Bytes, String] {
+  let (lon_start, nlon, dlon) = match parse_lola_axis(lon_spec) {
+    Some(v) => v
+    None => return Err(option_name + ": invalid lon axis")
+  }
+  let (lat_start, nlat, dlat) = match parse_lola_axis(lat_spec) {
+    Some(v) => v
+    None => return Err(option_name + ": invalid lat axis")
+  }
+  match source_section3.template {
+    @section3.GridTemplate30(grid) => {
+      let section_subdivisions = if option_name == "-new_grid" &&
+        grid.basic_angle == 0 &&
+        grid.subdivisions_of_basic_angle == 0 {
+        -1
+      } else {
+        grid.subdivisions_of_basic_angle
+      }
+      let lon_end = normalize_irr_grid_lon(
+        lon_start + (nlon - 1).to_double() * dlon,
+      )
+      let lat_end = lat_start + (nlat - 1).to_double() * dlat
+      Ok(
+        @lib.encode_section3_bytes({
+          source_of_grid_definition: source_section3.source_of_grid_definition,
+          number_of_data_points: nlon * nlat,
+          optional_points_octet_count: 0,
+          optional_points_interpretation: 0,
+          template: @section3.GridTemplate30({
+            shape_of_earth: grid.shape_of_earth,
+            scale_factor_radius: grid.scale_factor_radius,
+            scaled_value_radius: grid.scaled_value_radius,
+            scale_factor_major_axis: grid.scale_factor_major_axis,
+            scaled_value_major_axis: grid.scaled_value_major_axis,
+            scale_factor_minor_axis: grid.scale_factor_minor_axis,
+            scaled_value_minor_axis: grid.scaled_value_minor_axis,
+            ni: nlon,
+            nj: nlat,
+            basic_angle: grid.basic_angle,
+            subdivisions_of_basic_angle: section_subdivisions,
+            la1: encode_i32_sign_magnitude(
+              encode_template30_coord(
+                lat_start,
+                grid.basic_angle,
+                grid.subdivisions_of_basic_angle,
+              ),
+            ),
+            lo1: encode_i32_sign_magnitude(
+              encode_template30_coord(
+                normalize_irr_grid_lon(lon_start),
+                grid.basic_angle,
+                grid.subdivisions_of_basic_angle,
+              ),
+            ),
+            resolution_and_component_flags: grid.resolution_and_component_flags,
+            la2: encode_i32_sign_magnitude(
+              encode_template30_coord(
+                lat_end,
+                grid.basic_angle,
+                grid.subdivisions_of_basic_angle,
+              ),
+            ),
+            lo2: encode_i32_sign_magnitude(
+              encode_template30_coord(
+                lon_end,
+                grid.basic_angle,
+                grid.subdivisions_of_basic_angle,
+              ),
+            ),
+            di: encode_template30_coord(
+              dlon,
+              grid.basic_angle,
+              grid.subdivisions_of_basic_angle,
+            ),
+            dj: encode_template30_coord(
+              dlat,
+              grid.basic_angle,
+              grid.subdivisions_of_basic_angle,
+            ),
+            scanning_mode: 64,
+          }),
+          optional_points_raw: b"",
+        }),
+      )
+    }
+    _ =>
+      Err(
+        option_name + " currently supports regular lat/lon grid (template 3.0)",
+      )
+  }
+}
+
+///|
+fn build_identity_lola_submessage_bytes(
+  option_name : String,
+  lon_spec : String,
+  lat_spec : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+) -> Result[Bytes, String] {
+  let template_id = meta.section5_template.id()
+  if template_id != 0 &&
+    template_id != 2 &&
+    template_id != 3 &&
+    template_id != 40 &&
+    template_id != 41 {
+    return Err(
+      option_name +
+      " is not implemented for packing template " +
+      template_id.to_string(),
+    )
+  }
+  let source_section3 = match
+    @lib.decode_submessage_section3(message, submessage) {
+    Ok(v) => v
+    Err(e) =>
+      return Err("failed to decode Section 3 for " + option_name + ": \{e}")
+  }
+  let section3 = match
+    build_identity_lola_section3_bytes(
+      option_name, source_section3, lon_spec, lat_spec,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) =>
+      return Err(
+        "failed to unpack record " +
+        meta.record_index.to_string() +
+        " for " +
+        option_name,
+      )
+  }
+  let total_points = meta.section3_ni * meta.section3_nj
+  if unpacked.length() != total_points {
+    return Err(
+      "failed to derive regular-grid values for " +
+      option_name +
+      " record " +
+      meta.record_index.to_string(),
+    )
+  }
+  let defined_values : Array[Double] = []
+  let bitmap_out : Array[Byte] = Array::make((total_points + 7) / 8, b'\x00')
+  let mut needs_bitmap = false
+  let mut point = 0
+  for j = 1; j <= meta.section3_nj; j = j + 1 {
+    for i = 1; i <= meta.section3_ni; i = i + 1 {
+      let idx = match value_index_for_ij(meta, i, j) {
+        Some(v) => v
+        None => return Err("invalid ij point in " + option_name)
+      }
+      let value = unpacked[idx]
+      if value == value {
+        defined_values.push(value)
+        bitmap_mark_defined(bitmap_out, point)
+      } else {
+        needs_bitmap = true
+      }
+      point += 1
+    }
+  }
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let (sec5, sec7) = match
+    try_build_simple_packed_sections_with_scaling(
+      defined_values,
+      meta.section5_reference_value_ieee,
+      meta.section5_binary_scale_factor,
+      meta.section5_decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string(),
+      )
+  }
+  let sec6 = if needs_bitmap {
+    @lib.encode_section6_bytes({
+      bitmap_indicator: 0,
+      bitmap_raw: Bytes::from_array(bitmap_out),
+    })
+  } else {
+    @lib.encode_section6_bytes({ bitmap_indicator: 255, bitmap_raw: b"" })
+  }
+  Ok(
+    build_submessage_grib_bytes_with_section_overrides(
+      message,
+      submessage,
+      Some(section3),
+      None,
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
+}
+
+///|
+fn write_identity_lola_grib_output(
+  option_name : String,
+  lon_spec : String,
+  lat_spec : String,
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let out : Array[Byte] = []
+  let mut record_index = 1
+  for message in context.messages {
+    for submessage in message.submessages {
+      if !record_is_selected(record_index, selected) {
+        record_index += 1
+        continue
+      }
+      let meta = match find_record_meta(context, record_index) {
+        Some(v) => v
+        None =>
+          return Err(
+            "record not found for " +
+            option_name +
+            ": " +
+            record_index.to_string(),
+          )
+      }
+      if !lola_matches_meta(meta, lon_spec, lat_spec) {
+        return Err(
+          option_name +
+          " currently supports only identity remap (same regular lat/lon grid)",
+        )
+      }
+      let bytes = match
+        build_identity_lola_submessage_bytes(
+          option_name, lon_spec, lat_spec, message, submessage, meta,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(out, bytes)
+      record_index += 1
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -3272,9 +3848,374 @@ fn write_lola_output(
       destination, context, selected, crlf, append_mode, text_fmt,
     )
   } else if mode == "grib" {
-    write_raw_output(destination, context, selected, append_mode)
+    write_identity_lola_grib_output(
+      "-lola", lon_spec, lat_spec, destination, context, selected, append_mode,
+    )
   } else {
     Err("unsupported -lola mode: " + mode)
+  }
+}
+
+///|
+fn write_cress_lola_output(
+  lon_spec : String,
+  lat_spec : String,
+  destination : String,
+  radii_spec : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  match parse_cress_lola_radii(radii_spec) {
+    Some(_) => ()
+    None =>
+      return Err(
+        "-cress_lola radius list must be positive numbers separated by ':'",
+      )
+  }
+  write_identity_lola_grib_output(
+    "-cress_lola", lon_spec, lat_spec, destination, context, selected, append_mode,
+  )
+}
+
+///|
+fn new_grid_rejects_identity_parameter(var_name : String) -> Bool {
+  var_name == "UGRD" ||
+  var_name == "VGRD" ||
+  var_name == "WIND" ||
+  var_name == "WDIR"
+}
+
+///|
+fn write_new_grid_output(
+  projection : String,
+  lon_spec : String,
+  lat_spec : String,
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  if projection != "latlon" {
+    return Err("-new_grid currently supports only latlon projection")
+  }
+  let mut record_index = 1
+  for message in context.messages {
+    for _ in message.submessages {
+      if record_is_selected(record_index, selected) {
+        let meta = match find_record_meta(context, record_index) {
+          Some(v) => v
+          None =>
+            return Err(
+              "record not found for -new_grid: " + record_index.to_string(),
+            )
+        }
+        if !lola_matches_meta(meta, lon_spec, lat_spec) {
+          return Err(
+            "-new_grid currently supports only identity remap (same regular lat/lon grid)",
+          )
+        }
+        let var_name = name_lookup_text(meta.parameter_name)
+        if new_grid_rejects_identity_parameter(var_name) {
+          return Err(
+            "-new_grid currently rejects vector/wind fields in limited identity mode (" +
+            var_name +
+            ")",
+          )
+        }
+      }
+      record_index += 1
+    }
+  }
+  write_identity_lola_grib_output(
+    "-new_grid", lon_spec, lat_spec, destination, context, selected, append_mode,
+  )
+}
+
+///|
+fn normalize_irr_grid_lon(lon : Double) -> Double {
+  let mut normalized = lon
+  while normalized < 0.0 {
+    normalized += 360.0
+  }
+  while normalized >= 360.0 {
+    normalized -= 360.0
+  }
+  normalized
+}
+
+///|
+fn irr_grid_microdegrees(value : Double) -> Int {
+  let scaled = value * 1000000.0
+  if scaled >= 0.0 {
+    @math.floor(scaled + 0.5).to_int()
+  } else {
+    -@math.floor(-scaled + 0.5).to_int()
+  }
+}
+
+///|
+fn parse_irr_grid_requested_points(
+  spec : String,
+) -> Result[Array[IrrGridRequestedPoint], String] {
+  let parts : Array[StringView] = [..spec.split(":")]
+  if parts.length() < 2 || parts.length() % 2 != 0 {
+    return Err("irr_grid: need lon0:lat0:lon1:lat1:..:lonN:latN")
+  }
+  let points : Array[IrrGridRequestedPoint] = []
+  let mut index = 0
+  while index < parts.length() {
+    let lon_raw = parts[index].to_string()
+    let lat_raw = parts[index + 1].to_string()
+    let lon = match parse_double_option(lon_raw) {
+      Some(v) => normalize_irr_grid_lon(v)
+      None => return Err("irr_grid: lat-lon list, " + spec)
+    }
+    let lat = match parse_double_option(lat_raw) {
+      Some(v) => v
+      None => return Err("irr_grid: lat-lon list, " + spec)
+    }
+    if lat < -90.0 || lat > 90.0 {
+      return Err("irr_grid: bad latitude")
+    }
+    points.push({
+      lon_microdeg: irr_grid_microdegrees(lon),
+      lat_microdeg: irr_grid_microdegrees(lat),
+    })
+    index += 2
+  }
+  Ok(points)
+}
+
+///|
+fn validate_irr_grid_radius(radius_spec : String) -> Result[Unit, String] {
+  match parse_double_option(radius_spec) {
+    Some(_) => Ok(())
+    None => Err("irr_grid: radius " + radius_spec)
+  }
+}
+
+///|
+fn irr_grid_lon_delta_abs_microdeg(a : Int, b : Int) -> Int {
+  let raw = (a - b).abs()
+  if raw > 180_000_000 {
+    360_000_000 - raw
+  } else {
+    raw
+  }
+}
+
+///|
+fn find_nearest_grid_point_for_irr_grid(
+  meta : @lib.Grib2RecordMeta,
+  point : IrrGridRequestedPoint,
+) -> Result[(Int, Int), String] {
+  let mut found = false
+  let mut best_i = 1
+  let mut best_j = 1
+  let mut best_distance = 0L
+  for j = 1; j <= meta.section3_nj; j = j + 1 {
+    for i = 1; i <= meta.section3_ni; i = i + 1 {
+      let (lon_microdeg, lat_microdeg) = match
+        grid_ij_to_latlon_microdeg_from_meta(meta, i, j) {
+        Some(v) => v
+        None => return Err("failed to derive lon/lat for -irr_grid")
+      }
+      let lon_delta = irr_grid_lon_delta_abs_microdeg(
+        point.lon_microdeg,
+        lon_microdeg,
+      )
+      let lat_delta = (point.lat_microdeg - lat_microdeg).abs()
+      let distance = lon_delta.to_int64() * lon_delta.to_int64() +
+        lat_delta.to_int64() * lat_delta.to_int64()
+      if !found || distance < best_distance {
+        found = true
+        best_i = i
+        best_j = j
+        best_distance = distance
+      }
+    }
+  }
+  if found {
+    Ok((best_i, best_j))
+  } else {
+    Err("failed to derive lon/lat for -irr_grid")
+  }
+}
+
+///|
+fn collect_points_for_irr_grid(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  requested_points : Array[IrrGridRequestedPoint],
+) -> Result[(Array[Int], Array[Int], Array[Double], Bytes?), String] {
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) => return Err("failed to unpack data for -irr_grid")
+  }
+  let total_points = meta.section3_ni * meta.section3_nj
+  if unpacked.length() != total_points {
+    return Err("failed to derive regular-grid values for -irr_grid")
+  }
+  let latitudes : Array[Int] = []
+  let longitudes : Array[Int] = []
+  let defined_values : Array[Double] = []
+  let bitmap_out : Array[Byte] = Array::make(
+    (requested_points.length() + 7) / 8,
+    b'\x00',
+  )
+  let mut needs_bitmap = false
+  for point_index in 0..<requested_points.length() {
+    let point = requested_points[point_index]
+    let (i, j) = match find_nearest_grid_point_for_irr_grid(meta, point) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let idx = match value_index_for_ij(meta, i, j) {
+      Some(v) => v
+      None => return Err("invalid ij point in -irr_grid")
+    }
+    latitudes.push(point.lat_microdeg)
+    longitudes.push(point.lon_microdeg)
+    let value = unpacked[idx]
+    if value == value {
+      defined_values.push(value)
+      bitmap_mark_defined(bitmap_out, point_index)
+    } else {
+      needs_bitmap = true
+    }
+  }
+  Ok(
+    (
+      latitudes,
+      longitudes,
+      defined_values,
+      if needs_bitmap {
+        Some(Bytes::from_array(bitmap_out))
+      } else {
+        None
+      },
+    ),
+  )
+}
+
+///|
+fn build_irr_grid_submessage_bytes(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  requested_points : Array[IrrGridRequestedPoint],
+) -> Result[Bytes, String] {
+  let (latitudes_microdeg, longitudes_microdeg, defined_values, bitmap_raw) = match
+    collect_points_for_irr_grid(message, submessage, meta, requested_points) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to collect values for -irr_grid record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  let sec3 = build_grib_out_irr_section3_bytes(
+    meta, latitudes_microdeg, longitudes_microdeg,
+  )
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let rebuilt = match
+    try_build_simple_packed_sections_with_scaling(
+      defined_values,
+      meta.section5_reference_value_ieee,
+      meta.section5_binary_scale_factor,
+      meta.section5_decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for -irr_grid record " +
+        meta.record_index.to_string(),
+      )
+  }
+  let (sec5, sec7) = rebuilt
+  let sec6 = match bitmap_raw {
+    Some(v) =>
+      @lib.encode_section6_bytes({ bitmap_indicator: 0, bitmap_raw: v })
+    None =>
+      @lib.encode_section6_bytes({ bitmap_indicator: 255, bitmap_raw: b"" })
+  }
+  Ok(
+    build_submessage_grib_bytes_with_section_overrides(
+      message,
+      submessage,
+      Some(sec3),
+      None,
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
+}
+
+///|
+fn write_irr_grid_output(
+  requested_points_spec : String,
+  radius_spec : String,
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let requested_points = match
+    parse_irr_grid_requested_points(requested_points_spec) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  match validate_irr_grid_radius(radius_spec) {
+    Ok(_) => ()
+    Err(e) => return Err(e)
+  }
+  let metas = @lib.decode_records(context)
+  let out : Array[Byte] = []
+  let mut record_index = 1
+  for message_index in 0..<context.messages.length() {
+    let message = context.messages[message_index]
+    for submessage_index in 0..<message.submessages.length() {
+      let submessage = message.submessages[submessage_index]
+      if record_is_selected(record_index, selected) {
+        let meta_index = record_index - 1
+        if meta_index >= metas.length() {
+          return Err(
+            "internal: record metadata missing for -irr_grid record " +
+            record_index.to_string(),
+          )
+        }
+        let meta = metas[meta_index]
+        if meta.section3_template.id() != 0 ||
+          meta.section3_ni <= 0 ||
+          meta.section3_nj <= 0 {
+          return Err(
+            "-irr_grid currently supports regular lat/lon grid (template 3.0)",
+          )
+        }
+        let bytes = match
+          build_irr_grid_submessage_bytes(
+            message, submessage, meta, requested_points,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        append_bytes(out, bytes)
+      }
+      record_index += 1
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
   }
 }
 
@@ -3804,14 +4745,178 @@ fn write_new_grid_order_output(
 }
 
 ///|
-fn write_vector_combine_compat_output(
+fn collect_selected_record_refs(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+) -> Array[SelectedRecordRef] {
+  let refs : Array[SelectedRecordRef] = []
+  let mut record_index = 1
+  for message_index in 0..<context.messages.length() {
+    let message = context.messages[message_index]
+    for submessage_index in 0..<message.submessages.length() {
+      if record_is_selected(record_index, selected) {
+        refs.push({ record_index, message_index, submessage_index })
+      }
+      record_index += 1
+    }
+  }
+  refs
+}
+
+///|
+fn vector_pair_messages_compatible(
+  context : @lib.Grib2FileContext,
+  lhs : SelectedRecordRef,
+  rhs : SelectedRecordRef,
+) -> Bool {
+  let lhs_message = context.messages[lhs.message_index]
+  let rhs_message = context.messages[rhs.message_index]
+  lhs_message.discipline == rhs_message.discipline &&
+  section_frame_bytes(lhs_message, lhs_message.section1) ==
+  section_frame_bytes(rhs_message, rhs_message.section1)
+}
+
+///|
+fn build_grouped_submessage_grib_bytes(
+  context : @lib.Grib2FileContext,
+  refs : Array[SelectedRecordRef],
+) -> Result[Bytes, String] {
+  if refs.length() == 0 {
+    return Err("internal: empty record group for vector combine output")
+  }
+  let header_message = context.messages[refs[0].message_index]
+  let body : Array[Byte] = []
+  append_bytes(
+    body,
+    section_frame_bytes(header_message, header_message.section1),
+  )
+  let mut previous_section3 : Bytes? = None
+  for record_ref in refs {
+    let message = context.messages[record_ref.message_index]
+    if message.discipline != header_message.discipline {
+      return Err("vector combine requires a common discipline")
+    }
+    let submessage = message.submessages[record_ref.submessage_index]
+    match submessage.section2 {
+      Some(section2) =>
+        append_bytes(body, section_frame_bytes(message, section2))
+      None => ()
+    }
+    let section3 = section_frame_bytes(message, submessage.section3)
+    let include_section3 = match previous_section3 {
+      Some(prev) => prev != section3
+      None => true
+    }
+    if include_section3 {
+      append_bytes(body, section3)
+    }
+    previous_section3 = Some(section3)
+    append_bytes(body, section_frame_bytes(message, submessage.section4))
+    append_bytes(body, section_frame_bytes(message, submessage.section5))
+    append_bytes(body, section_frame_bytes(message, submessage.section6))
+    append_bytes(body, section_frame_bytes(message, submessage.section7))
+  }
+  let total_len = 16 + body.length() + 4
+  let sec0 = build_sec0_with_length(header_message, total_len)
+  let out : Array[Byte] = []
+  append_bytes(out, sec0)
+  append_bytes(out, Bytes::from_array(body))
+  out.push(b'7')
+  out.push(b'7')
+  out.push(b'7')
+  out.push(b'7')
+  Ok(Bytes::from_array(out))
+}
+
+///|
+fn write_vector_combine_output(
   destination : String,
   context : @lib.Grib2FileContext,
   selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {
-  // Limited compatibility: keep selected records unchanged as GRIB output.
-  write_raw_output(destination, context, selected, append_mode)
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, selected)
+  let u_candidates : Map[Bytes, SelectedRecordRef] = {}
+  let v_candidates : Map[Bytes, SelectedRecordRef] = {}
+  for record_ref in refs {
+    let meta_index = record_ref.record_index - 1
+    if meta_index >= metas.length() {
+      continue
+    }
+    let meta = metas[meta_index]
+    if !is_wind_u_component(meta) && !is_wind_v_component(meta) {
+      continue
+    }
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let pair_key = build_wind_pair_key(message, submessage)
+    if pair_key.length() == 0 {
+      continue
+    }
+    if is_wind_u_component(meta) {
+      u_candidates.set(pair_key, record_ref)
+    } else if is_wind_v_component(meta) {
+      v_candidates.set(pair_key, record_ref)
+    }
+  }
+  let consumed = Array::make(metas.length() + 1, false)
+  let out : Array[Byte] = []
+  for record_ref in refs {
+    if record_ref.record_index < consumed.length() &&
+      consumed[record_ref.record_index] {
+      continue
+    }
+    let meta_index = record_ref.record_index - 1
+    if meta_index < metas.length() {
+      let meta = metas[meta_index]
+      if is_wind_u_component(meta) || is_wind_v_component(meta) {
+        let message = context.messages[record_ref.message_index]
+        let submessage = message.submessages[record_ref.submessage_index]
+        let pair_key = build_wind_pair_key(message, submessage)
+        if pair_key.length() > 0 {
+          match u_candidates.get(pair_key) {
+            Some(u_ref) =>
+              match v_candidates.get(pair_key) {
+                Some(v_ref) => {
+                  let first_index = if u_ref.record_index < v_ref.record_index {
+                    u_ref.record_index
+                  } else {
+                    v_ref.record_index
+                  }
+                  if record_ref.record_index == first_index &&
+                    vector_pair_messages_compatible(context, u_ref, v_ref) {
+                    let pair_refs : Array[SelectedRecordRef] = [u_ref, v_ref]
+                    let combined = match
+                      build_grouped_submessage_grib_bytes(context, pair_refs) {
+                      Ok(v) => v
+                      Err(e) => return Err(e)
+                    }
+                    append_bytes(out, combined)
+                    consumed[u_ref.record_index] = true
+                    consumed[v_ref.record_index] = true
+                    continue
+                  }
+                }
+                None => ()
+              }
+            None => ()
+          }
+        }
+      }
+    }
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    append_bytes(out, build_submessage_grib_bytes(message, submessage))
+    if record_ref.record_index < consumed.length() {
+      consumed[record_ref.record_index] = true
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -3924,6 +5029,330 @@ fn reduced_gaussian_method_supported(interp_method : String) -> Bool {
 }
 
 ///|
+fn is_reduced_gaussian_interp_linear(interp_method : String) -> Bool {
+  interp_method == "linear" || interp_method == "linear-extrapolate"
+}
+
+///|
+fn is_reduced_gaussian_template_id(template_id : Int) -> Bool {
+  template_id == 40 ||
+  template_id == 41 ||
+  template_id == 42 ||
+  template_id == 43
+}
+
+///|
+fn decode_reduced_gaussian_row_counts_for_cli(
+  section3 : @lib.Grib2Section3Decoded,
+  expected_rows : Int,
+) -> Array[Int]? {
+  let octets = section3.optional_points_octet_count
+  if expected_rows <= 0 || octets <= 0 || octets > 4 {
+    return None
+  }
+  if section3.optional_points_interpretation != 1 {
+    return None
+  }
+  let raw = section3.optional_points_raw
+  if raw.length() != expected_rows * octets {
+    return None
+  }
+  let row_counts : Array[Int] = []
+  for row in 0..<expected_rows {
+    let mut value = 0
+    let offset = row * octets
+    for byte_index in 0..<octets {
+      value = (value << 8) |
+        raw[offset + byte_index].to_uint().reinterpret_as_int()
+    }
+    row_counts.push(value)
+  }
+  Some(row_counts)
+}
+
+///|
+fn build_reduced_gaussian_row_offsets(row_counts : Array[Int]) -> Array[Int] {
+  let offsets : Array[Int] = Array::make(row_counts.length(), 0)
+  let mut offset = 0
+  for index in 0..<row_counts.length() {
+    offsets[index] = offset
+    offset += row_counts[index]
+  }
+  offsets
+}
+
+///|
+fn normalize_reduced_gaussian_values_for_cli(
+  section3 : @lib.Grib2Section3Decoded,
+  values : Array[Double],
+) -> Result[(Array[Double], Array[Int]), String] {
+  let grid_info = @lib.get_section3_grid_info(section3.template)
+  let nj = grid_info.nj
+  if nj <= 0 {
+    return Err("failed to determine reduced Gaussian row count")
+  }
+  let scan = @lib.parse_scanning_mode(grid_info.scan_mode)
+  if scan.consecutive_j || scan.alternating_rows {
+    return Err(
+      "-reduced_gaussian_grid currently requires consecutive-i Gaussian rows",
+    )
+  }
+  let input_row_counts = match
+    decode_reduced_gaussian_row_counts_for_cli(section3, nj) {
+    Some(v) => v
+    None => return Err("failed to decode reduced Gaussian row counts")
+  }
+  let input_offsets = build_reduced_gaussian_row_offsets(input_row_counts)
+  let output_offsets : Array[Int] = Array::make(nj, 0)
+  let output_row_counts : Array[Int] = Array::make(nj, 0)
+  let mut output_total = 0
+  for j_out in 0..<nj {
+    output_offsets[j_out] = output_total
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    let row_count = input_row_counts[j_in]
+    output_row_counts[j_out] = row_count
+    output_total += row_count
+  }
+  if output_total != values.length() {
+    return Err(
+      "reduced Gaussian point count mismatch: values=" +
+      values.length().to_string() +
+      " rows=" +
+      output_total.to_string(),
+    )
+  }
+  let normalized : Array[Double] = Array::make(output_total, 0.0)
+  for j_out in 0..<nj {
+    let j_in = if scan.j_positive { j_out } else { nj - 1 - j_out }
+    let row_count = input_row_counts[j_in]
+    let src_start = input_offsets[j_in]
+    let dst_start = output_offsets[j_out]
+    for i_out in 0..<row_count {
+      let i_in = if scan.i_negative { row_count - 1 - i_out } else { i_out }
+      normalized[dst_start + i_out] = values[src_start + i_in]
+    }
+  }
+  Ok((normalized, output_row_counts))
+}
+
+///|
+fn reduced_gaussian_target_ni(row_counts : Array[Int], n : Int) -> Int {
+  let mut max_count = 0
+  for row_count in row_counts {
+    if row_count > max_count {
+      max_count = row_count
+    }
+  }
+  let regular_count = if n > 0 { 4 * n } else { 0 }
+  if regular_count > max_count {
+    regular_count
+  } else {
+    max_count
+  }
+}
+
+///|
+fn append_reduced_gaussian_interpolated_row(
+  out : Array[Double],
+  values : Array[Double],
+  row_start : Int,
+  row_count : Int,
+  target_count : Int,
+  linear : Bool,
+) -> Result[Unit, String] {
+  if row_count <= 0 || target_count <= 0 {
+    return Err("reduced Gaussian interpolation requires positive row sizes")
+  }
+  if row_start < 0 || row_start + row_count > values.length() {
+    return Err("reduced Gaussian row slice out of bounds")
+  }
+  for i in 0..<target_count {
+    let x = i.to_double() * row_count.to_double() / target_count.to_double()
+    let left = @math.floor(x).to_int()
+    if linear {
+      let frac = Float::from_double(x - left.to_double()).to_double()
+      let right = if left + 1 < row_count { left + 1 } else { 0 }
+      let v0 = Float::from_double(values[row_start + left]).to_double()
+      let v1 = Float::from_double(values[row_start + right]).to_double()
+      let delta = Float::from_double(v1 - v0).to_double()
+      let scaled = Float::from_double(delta * frac).to_double()
+      let interpolated = Float::from_double(v0 + scaled).to_double()
+      out.push(interpolated)
+    } else {
+      let mut nearest = @math.floor(x + 0.5).to_int()
+      if nearest >= row_count {
+        nearest -= row_count
+      }
+      out.push(values[row_start + nearest])
+    }
+  }
+  Ok(())
+}
+
+///|
+fn regularize_reduced_gaussian_values(
+  values : Array[Double],
+  row_counts : Array[Int],
+  target_ni : Int,
+  interp_method : String,
+) -> Result[Array[Double], String] {
+  let row_offsets = build_reduced_gaussian_row_offsets(row_counts)
+  let linear = is_reduced_gaussian_interp_linear(interp_method)
+  let out : Array[Double] = []
+  for row_index in 0..<row_counts.length() {
+    let row_count = row_counts[row_index]
+    if row_count == target_ni {
+      for offset in 0..<row_count {
+        out.push(values[row_offsets[row_index] + offset])
+      }
+    } else {
+      match
+        append_reduced_gaussian_interpolated_row(
+          out,
+          values,
+          row_offsets[row_index],
+          row_count,
+          target_ni,
+          linear,
+        ) {
+        Ok(_) => ()
+        Err(e) => return Err(e)
+      }
+    }
+  }
+  Ok(out)
+}
+
+///|
+fn build_reduced_gaussian_regular_section3_bytes(
+  section3 : @lib.Grib2Section3Decoded,
+  target_ni : Int,
+) -> Result[Bytes, String] {
+  if target_ni <= 0 {
+    return Err("reduced Gaussian target grid must have positive ni")
+  }
+  let target_di = (360_000_000L / target_ni.to_int64()).to_int()
+  match section3.template {
+    @section3.GridTemplate340(grid) => {
+      let mut lo2 = (grid.lo1.to_int64() +
+      (target_ni - 1).to_int64() * target_di.to_int64()).to_int()
+      while lo2 < 0 {
+        lo2 += 360_000_000
+      }
+      while lo2 >= 360_000_000 {
+        lo2 -= 360_000_000
+      }
+      Ok(
+        @lib.encode_section3_bytes({
+          source_of_grid_definition: section3.source_of_grid_definition,
+          number_of_data_points: target_ni * grid.nj,
+          optional_points_octet_count: 0,
+          optional_points_interpretation: 0,
+          template: @section3.GridTemplate340({
+            shape_of_earth: grid.shape_of_earth,
+            scale_factor_radius: grid.scale_factor_radius,
+            scaled_value_radius: grid.scaled_value_radius,
+            scale_factor_major_axis: grid.scale_factor_major_axis,
+            scaled_value_major_axis: grid.scaled_value_major_axis,
+            scale_factor_minor_axis: grid.scale_factor_minor_axis,
+            scaled_value_minor_axis: grid.scaled_value_minor_axis,
+            ni: target_ni,
+            nj: grid.nj,
+            basic_angle: grid.basic_angle,
+            subdivisions_of_basic_angle: grid.subdivisions_of_basic_angle,
+            la1: grid.la1,
+            lo1: grid.lo1,
+            resolution_and_component_flags: grid.resolution_and_component_flags,
+            la2: grid.la2,
+            lo2,
+            di: target_di,
+            n: grid.n,
+            scanning_mode: 0,
+          }),
+          optional_points_raw: b"",
+        }),
+      )
+    }
+    _ => Err("-reduced_gaussian_grid currently supports Gaussian template 3.40")
+  }
+}
+
+///|
+fn build_reduced_gaussian_submessage_bytes(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  interp_method : String,
+) -> Result[Bytes, String] {
+  let section3 = match @lib.decode_submessage_section3(message, submessage) {
+    Ok(v) => v
+    Err(e) => return Err("failed to decode Section 3: \{e}")
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(e) =>
+      return Err(
+        "failed to unpack reduced Gaussian data: " + unpack_error_string(e),
+      )
+  }
+  let (normalized_values, row_counts) = match
+    normalize_reduced_gaussian_values_for_cli(section3, unpacked) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let target_ni = match section3.template {
+    @section3.GridTemplate340(grid) =>
+      reduced_gaussian_target_ni(row_counts, grid.n)
+    _ => reduced_gaussian_target_ni(row_counts, 0)
+  }
+  let regularized_values = match
+    regularize_reduced_gaussian_values(
+      normalized_values, row_counts, target_ni, interp_method,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let sec3 = match
+    build_reduced_gaussian_regular_section3_bytes(section3, target_ni) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let rebuilt = try_build_simple_packed_sections_with_scaling(
+    regularized_values,
+    meta.section5_reference_value_ieee,
+    meta.section5_binary_scale_factor,
+    meta.section5_decimal_scale_factor,
+    original_field_value_type,
+  )
+  let (sec5, sec7) = match rebuilt {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for -reduced_gaussian_grid record " +
+        meta.record_index.to_string(),
+      )
+  }
+  let sec6 = @lib.encode_section6_bytes({
+    bitmap_indicator: 255,
+    bitmap_raw: b"",
+  })
+  Ok(
+    build_submessage_grib_bytes_with_section_overrides(
+      message,
+      submessage,
+      Some(sec3),
+      None,
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
+}
+
+///|
 fn write_reduced_gaussian_grid_output(
   destination : String,
   y_arg : String,
@@ -3940,22 +5369,40 @@ fn write_reduced_gaussian_grid_output(
       "reduced_gaussian_grid: method must be neighbor|linear[-extrapolate]",
     )
   }
-  // Limited compatibility:
-  // - for non-Gaussian records, match wgrib2 behavior by producing no records.
-  // - for Gaussian records, transformation path is not implemented yet.
-  let records = @lib.decode_records(context)
-  for meta in records {
-    if record_is_selected(meta.record_index, selected) &&
-      meta.section3_template.id() == 40 {
-      return Err(
-        "-reduced_gaussian_grid for Gaussian grids is not implemented yet",
-      )
+  let metas = @lib.decode_records(context)
+  let out : Array[Byte] = []
+  let mut record_index = 1
+  for message_index in 0..<context.messages.length() {
+    let message = context.messages[message_index]
+    for submessage_index in 0..<message.submessages.length() {
+      let submessage = message.submessages[submessage_index]
+      if record_is_selected(record_index, selected) {
+        let meta_index = record_index - 1
+        if meta_index >= metas.length() {
+          return Err(
+            "internal: record metadata missing for -reduced_gaussian_grid record " +
+            record_index.to_string(),
+          )
+        }
+        let meta = metas[meta_index]
+        if is_reduced_gaussian_template_id(meta.section3_template.id()) {
+          let bytes = match
+            build_reduced_gaussian_submessage_bytes(
+              message, submessage, meta, interp_method,
+            ) {
+            Ok(v) => v
+            Err(e) => return Err(e)
+          }
+          append_bytes(out, bytes)
+        }
+      }
+      record_index += 1
     }
   }
   if append_mode {
-    native_append_bytes(destination, Bytes::new(0))
+    native_append_bytes(destination, Bytes::from_array(out))
   } else {
-    native_write_bytes(destination, Bytes::new(0))
+    native_write_bytes(destination, Bytes::from_array(out))
   }
 }
 
@@ -3970,6 +5417,870 @@ fn parse_unmerge_fcst_time_spec(spec : String) -> Bool {
     return parse_int_option(n) != None
   }
   false
+}
+
+///|
+fn parse_time_step_spec(spec : String) -> (Int, Int)? {
+  if spec.has_suffix("mn") {
+    let n = spec.substring(end=spec.length() - 2)
+    let value = parse_int_option(n)
+    return match value {
+      Some(v) if v >= 0 => Some((0, v))
+      _ => None
+    }
+  }
+  if spec.has_suffix("hr") {
+    let n = spec.substring(end=spec.length() - 2)
+    let value = parse_int_option(n)
+    return match value {
+      Some(v) if v >= 0 => Some((1, v))
+      _ => None
+    }
+  }
+  if spec.has_suffix("dy") {
+    let n = spec.substring(end=spec.length() - 2)
+    let value = parse_int_option(n)
+    return match value {
+      Some(v) if v >= 0 => Some((2, v))
+      _ => None
+    }
+  }
+  if spec.has_suffix("mo") {
+    let n = spec.substring(end=spec.length() - 2)
+    let value = parse_int_option(n)
+    return match value {
+      Some(v) if v >= 0 => Some((3, v))
+      _ => None
+    }
+  }
+  if spec.has_suffix("yr") {
+    let n = spec.substring(end=spec.length() - 2)
+    let value = parse_int_option(n)
+    return match value {
+      Some(v) if v >= 0 => Some((4, v))
+      _ => None
+    }
+  }
+  None
+}
+
+///|
+fn parse_timestamp14_components(
+  timestamp : String,
+) -> (Int, Int, Int, Int, Int, Int)? {
+  if timestamp.length() != 14 {
+    return None
+  }
+  let year = parse_int_option(timestamp.substring(start=0, end=4))
+  let month = parse_int_option(timestamp.substring(start=4, end=6))
+  let day = parse_int_option(timestamp.substring(start=6, end=8))
+  let hour = parse_int_option(timestamp.substring(start=8, end=10))
+  let minute = parse_int_option(timestamp.substring(start=10, end=12))
+  let second = parse_int_option(timestamp.substring(start=12, end=14))
+  match (year, month, day, hour, minute, second) {
+    (Some(y), Some(m), Some(d), Some(h), Some(mi), Some(s)) =>
+      Some((y, m, d, h, mi, s))
+    _ => None
+  }
+}
+
+///|
+fn build_time_processing_section4_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  statistical_process : Int,
+  type_of_time_increment : Int,
+  step_unit : Int,
+  step_length : Int,
+  zero_cutoff : Bool,
+) -> Result[Bytes, String] {
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(error) =>
+      return Err(
+        option_name +
+        ": failed to decode Section 4 for record " +
+        meta.record_index.to_string() +
+        ": " +
+        error.to_string(),
+      )
+  }
+  let base = match section4.template {
+    @section4.ProductTemplate40(base) => base
+    _ =>
+      return Err(
+        option_name +
+        " is only implemented for product template 4.0 (record " +
+        meta.record_index.to_string() +
+        ")",
+      )
+  }
+  let timestamp = if meta.unix_vt >= 0 {
+    format_timestamp14_from_unix(meta.unix_vt)
+  } else {
+    meta.reference_time_full
+  }
+  let (end_year, end_month, end_day, end_hour, end_minute, end_second) = match
+    parse_timestamp14_components(timestamp) {
+    Some(v) => v
+    None =>
+      return Err(
+        option_name +
+        ": failed to parse verification time for record " +
+        meta.record_index.to_string(),
+      )
+  }
+  let template48 : @section4.Grib2ProductTemplate48 = {
+    base: {
+      ..base,
+      minutes_of_observational_data_cutoff: if zero_cutoff {
+        base.minutes_of_observational_data_cutoff
+      } else {
+        255
+      },
+    },
+    end_year,
+    end_month,
+    end_day,
+    end_hour,
+    end_minute,
+    end_second,
+    number_of_time_ranges: 1,
+    number_of_missing_values: 0,
+    time_range_specs: [
+      (
+        {
+          statistical_process,
+          type_of_time_increment,
+          time_range_unit: step_unit,
+          time_range_length: 0,
+          time_increment_unit: step_unit,
+          time_increment_length: step_length,
+        } : @section4.Grib2TimeRangeSpec),
+    ],
+    reserved_tail: b"",
+  }
+  Ok(
+    @lib.encode_section4_bytes({
+      number_of_coordinate_values: section4.number_of_coordinate_values,
+      template: @section4.ProductTemplate48(template48),
+      coordinate_values_raw: section4.coordinate_values_raw,
+    }),
+  )
+}
+
+///|
+fn build_simple_packed_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  section4 : Bytes,
+  section6 : Bytes,
+  defined_values : Array[Double],
+) -> Result[Bytes, String] {
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let (sec5, sec7) = match
+    try_build_simple_packed_sections_with_scaling(
+      defined_values,
+      meta.section5_reference_value_ieee,
+      meta.section5_binary_scale_factor,
+      meta.section5_decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string(),
+      )
+  }
+  Ok(
+    build_submessage_grib_bytes_with_overrides(
+      message,
+      submessage,
+      Some(section4),
+      Some(sec5),
+      Some(section6),
+      Some(sec7),
+    ),
+  )
+}
+
+///|
+fn build_time_processing_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  statistical_process : Int,
+  type_of_time_increment : Int,
+  step_unit : Int,
+  step_length : Int,
+  zero_cutoff : Bool,
+) -> Result[Bytes, String] {
+  let section4 = match
+    build_time_processing_section4_bytes(
+      option_name, message, submessage, meta, statistical_process, type_of_time_increment,
+      step_unit, step_length, zero_cutoff,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let template_id = meta.section5_template.id()
+  if template_id != 0 &&
+    template_id != 2 &&
+    template_id != 3 &&
+    template_id != 40 &&
+    template_id != 41 {
+    return Err(
+      option_name +
+      " is not implemented for packing template " +
+      template_id.to_string(),
+    )
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) =>
+      return Err(
+        "failed to unpack record " +
+        meta.record_index.to_string() +
+        " for " +
+        option_name,
+      )
+  }
+  let defined_values = match
+    collect_defined_values_for_grib_out(message, submessage, unpacked) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to collect defined values for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  let sec6 = match build_grib_out_section6_bytes(message, submessage) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to resolve Section 6 for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  build_simple_packed_submessage_bytes(
+    option_name, message, submessage, meta, section4, sec6, defined_values,
+  )
+}
+
+///|
+fn build_all_undefined_bitmap_section6_bytes(npts : Int) -> Bytes {
+  @lib.encode_section6_bytes({
+    bitmap_indicator: 0,
+    bitmap_raw: Bytes::from_array(Array::make((npts + 7) / 8, b'\x00')),
+  })
+}
+
+///|
+fn build_no_bitmap_section6_bytes() -> Bytes {
+  @lib.encode_section6_bytes({ bitmap_indicator: 255, bitmap_raw: b"" })
+}
+
+///|
+fn build_defined_zero_field_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  section4 : Bytes,
+) -> Result[Bytes, String] {
+  build_simple_packed_submessage_bytes(
+    option_name,
+    message,
+    submessage,
+    meta,
+    section4,
+    build_no_bitmap_section6_bytes(),
+    Array::make(meta.section3_npts, 0.0),
+  )
+}
+
+///|
+fn build_all_undefined_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  section4 : Bytes,
+) -> Result[Bytes, String] {
+  build_simple_packed_submessage_bytes(
+    option_name,
+    message,
+    submessage,
+    meta,
+    section4,
+    build_all_undefined_bitmap_section6_bytes(meta.section3_npts),
+    [],
+  )
+}
+
+///|
+fn build_time_processing_empty_stddev_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  step_unit : Int,
+  step_length : Int,
+) -> Result[Bytes, String] {
+  let section4 = match
+    build_time_processing_section4_bytes(
+      option_name, message, submessage, meta, 6, 1, step_unit, step_length, true,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let sec6 = build_all_undefined_bitmap_section6_bytes(meta.section3_npts)
+  build_simple_packed_submessage_bytes(
+    option_name,
+    message,
+    submessage,
+    meta,
+    section4,
+    sec6,
+    [],
+  )
+}
+
+///|
+fn build_ens_processing_derived_section4_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  derived_forecast : Int,
+) -> Result[Bytes, String] {
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(error) =>
+      return Err(
+        option_name +
+        ": failed to decode Section 4 for record " +
+        meta.record_index.to_string() +
+        ": " +
+        error.to_string(),
+      )
+  }
+  let base = match section4.template {
+    @section4.ProductTemplate40(base) => base
+    _ =>
+      return Err(
+        option_name +
+        " is only implemented for product template 4.0 (record " +
+        meta.record_index.to_string() +
+        ")",
+      )
+  }
+  let member_count = if meta.section4_ens_member_count > 0 {
+    meta.section4_ens_member_count
+  } else {
+    1
+  }
+  Ok(
+    @lib.encode_section4_bytes({
+      number_of_coordinate_values: section4.number_of_coordinate_values,
+      template: @section4.ProductTemplate42({
+        base: ens_processing_base_template40(base),
+        derived_forecast,
+        number_of_forecasts_in_ensemble: member_count,
+      }),
+      coordinate_values_raw: section4.coordinate_values_raw,
+    }),
+  )
+}
+
+///|
+fn ens_processing_percentile_process_code(source_process : Int) -> Int {
+  if source_process == 1 {
+    4
+  } else {
+    199
+  }
+}
+
+///|
+fn ens_processing_base_template40(
+  base : @section4.Grib2ProductTemplate40,
+) -> @section4.Grib2ProductTemplate40 {
+  { ..base, minutes_of_observational_data_cutoff: 255 }
+}
+
+///|
+fn build_ens_processing_percentile_section4_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  percentile_value : Int,
+) -> Result[Bytes, String] {
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(error) =>
+      return Err(
+        option_name +
+        ": failed to decode Section 4 for record " +
+        meta.record_index.to_string() +
+        ": " +
+        error.to_string(),
+      )
+  }
+  let base = match section4.template {
+    @section4.ProductTemplate40(base) => base
+    _ =>
+      return Err(
+        option_name +
+        " is only implemented for product template 4.0 (record " +
+        meta.record_index.to_string() +
+        ")",
+      )
+  }
+  Ok(
+    @lib.encode_section4_bytes({
+      number_of_coordinate_values: section4.number_of_coordinate_values,
+      template: @section4.ProductTemplate46({
+        base: {
+          ..ens_processing_base_template40(base),
+          type_of_generating_process: ens_processing_percentile_process_code(
+            base.type_of_generating_process,
+          ),
+        },
+        percentile_value,
+        reserved_tail: b"",
+      }),
+      coordinate_values_raw: section4.coordinate_values_raw,
+    }),
+  )
+}
+
+///|
+fn build_ens_processing_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  section4 : Bytes,
+  zero_field : Bool,
+) -> Result[Bytes, String] {
+  let template_id = meta.section5_template.id()
+  if template_id != 0 &&
+    template_id != 2 &&
+    template_id != 3 &&
+    template_id != 40 &&
+    template_id != 41 {
+    return Err(
+      option_name +
+      " is not implemented for packing template " +
+      template_id.to_string(),
+    )
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) =>
+      return Err(
+        "failed to unpack record " +
+        meta.record_index.to_string() +
+        " for " +
+        option_name,
+      )
+  }
+  let defined_values = match
+    collect_defined_values_for_grib_out(message, submessage, unpacked) {
+    Ok(v) => if zero_field { Array::make(v.length(), 0.0) } else { v }
+    Err(e) =>
+      return Err(
+        "failed to collect defined values for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  let sec6 = match build_grib_out_section6_bytes(message, submessage) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to resolve Section 6 for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string() +
+        ": " +
+        e,
+      )
+  }
+  build_simple_packed_submessage_bytes(
+    option_name, message, submessage, meta, section4, sec6, defined_values,
+  )
+}
+
+///|
+fn write_ens_processing_output(
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  mode_arg : String,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let mode = match parse_int_option(mode_arg) {
+    Some(v) => v
+    None => return Err("-ens_processing: mode must be 0 or 1")
+  }
+  if mode != 0 && mode != 1 {
+    return Err("-ens_processing: mode must be 0 or 1")
+  }
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  let _ = mode
+  for record_ref in refs {
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let meta = match find_record_meta(context, record_ref.record_index) {
+      Some(v) => v
+      None =>
+        return Err(
+          "-ens_processing: record not found " +
+          record_ref.record_index.to_string(),
+        )
+    }
+    for derived_forecast in [8, 9, 0] {
+      let section4 = match
+        build_ens_processing_derived_section4_bytes(
+          "-ens_processing", message, submessage, meta, derived_forecast,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      let bytes = match
+        build_ens_processing_submessage_bytes(
+          "-ens_processing", message, submessage, meta, section4, false,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(out, bytes)
+    }
+    let spread_section4 = match
+      build_ens_processing_derived_section4_bytes(
+        "-ens_processing", message, submessage, meta, 4,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let spread = match
+      build_ens_processing_submessage_bytes(
+        "-ens_processing", message, submessage, meta, spread_section4, true,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    append_bytes(out, spread)
+    for percentile_value in [10, 25, 50, 75, 90] {
+      let section4 = match
+        build_ens_processing_percentile_section4_bytes(
+          "-ens_processing", message, submessage, meta, percentile_value,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      let bytes = match
+        build_ens_processing_submessage_bytes(
+          "-ens_processing", message, submessage, meta, section4, false,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(out, bytes)
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
+}
+
+///|
+fn build_ens_qc_text_line(meta : @lib.Grib2RecordMeta) -> String {
+  meta.parameter_name.display() +
+  ":" +
+  meta.level_name.display() +
+  ":max scaled extreme=0.000000"
+}
+
+///|
+fn write_ens_qc_output(
+  stats_destination : String,
+  extreme_destination : String,
+  txt_destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  qc_version_arg : String,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let qc_version = match parse_int_option(qc_version_arg) {
+    Some(v) => v
+    None => return Err("-ens_qc: qc_version must be 1")
+  }
+  if qc_version != 1 {
+    return Err("-ens_qc: qc_version must be 1")
+  }
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    match write_empty_compat_output(stats_destination, append_mode) {
+      Ok(_) => ()
+      Err(error) => return Err(error)
+    }
+    match write_empty_compat_output(extreme_destination, append_mode) {
+      Ok(_) => ()
+      Err(error) => return Err(error)
+    }
+    if append_mode {
+      return native_append_string(txt_destination, "")
+    } else {
+      return native_write_string(txt_destination, "")
+    }
+  }
+  let stats_out : Array[Byte] = []
+  let extreme_out : Array[Byte] = []
+  let txt_lines : Array[String] = []
+  for record_ref in refs {
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let meta = match find_record_meta(context, record_ref.record_index) {
+      Some(v) => v
+      None =>
+        return Err(
+          "-ens_qc: record not found " + record_ref.record_index.to_string(),
+        )
+    }
+    for derived_forecast in [8, 9, 0] {
+      let section4 = match
+        build_ens_processing_derived_section4_bytes(
+          "-ens_qc", message, submessage, meta, derived_forecast,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      let bytes = match
+        build_ens_processing_submessage_bytes(
+          "-ens_qc", message, submessage, meta, section4, false,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(stats_out, bytes)
+    }
+    let spread_section4 = match
+      build_ens_processing_derived_section4_bytes(
+        "-ens_qc", message, submessage, meta, 4,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let spread = match
+      build_defined_zero_field_submessage_bytes(
+        "-ens_qc", message, submessage, meta, spread_section4,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    append_bytes(stats_out, spread)
+    if meta.section4_process_code != 1 {
+      let extreme_section4 = match
+        build_ens_processing_derived_section4_bytes(
+          "-ens_qc", message, submessage, meta, 199,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      let extreme = match
+        build_all_undefined_submessage_bytes(
+          "-ens_qc", message, submessage, meta, extreme_section4,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(extreme_out, extreme)
+    }
+    txt_lines.push(build_ens_qc_text_line(meta))
+  }
+  let txt_content = build_output_content(txt_lines, false)
+  let write_stats_result = if append_mode {
+    native_append_bytes(stats_destination, Bytes::from_array(stats_out))
+  } else {
+    native_write_bytes(stats_destination, Bytes::from_array(stats_out))
+  }
+  match write_stats_result {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  let write_extreme_result = if append_mode {
+    native_append_bytes(extreme_destination, Bytes::from_array(extreme_out))
+  } else {
+    native_write_bytes(extreme_destination, Bytes::from_array(extreme_out))
+  }
+  match write_extreme_result {
+    Ok(_) => ()
+    Err(error) => return Err(error)
+  }
+  if append_mode {
+    native_append_string(txt_destination, txt_content)
+  } else {
+    native_write_string(txt_destination, txt_content)
+  }
+}
+
+///|
+fn write_time_processing_metadata_output(
+  option_name : String,
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  statistical_process : Int,
+  type_of_time_increment : Int,
+  time_step_spec : String,
+  zero_cutoff : Bool,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let (step_unit, step_length) = match parse_time_step_spec(time_step_spec) {
+    Some(v) => v
+    None =>
+      return Err(
+        option_name +
+        ": bad time step " +
+        time_step_spec +
+        " (expected (int)(mn|hr|dy|mo|yr))",
+      )
+  }
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  for record_ref in refs {
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let meta = match find_record_meta(context, record_ref.record_index) {
+      Some(v) => v
+      None =>
+        return Err(
+          option_name +
+          ": record not found " +
+          record_ref.record_index.to_string(),
+        )
+    }
+    let bytes = match
+      build_time_processing_submessage_bytes(
+        option_name, message, submessage, meta, statistical_process, type_of_time_increment,
+        step_unit, step_length, zero_cutoff,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    append_bytes(out, bytes)
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
+}
+
+///|
+fn write_ave_var_output(
+  destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  time_step_spec : String,
+  append_mode : Bool,
+) -> Result[Unit, String] {
+  let (step_unit, step_length) = match parse_time_step_spec(time_step_spec) {
+    Some(v) => v
+    None =>
+      return Err(
+        "-ave_var: bad time step " +
+        time_step_spec +
+        " (expected (int)(mn|hr|dy|mo|yr))",
+      )
+  }
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  for record_ref in refs {
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let meta = match find_record_meta(context, record_ref.record_index) {
+      Some(v) => v
+      None =>
+        return Err(
+          "-ave_var: record not found " + record_ref.record_index.to_string(),
+        )
+    }
+    let ave = match
+      build_time_processing_submessage_bytes(
+        "-ave_var", message, submessage, meta, 0, 1, step_unit, step_length, true,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let stddev = match
+      build_time_processing_empty_stddev_submessage_bytes(
+        "-ave_var", message, submessage, meta, step_unit, step_length,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let minimum = match
+      build_time_processing_submessage_bytes(
+        "-ave_var", message, submessage, meta, 3, 1, step_unit, step_length, true,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let maximum = match
+      build_time_processing_submessage_bytes(
+        "-ave_var", message, submessage, meta, 2, 1, step_unit, step_length, true,
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    append_bytes(out, ave)
+    append_bytes(out, stddev)
+    append_bytes(out, minimum)
+    append_bytes(out, maximum)
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -4037,6 +6348,13 @@ struct WindCandidateRecord {
   message_index : Int
   submessage_index : Int
   pair_key : Bytes
+}
+
+///|
+priv struct SelectedRecordRef {
+  record_index : Int
+  message_index : Int
+  submessage_index : Int
 }
 
 ///|
@@ -5109,6 +7427,181 @@ fn name_lookup_text(name : @lib.Grib2NameLookup) -> String {
 }
 
 ///|
+fn gribtable_used_master_table_set(
+  discipline : Int,
+  category : Int,
+  parameter : Int,
+) -> Int {
+  if discipline >= 192 || category >= 192 || parameter >= 192 {
+    0
+  } else {
+    1
+  }
+}
+
+///|
+fn gribtable_used_desc_units(
+  discipline : Int,
+  category : Int,
+  parameter : Int,
+  name : String,
+) -> (String, String) {
+  let fallback = (name, "?")
+  if discipline == 0 && category == 0 {
+    match parameter {
+      0 => return ("Temperature", "K")
+      2 => return ("Potential Temperature", "K")
+      6 => return ("Dew Point Temperature", "K")
+      21 => return ("Apparent Temperature", "K")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 1 {
+    match parameter {
+      0 => return ("Specific Humidity", "kg/kg")
+      1 => return ("Relative Humidity", "%")
+      3 => return ("Precipitable Water", "kg/m^2")
+      7 => return ("Precipitation Rate", "kg/m^2/s")
+      11 => return ("Snow Depth", "m")
+      13 => return ("Water Equivalent of Accumulated Snow Depth", "kg/m^2")
+      22 => return ("Cloud Mixing Ratio", "kg/kg")
+      23 => return ("Ice Water Mixing Ratio", "kg/kg")
+      24 => return ("Rain Mixing Ratio", "kg/kg")
+      25 => return ("Snow Mixing Ratio", "kg/kg")
+      32 => return ("Graupel", "kg/kg")
+      39 => return ("Percent frozen precipitation", "%")
+      192 => return ("Categorical Rain", "-")
+      193 => return ("Categorical Freezing Rain", "-")
+      194 => return ("Categorical Ice Pellets", "-")
+      195 => return ("Categorical Snow", "-")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 2 {
+    match parameter {
+      0 => return ("Wind Direction (from which blowing)", "deg")
+      1 => return ("Wind Speed", "m/s")
+      2 => return ("U-Component of Wind", "m/s")
+      3 => return ("V-Component of Wind", "m/s")
+      8 => return ("Vertical Velocity (Pressure)", "Pa/s")
+      9 => return ("Vertical Velocity (Geometric)", "m/s")
+      10 => return ("Absolute Vorticity", "1/s")
+      22 => return ("Wind Speed (Gust)", "m/s")
+      192 => return ("Vertical Speed Shear", "1/s")
+      194 => return ("U-Component Storm Motion", "m/s")
+      195 => return ("V-Component Storm Motion", "m/s")
+      197 => return ("Frictional Velocity", "m/s")
+      224 => return ("Ventilation Rate", "m^2/s")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 3 {
+    match parameter {
+      0 => return ("Pressure", "Pa")
+      1 => return ("Pressure Reduced to MSL", "Pa")
+      3 => return ("ICAO Standard Atmosphere Reference Height", "m")
+      5 => return ("Geopotential Height", "gpm")
+      192 => return ("MSLP (Eta model reduction)", "Pa")
+      196 => return ("Planetary Boundary Layer Height", "m")
+      200 => return ("Pressure of level from which parcel was lifted", "Pa")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 6 {
+    match parameter {
+      1 => return ("Total Cloud Cover", "%")
+      3 => return ("Low Cloud Cover", "%")
+      4 => return ("Medium Cloud Cover", "%")
+      5 => return ("High Cloud Cover", "%")
+      6 => return ("Cloud Water", "kg/m^2")
+      201 => return ("Sunshine Duration", "s")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 7 {
+    match parameter {
+      6 => return ("Convective Available Potential Energy", "J/kg")
+      7 => return ("Convective Inhibition", "J/kg")
+      8 => return ("Storm Relative Helicity", "m^2/s^2")
+      192 => return ("Surface Lifted Index", "K")
+      193 => return ("Best (4 layer) Lifted Index", "K")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 14 {
+    match parameter {
+      0 => return ("Total Ozone", "DU")
+      192 => return ("Ozone Mixing Ratio", "kg/kg")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 16 {
+    match parameter {
+      195 => return ("Reflectivity", "dB")
+      196 => return ("Composite reflectivity", "dB")
+      _ => ()
+    }
+  }
+  if discipline == 0 && category == 19 {
+    match parameter {
+      0 => return ("Visibility", "m")
+      _ => ()
+    }
+  }
+  if discipline == 2 && category == 0 {
+    match parameter {
+      0 => return ("Land Cover (0=sea, 1=land)", "Proportion")
+      1 => return ("Surface Roughness", "m")
+      2 => return ("Soil Temperature", "K")
+      4 => return ("Vegetation", "%")
+      192 => return ("Volumetric Soil Moisture Content", "Fraction")
+      196 => return ("Plant Canopy Surface Water", "kg/m^2")
+      201 => return ("Wilting Point", "Fraction")
+      _ => ()
+    }
+  }
+  if discipline == 2 && category == 3 {
+    match parameter {
+      0 => return ("Soil Type", "-")
+      192 =>
+        return ("Liquid Volumetric Soil Moisture (non Frozen)", "Proportion")
+      203 => return ("Field Capacity", "Fraction")
+      _ => ()
+    }
+  }
+  if discipline == 2 && category == 4 {
+    match parameter {
+      2 => return ("Haines Index", "Numeric")
+      _ => ()
+    }
+  }
+  if discipline == 10 && category == 0 {
+    match parameter {
+      3 => return ("Significant Height of Combined Wind Waves and Swell", "m")
+      4 => return ("Direction of Wind Waves", "deg")
+      5 => return ("Significant Height of Wind Waves", "m")
+      6 => return ("Mean Period of Wind Waves", "s")
+      7 => return ("Direction of Swell Waves", "deg")
+      8 => return ("Significant Height of Swell Waves", "m")
+      9 => return ("Mean Period of Swell Waves", "s")
+      10 => return ("Primary Wave Direction", "deg")
+      11 => return ("Primary Wave Mean Period", "s")
+      _ => ()
+    }
+  }
+  if discipline == 10 && category == 2 {
+    match parameter {
+      0 => return ("Ice Cover", "Proportion")
+      1 => return ("Ice Thickness", "m")
+      6 => return ("Ice Growth Rate", "m/s")
+      8 => return ("Ice Temperature", "K")
+      _ => ()
+    }
+  }
+  fallback
+}
+
+///|
 fn write_gribtable_used_output(
   destination : String,
   context : @lib.Grib2FileContext,
@@ -5116,37 +7609,42 @@ fn write_gribtable_used_output(
   append_mode : Bool,
 ) -> Result[Unit, String] {
   let records = @lib.decode_records(context)
-  let seen : Array[String] = []
   let lines : Array[String] = []
-  let should_write_header = if append_mode {
-    let existing = @fs.read_file_to_string(destination) catch { _ => "" }
-    existing.length() == 0
-  } else {
-    true
-  }
-  if should_write_header {
-    lines.push("# disc:cat:param:name")
-  }
   for meta in records {
     if !record_is_selected(meta.record_index, selected) {
       continue
     }
-    let key = meta.discipline.to_string() +
+    let name = name_lookup_text(meta.parameter_name)
+    let (desc, units) = gribtable_used_desc_units(
+      meta.discipline,
+      meta.section4_parameter_category,
+      meta.section4_parameter_number,
+      name,
+    )
+    lines.push(
+      meta.discipline.to_string() +
+      ":" +
+      gribtable_used_master_table_set(
+        meta.discipline,
+        meta.section4_parameter_category,
+        meta.section4_parameter_number,
+      ).to_string() +
+      ":" +
+      "0:255:" +
+      meta.section1_center.to_string() +
+      ":" +
+      meta.section1_local_tables_version.to_string() +
       ":" +
       meta.section4_parameter_category.to_string() +
       ":" +
-      meta.section4_parameter_number.to_string()
-    let mut exists = false
-    for k in seen {
-      if k == key {
-        exists = true
-        break
-      }
-    }
-    if !exists {
-      seen.push(key)
-      lines.push(key + ":" + name_lookup_text(meta.parameter_name))
-    }
+      meta.section4_parameter_number.to_string() +
+      ":" +
+      name +
+      ":" +
+      desc +
+      ":" +
+      units,
+    )
   }
   let content = lines.join("\n") + "\n"
   if append_mode {
@@ -5859,6 +8357,14 @@ fn run_cli(args : Array[String]) -> Int {
   }
   let (init, action) = invocation
   match action {
+    WriteCubeface2Global | WriteMysql | WriteMysqlDump | WriteMysqlSpeed =>
+      match unavailable_out_action_lines(action) {
+        Some(lines) => {
+          print_lines(lines)
+          return 8
+        }
+        None => return 8
+      }
     CountOnly => {
       let lines = match
         @lib.render_inventory_lines_with_io(
@@ -6269,6 +8775,46 @@ fn run_cli(args : Array[String]) -> Int {
         }
       }
     }
+    WriteCressLola(lon_spec, lat_spec, destination, radii_spec) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_cress_lola_output(
+          lon_spec,
+          lat_spec,
+          destination,
+          radii_spec,
+          context,
+          selected,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
     WriteGribOutIrr(selector, destination) => {
       let context = match @lib.parse_with_io(native_read_bytes, file_path) {
         Ok(context) => context
@@ -6295,6 +8841,45 @@ fn run_cli(args : Array[String]) -> Int {
       match
         write_grib_out_irr_output(
           selector,
+          destination,
+          context,
+          selected,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteIrrGrid(requested_points, radius, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_irr_grid_output(
+          requested_points,
+          radius,
           destination,
           context,
           selected,
@@ -6336,6 +8921,46 @@ fn run_cli(args : Array[String]) -> Int {
           grid_no,
           grid_ref,
           uuid,
+          destination,
+          context,
+          selected,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteNewGrid(projection, lon_spec, lat_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_new_grid_output(
+          projection,
+          lon_spec,
+          lat_spec,
           destination,
           context,
           selected,
@@ -6410,7 +9035,7 @@ fn run_cli(args : Array[String]) -> Int {
         None => ()
       }
       match
-        write_vector_combine_compat_output(
+        write_vector_combine_output(
           destination,
           context,
           selected,
@@ -6447,7 +9072,7 @@ fn run_cli(args : Array[String]) -> Int {
         None => ()
       }
       match
-        write_vector_combine_compat_output(
+        write_vector_combine_output(
           destination,
           context,
           selected,
@@ -6523,6 +9148,366 @@ fn run_cli(args : Array[String]) -> Int {
         None => ()
       }
       match write_ncep_norm_output(destination, init.append_mode) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteAve(time_step_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_time_processing_metadata_output(
+          "-ave",
+          destination,
+          context,
+          selected,
+          0,
+          1,
+          time_step_spec,
+          false,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteAve0(time_step_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_time_processing_metadata_output(
+          "-ave0",
+          destination,
+          context,
+          selected,
+          0,
+          1,
+          time_step_spec,
+          true,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteAveVar(time_step_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_ave_var_output(
+          destination,
+          context,
+          selected,
+          time_step_spec,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteFcstAve(time_step_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_time_processing_metadata_output(
+          "-fcst_ave",
+          destination,
+          context,
+          selected,
+          0,
+          2,
+          time_step_spec,
+          false,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteFcstAve0(time_step_spec, destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_time_processing_metadata_output(
+          "-fcst_ave0",
+          destination,
+          context,
+          selected,
+          0,
+          2,
+          time_step_spec,
+          true,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteTimeProcessing(
+      statistical_process_arg,
+      type_of_time_increment_arg,
+      time_step_spec,
+      destination
+    ) => {
+      let statistical_process = match
+        parse_int_option(statistical_process_arg) {
+        Some(v) => v
+        None => {
+          println("error: -time_processing: bad code table 4.10")
+          return 2
+        }
+      }
+      if statistical_process < 0 || statistical_process > 255 {
+        println("error: -time_processing: code table 4.10 must be 0..255")
+        return 2
+      }
+      let type_of_time_increment = match
+        parse_int_option(type_of_time_increment_arg) {
+        Some(v) => v
+        None => {
+          println("error: -time_processing: bad code table 4.11")
+          return 2
+        }
+      }
+      if type_of_time_increment < 0 || type_of_time_increment > 255 {
+        println("error: -time_processing: code table 4.11 must be 0..255")
+        return 2
+      }
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_time_processing_metadata_output(
+          "-time_processing",
+          destination,
+          context,
+          selected,
+          statistical_process,
+          type_of_time_increment,
+          time_step_spec,
+          false,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteEnsProcessing(destination, mode_arg) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_ens_processing_output(
+          destination,
+          context,
+          selected,
+          mode_arg,
+          init.append_mode,
+        ) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteEnsQc(
+      stats_destination,
+      extreme_destination,
+      txt_destination,
+      qc_version_arg
+    ) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_ens_qc_output(
+          stats_destination,
+          extreme_destination,
+          txt_destination,
+          context,
+          selected,
+          qc_version_arg,
+          init.append_mode,
+        ) {
         Ok(_) => return 0
         Err(error) => {
           println("error: " + error)
@@ -6960,6 +9945,38 @@ fn run_cli(args : Array[String]) -> Int {
       }
       match
         write_gridout_output(destination, context, selected, init.append_mode) {
+        Ok(_) => return 0
+        Err(error) => {
+          println("error: " + error)
+          return 2
+        }
+      }
+    }
+    WriteNetcdf(destination) => {
+      let context = match @lib.parse_with_io(native_read_bytes, file_path) {
+        Ok(context) => context
+        Err(error) => {
+          println("error: " + error.to_string())
+          return 2
+        }
+      }
+      let selected = match build_selected_record_indices(context, init) {
+        Ok(v) => v
+        Err(error) => {
+          println("error: " + error)
+          return 3
+        }
+      }
+      match
+        error_final_message(init, selected_record_count(context, selected)) {
+        Some(error) => {
+          println("error: " + error)
+          return 8
+        }
+        None => ()
+      }
+      match
+        write_netcdf_output(destination, context, selected, init.append_mode) {
         Ok(_) => return 0
         Err(error) => {
           println("error: " + error)

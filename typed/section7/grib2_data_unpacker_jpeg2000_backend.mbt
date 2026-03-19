@@ -195,9 +195,7 @@ pub fn unpack_jpeg2000_with_external_package(
   if num_points < 0 {
     return Err(UnsupportedTemplate("num_points must be >= 0"))
   }
-  let decoded = try {
-    @jpeg2000.decode(data)
-  } catch {
+  let decoded = @jpeg2000.decode(data) catch {
     e =>
       return Err(UnsupportedTemplate("external jpeg2000 decode failed: \{e}"))
   }
