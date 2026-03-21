@@ -457,6 +457,18 @@ fn expect_forecast_values_close(
   actual : Array[Double],
   expected : Array[Double],
 ) -> Result[Unit, String] {
+  expect_forecast_values_close_with_min_tolerance(
+    label, actual, expected, 0.006,
+  )
+}
+
+///|
+fn expect_forecast_values_close_with_min_tolerance(
+  label : String,
+  actual : Array[Double],
+  expected : Array[Double],
+  min_tolerance : Double,
+) -> Result[Unit, String] {
   if actual.length() != expected.length() {
     return Err(
       label +
@@ -476,7 +488,11 @@ fn expect_forecast_values_close(
       continue
     }
     let scale = if want.abs() > 1.0 { want.abs() } else { 1.0 }
-    let tolerance = if 0.0006 * scale > 0.006 { 0.0006 * scale } else { 0.006 }
+    let tolerance = if 0.0006 * scale > min_tolerance {
+      0.0006 * scale
+    } else {
+      min_tolerance
+    }
     if (got - want).abs() > tolerance {
       return Err(
         label +
@@ -3520,6 +3536,198 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-
 }
 
 ///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH36-39)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
+  let input = "target/cmd_main_ncep_norm_realworld_fh36_39_input.grb2"
+  let out = "target/cmd_main_ncep_norm_realworld_fh36_39_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH36-39 ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="2")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh36-39 ncep_norm record 1",
+      out_values[0],
+      source_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh36-39 ncep_norm record 2",
+      out_values[1],
+      forecast_residual_values(Ave, source_fields[0], source_fields[1], 3, 6),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_ncep_norm_realworld_fh18_33_long_input.grb2"
+  let out = "target/cmd_main_ncep_norm_realworld_fh18_33_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280, 372, 464]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 long ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  for pair in [0, 2, 4] {
+    match
+      expect_forecast_values_close(
+        "fh18-33 long ncep_norm source record " + (pair + 1).to_string(),
+        out_values[pair],
+        source_fields[pair],
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+    match
+      expect_forecast_values_close(
+        "fh18-33 long ncep_norm residual record " + (pair + 2).to_string(),
+        out_values[pair + 1],
+        forecast_residual_values(
+          Ave,
+          source_fields[pair],
+          source_fields[pair + 1],
+          3,
+          6,
+        ),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (UGRD FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_ncep_norm_realworld_fh18_33_ugrd_long_input.grb2"
+  let out = "target/cmd_main_ncep_norm_realworld_fh18_33_ugrd_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [2, 94, 186, 278, 370, 462]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 long UGRD ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  for pair in [0, 2, 4] {
+    match
+      expect_forecast_values_close(
+        "fh18-33 long ugrd ncep_norm source record " + (pair + 1).to_string(),
+        out_values[pair],
+        source_fields[pair],
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+    match
+      expect_forecast_values_close(
+        "fh18-33 long ugrd ncep_norm residual record " + (pair + 2).to_string(),
+        out_values[pair + 1],
+        forecast_residual_values(
+          Ave,
+          source_fields[pair],
+          source_fields[pair + 1],
+          3,
+          6,
+        ),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
 test "run_cli keeps varying-dt ncep_norm series as pass-through" {
   let input = "target/cmd_main_ncep_norm_passthrough_input.grb2"
   let out = "target/cmd_main_ncep_norm_passthrough_test.grb2"
@@ -4138,6 +4346,172 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18
 }
 
 ///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH36-39)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
+  let input = "target/cmd_main_merge_fcst_realworld_fh36_39_input.grb2"
+  let out = "target/cmd_main_merge_fcst_realworld_fh36_39_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH36-39 merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="1")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\"]",
+  )
+  let merged = forecast_scale_average_values(
+    forecast_merge_values(Ave, source_fields[0], source_fields[1]),
+    0.5,
+  )
+  match
+    expect_forecast_values_close(
+      "fh36-39 merge_fcst record 1",
+      out_values[0],
+      merged,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_merge_fcst_realworld_fh18_33_long_input.grb2"
+  let out = "target/cmd_main_merge_fcst_realworld_fh18_33_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 15, duration: 3, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280, 372, 464]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 long merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="3")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\", \"6/6\", \"12/6\"]",
+  )
+  for pair in [0, 2, 4] {
+    let merged = forecast_scale_average_values(
+      forecast_merge_values(Ave, source_fields[pair], source_fields[pair + 1]),
+      0.5,
+    )
+    match
+      expect_forecast_values_close(
+        "fh18-33 long merge_fcst record " + (pair / 2 + 1).to_string(),
+        out_values[pair / 2],
+        merged,
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (UGRD FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_merge_fcst_realworld_fh18_33_ugrd_long_input.grb2"
+  let out = "target/cmd_main_merge_fcst_realworld_fh18_33_ugrd_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 15, duration: 3, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [2, 94, 186, 278, 370, 462]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 long UGRD merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="3")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\", \"6/6\", \"12/6\"]",
+  )
+  for pair in [0, 2, 4] {
+    let merged = forecast_scale_average_values(
+      forecast_merge_values(Ave, source_fields[pair], source_fields[pair + 1]),
+      0.5,
+    )
+    match
+      expect_forecast_values_close_with_min_tolerance(
+        "fh18-33 long ugrd merge_fcst record " + (pair / 2 + 1).to_string(),
+        out_values[pair / 2],
+        merged,
+        0.01,
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
 test "run_cli supports -unmerge_fcst on synthetic PDT4.8 acc series" {
   let input = "target/cmd_main_unmerge_fcst_input.grb2"
   let out = "target/cmd_main_unmerge_fcst_test.grb2"
@@ -4355,6 +4729,223 @@ test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH
     match
       expect_forecast_values_close(
         "fh18-33 unmerge_fcst zero record " + (index + 1).to_string(),
+        out_values[index],
+        Array::make(out_values[index].length(), 0.0),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH36-39)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
+  let input = "target/cmd_main_unmerge_fcst_realworld_fh36_39_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_realworld_fh36_39_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH36-39 unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="2")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh36-39 unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh36-39 unmerge_fcst zero record 2",
+      out_values[1],
+      Array::make(out_values[1].length(), 0.0),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_unmerge_fcst_realworld_fh18_33_long_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_realworld_fh18_33_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 15, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 18, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280, 372, 464]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 long unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh18-33 long unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  for index in 1..<out_values.length() {
+    match
+      expect_forecast_values_close(
+        "fh18-33 long unmerge_fcst zero record " + (index + 1).to_string(),
+        out_values[index],
+        Array::make(out_values[index].length(), 0.0),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (UGRD FH18-33 long)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_unmerge_fcst_realworld_fh18_33_ugrd_long_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_realworld_fh18_33_ugrd_long_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 15, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 18, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [2, 94, 186, 278, 370, 462]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to decode FH18-33 long UGRD unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh18-33 long ugrd unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  for index in 1..<out_values.length() {
+    match
+      expect_forecast_values_close(
+        "fh18-33 long ugrd unmerge_fcst zero record " + (index + 1).to_string(),
         out_values[index],
         Array::make(out_values[index].length(), 0.0),
       ) {
