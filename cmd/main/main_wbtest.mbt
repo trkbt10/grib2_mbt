@@ -42,6 +42,14 @@ fn count_grib_magic(bytes : Bytes) -> Int {
 }
 
 ///|
+fn bytes_be_u32(bytes : Bytes, offset : Int) -> Int {
+  (bytes[offset].to_int() << 24) |
+  (bytes[offset + 1].to_int() << 16) |
+  (bytes[offset + 2].to_int() << 8) |
+  bytes[offset + 3].to_int()
+}
+
+///|
 fn decode_single_template48_output(
   path : String,
 ) -> Result[(@lib.Grib2RecordMeta, @section4.Grib2ProductTemplate48), String] {
@@ -91,6 +99,437 @@ fn decode_template48_outputs(
     }
   }
   Ok((metas, templates))
+}
+
+///|
+fn decode_template48_outputs_with_values(
+  path : String,
+) -> Result[
+  (
+    Array[@lib.Grib2RecordMeta],
+    Array[@section4.Grib2ProductTemplate48],
+    Array[Array[Double]],
+  ),
+  String,
+] {
+  let context = match @lib.parse_with_io(native_read_bytes, path) {
+    Ok(v) => v
+    Err(e) => return Err("failed to parse output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let templates : Array[@section4.Grib2ProductTemplate48] = []
+  let values : Array[Array[Double]] = []
+  for index in 0..<metas.length() {
+    let message = context.messages[index]
+    let submessage = message.submessages[0]
+    let section4 = match @lib.decode_submessage_section4(message, submessage) {
+      Ok(v) => v
+      Err(e) => return Err("failed to decode output section4: " + e.to_string())
+    }
+    match section4.template {
+      @section4.ProductTemplate48(template48) => templates.push(template48)
+      _ => return Err("expected template4.8 output")
+    }
+    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+      Ok(v) => v.values
+      Err(e) =>
+        return Err("failed to unpack output data: " + unpack_error_string(e))
+    }
+    values.push(unpacked)
+  }
+  Ok((metas, templates, values))
+}
+
+///|
+struct SyntheticForecastInputSpec {
+  start_time : Int
+  duration : Int
+  time_increment_length : Int
+  scale : Double
+}
+
+///|
+struct ForecastTestSource {
+  context : @lib.Grib2FileContext
+  record_ref : SelectedRecordRef
+  meta : @lib.Grib2RecordMeta
+  base : @section4.Grib2ProductTemplate40
+  section1_bytes : Bytes
+  section3_bytes : Bytes
+  coordinate_value_count : Int
+  coordinate_values_raw : Bytes
+  source_values : Array[Double]
+}
+
+///|
+fn normalize_forecast_test_values(values : Array[Double]) -> Array[Double] {
+  let out : Array[Double] = []
+  for value in values {
+    out.push(to_wgrib2_float32(value))
+  }
+  out
+}
+
+///|
+fn load_forecast_test_source_record(
+  fixture : String,
+  record_index : Int,
+) -> Result[ForecastTestSource, String] {
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse forecast-processing fixture: " + e.to_string(),
+      )
+  }
+  let refs = collect_selected_record_refs(context, Some([record_index]))
+  if refs.length() != 1 {
+    return Err(
+      "expected exactly one forecast-processing source record for index " +
+      record_index.to_string(),
+    )
+  }
+  let record_ref = refs[0]
+  let meta = match find_record_meta(context, record_index) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to locate forecast-processing source record " +
+        record_index.to_string(),
+      )
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to decode forecast-processing source section4: " + e.to_string(),
+      )
+  }
+  let base = match section4.template {
+    @section4.ProductTemplate40(v) => v
+    _ => return Err("expected template4.0 forecast-processing source")
+  }
+  let source_values = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => normalize_forecast_test_values(v.values)
+    Err(e) =>
+      return Err(
+        "failed to unpack forecast-processing source: " + unpack_error_string(e),
+      )
+  }
+  Ok({
+    context,
+    record_ref,
+    meta,
+    base,
+    section1_bytes: section_frame_bytes(message, message.section1),
+    section3_bytes: section_frame_bytes(message, submessage.section3),
+    coordinate_value_count: section4.number_of_coordinate_values,
+    coordinate_values_raw: section4.coordinate_values_raw,
+    source_values,
+  })
+}
+
+///|
+fn load_forecast_test_source() -> Result[ForecastTestSource, String] {
+  load_forecast_test_source_record(
+    "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2", 1,
+  )
+}
+
+///|
+fn load_real_forecast_test_values(
+  fixture : String,
+  record_indices : Array[Int],
+) -> Result[(ForecastTestSource, Array[Array[Double]]), String] {
+  if record_indices.length() == 0 {
+    return Err("expected at least one real forecast-processing source record")
+  }
+  let source = match
+    load_forecast_test_source_record(fixture, record_indices[0]) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let values : Array[Array[Double]] = [source.source_values]
+  for index in 1..<record_indices.length() {
+    let current = match
+      load_forecast_test_source_record(fixture, record_indices[index]) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    if current.section1_bytes != source.section1_bytes ||
+      current.section3_bytes != source.section3_bytes ||
+      current.base.parameter_category != source.base.parameter_category ||
+      current.base.parameter_number != source.base.parameter_number ||
+      current.meta.level_name.display() != source.meta.level_name.display() {
+      return Err(
+        "real forecast-processing source records are not compatible: " +
+        record_indices[0].to_string() +
+        " vs " +
+        record_indices[index].to_string(),
+      )
+    }
+    values.push(current.source_values)
+  }
+  Ok((source, values))
+}
+
+///|
+fn forecast_test_statistical_process(kind : ForecastProcessingKind) -> Int {
+  match kind {
+    Ave => 0
+    Acc => 1
+    Max => 2
+    Min => 3
+  }
+}
+
+///|
+fn synthetic_forecast_template48_end_components(
+  source : ForecastTestSource,
+  start_time : Int,
+  duration : Int,
+) -> Result[(Int, Int, Int, Int, Int, Int), String] {
+  if source.meta.unix_rt < 0L {
+    return Err("expected synthetic forecast source to have unix_rt")
+  }
+  let timestamp = format_timestamp14_from_unix(
+    source.meta.unix_rt + (start_time + duration).to_int64() * 3600L,
+  )
+  match parse_timestamp14_components(timestamp) {
+    Some(v) => Ok(v)
+    None => Err("failed to compute synthetic forecast end time")
+  }
+}
+
+///|
+fn build_synthetic_forecast_record(
+  source : ForecastTestSource,
+  kind : ForecastProcessingKind,
+  spec : SyntheticForecastInputSpec,
+  values : Array[Double],
+) -> Result[ForecastProcessingRecord, String] {
+  let (end_year, end_month, end_day, end_hour, end_minute, end_second) = match
+    synthetic_forecast_template48_end_components(
+      source,
+      spec.start_time,
+      spec.duration,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let template48 : @section4.Grib2ProductTemplate48 = {
+    base: { ..source.base, time_range_unit: 1, forecast_time: spec.start_time },
+    end_year,
+    end_month,
+    end_day,
+    end_hour,
+    end_minute,
+    end_second,
+    number_of_time_ranges: 1,
+    number_of_missing_values: 0,
+    time_range_specs: [
+      {
+        statistical_process: forecast_test_statistical_process(kind),
+        type_of_time_increment: 2,
+        time_range_unit: 1,
+        time_range_length: spec.duration,
+        time_increment_unit: 1,
+        time_increment_length: spec.time_increment_length,
+      },
+    ],
+    reserved_tail: b"",
+  }
+  let decoded_section4 : @lib.Grib2Section4Decoded = {
+    number_of_coordinate_values: source.coordinate_value_count,
+    template: @section4.ProductTemplate48(template48),
+    coordinate_values_raw: source.coordinate_values_raw,
+  }
+  let section4_bytes = @lib.encode_section4_bytes(decoded_section4)
+  Ok({
+    record_ref: source.record_ref,
+    meta: source.meta,
+    section1_bytes: source.section1_bytes,
+    section3_bytes: source.section3_bytes,
+    section4_bytes,
+    section4_key: forecast_processing_template48_key(
+      decoded_section4, template48,
+    ),
+    coordinate_value_count: source.coordinate_value_count,
+    coordinate_values_raw: source.coordinate_values_raw,
+    template48,
+    kind,
+    start_time: spec.start_time,
+    duration: spec.duration,
+    values,
+  })
+}
+
+///|
+fn write_synthetic_forecast_input(
+  path : String,
+  kind : ForecastProcessingKind,
+  specs : Array[SyntheticForecastInputSpec],
+) -> Result[Unit, String] {
+  let source = match load_forecast_test_source() {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let values_by_record : Array[Array[Double]] = []
+  for spec in specs {
+    values_by_record.push(
+      forecast_scale_average_values(source.source_values, spec.scale),
+    )
+  }
+  write_forecast_input_with_values(path, source, kind, specs, values_by_record)
+}
+
+///|
+fn write_forecast_input_with_values(
+  path : String,
+  source : ForecastTestSource,
+  kind : ForecastProcessingKind,
+  specs : Array[SyntheticForecastInputSpec],
+  values_by_record : Array[Array[Double]],
+) -> Result[Unit, String] {
+  if specs.length() != values_by_record.length() {
+    return Err("forecast-processing spec/value length mismatch")
+  }
+  let out : Array[Byte] = []
+  for index in 0..<specs.length() {
+    let spec = specs[index]
+    let record = match
+      build_synthetic_forecast_record(
+        source,
+        kind,
+        spec,
+        values_by_record[index],
+      ) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let bytes = match
+      build_processed_forecast_submessage_bytes(
+        "synthetic-forecast-input",
+        source.context,
+        record,
+        record.section4_bytes,
+        record.values,
+      ) {
+      Ok(v) => v
+      Err(e) => return Err("failed to build synthetic forecast input: " + e)
+    }
+    append_bytes(out, bytes)
+  }
+  match native_write_bytes(path, Bytes::from_array(out)) {
+    Ok(_) => ()
+    Err(e) => return Err(e)
+  }
+  Ok(())
+}
+
+///|
+fn build_running_accumulated_forecast_values(
+  fields : Array[Array[Double]],
+) -> Array[Array[Double]] {
+  let out : Array[Array[Double]] = []
+  let mut running : Array[Double]? = None
+  for field in fields {
+    match running {
+      None => {
+        out.push(field)
+        running = Some(field)
+      }
+      Some(previous) => {
+        let merged = forecast_merge_values(Acc, previous, field)
+        out.push(merged)
+        running = Some(merged)
+      }
+    }
+  }
+  out
+}
+
+///|
+fn expect_forecast_values_close(
+  label : String,
+  actual : Array[Double],
+  expected : Array[Double],
+) -> Result[Unit, String] {
+  if actual.length() != expected.length() {
+    return Err(
+      label +
+      ": length mismatch " +
+      actual.length().to_string() +
+      " != " +
+      expected.length().to_string(),
+    )
+  }
+  for index in 0..<actual.length() {
+    let got = actual[index]
+    let want = expected[index]
+    if got != got || want != want {
+      if got == got || want == want {
+        return Err(label + ": NaN mismatch at index " + index.to_string())
+      }
+      continue
+    }
+    let scale = if want.abs() > 1.0 { want.abs() } else { 1.0 }
+    let tolerance = if 0.0006 * scale > 0.006 { 0.0006 * scale } else { 0.006 }
+    if (got - want).abs() > tolerance {
+      return Err(
+        label +
+        ": value mismatch at index " +
+        index.to_string() +
+        " got=" +
+        got.to_string() +
+        " want=" +
+        want.to_string(),
+      )
+    }
+  }
+  Ok(())
+}
+
+///|
+test "try_build_simple_packed_sections_with_scaling uses wgrib2 half-up quantization" {
+  let built = try_build_simple_packed_sections_with_scaling(
+    [0.0, 2.5],
+    0,
+    0,
+    0,
+    0,
+  )
+  let (sec5, sec7) = match built {
+    Some(v) => v
+    None => fail("expected simple packed sections")
+  }
+  let decoded5 = match @lib.decode_section5_bytes(sec5) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode section5: " + e.to_string())
+  }
+  inspect(decoded5.number_of_data_points, content="2")
+  match decoded5.template {
+    DataRepresentationTemplate50(t50) => {
+      inspect(t50.bits_per_value, content="2")
+      let unpacked = match
+        @lib.unpack_simple(
+          sec7.sub(start=5).to_bytes(),
+          t50.reference_value_ieee,
+          t50.binary_scale_factor,
+          t50.decimal_scale_factor,
+          t50.bits_per_value,
+          decoded5.number_of_data_points,
+        ) {
+        Ok(v) => v
+        Err(e) => fail("failed to unpack section7: " + unpack_error_string(e))
+      }
+      inspect(unpacked.values[0], content="0")
+      inspect(unpacked.values[1], content="3")
+    }
+    _ => fail("expected template 5.0")
+  }
 }
 
 ///|
@@ -462,14 +901,14 @@ test "parse_cli_invocation supports lola output" {
 test "parse_cli_invocation supports cress_lola output" {
   let p = match
     parse_cli_invocation([
-      "-cress_lola", "0:360:1", "-90:181:1", "target/cress_lola.grb2", "1:2",
+      "-cress_lola", "0:360:1", "-90:181:1", "target/cress_lola.grb2", "0:-1:2",
     ]) {
     Ok(v) => v
     Err(e) => fail(e)
   }
   let (_, a) = p
   let ok = match a {
-    WriteCressLola("0:360:1", "-90:181:1", "target/cress_lola.grb2", "1:2") =>
+    WriteCressLola("0:360:1", "-90:181:1", "target/cress_lola.grb2", "0:-1:2") =>
       true
     _ => false
   }
@@ -1941,7 +2380,7 @@ test "run_cli supports -lola identity remap mode=grib" {
 }
 
 ///|
-test "run_cli supports -cress_lola identity/all-defined limited mode" {
+test "run_cli supports -cress_lola regular lat/lon output" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
   let out = "target/cmd_main_cress_lola_jma_test.grib2"
   let args = [
@@ -1959,12 +2398,75 @@ test "run_cli supports -cress_lola identity/all-defined limited mode" {
 }
 
 ///|
+test "run_cli -cress_lola fills bitmap gaps for gfswave same-grid output" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-cress_lola", "260:301:0.166667", "0:331:0.166667",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse cress_lola gfswave output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
+  inspect(meta.section6_bitmap_indicator, content="255")
+  inspect(meta.section6_undef_points, content="0")
+}
+
+///|
+test "run_cli -cress_lola supports negative-radius mask on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_neg_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-cress_lola", "260:301:0.166667", "0:331:0.166667",
+    out, "-20",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse negative cress_lola output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section6_undef_points, content="68778")
+}
+
+///|
+test "run_cli -cress_lola keeps negative-pass mask after later positive passes" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_neg_pos_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-cress_lola", "260:301:0.166667", "0:331:0.166667",
+    out, "-1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse mixed-sign cress_lola output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section5_template.id(), content="0")
+  inspect(meta.section3_scanning_mode, content="64")
+  inspect(meta.section6_bitmap_indicator, content="0")
+  inspect(meta.section6_undef_points, content="70212")
+}
+
+///|
 test "run_cli rejects invalid -cress_lola radius list" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_cress_lola_bad.grib2"
   let args = [
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0:360:1", "-90:181:1",
-    out, "0:2",
+    out, "bad:2",
   ]
   inspect(run_cli(args), content="2")
 }
@@ -2369,7 +2871,20 @@ test "netcdf forecast helpers preserve verification metadata and unit mapping" {
 }
 
 ///|
-test "run_cli supports -netcdf output and validates selection constraints" {
+test "netcdf unit mapping follows wgrib2 conventions" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse pgrb2b fixture: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[2]
+  let (long_name, units) = netcdf_long_name_units(meta)
+  inspect(long_name, content="Relative Humidity")
+  inspect(units, content="percent")
+}
+
+///|
+test "run_cli supports single and multi-record -netcdf output" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_netcdf_test.nc"
   inspect(
@@ -2383,17 +2898,141 @@ test "run_cli supports -netcdf output and validates selection constraints" {
     bytes.sub(start=0, end=4).to_bytes().to_string(),
     content="b\"CDF\\x01\"",
   )
+  inspect(bytes_be_u32(bytes, 4).to_string(), content="1")
   inspect(bytes.length() > 1000, content="true")
+  let multi_out = "target/cmd_main_netcdf_multi.nc"
   inspect(
-    run_cli(["grib2_mbt", fixture, "-netcdf", "target/cmd_main_netcdf_multi.nc"]),
-    content="2",
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", multi_out]),
+    content="0",
+  )
+  let multi_bytes = @fs.read_file_to_bytes(multi_out) catch {
+    e => fail("failed to read multi netcdf output: " + e.to_string())
+  }
+  inspect(bytes_be_u32(multi_bytes, 4).to_string(), content="1")
+  inspect(multi_bytes.to_string().contains("CLMR_1hybridlevel"), content="true")
+  let forecast_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let time_out = "target/cmd_main_netcdf_multi_time.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", forecast_fixture, "-for_n", "1:185:92", "-netcdf", time_out,
+    ]),
+    content="0",
+  )
+  let time_bytes = @fs.read_file_to_bytes(time_out) catch {
+    e => fail("failed to read multi-time netcdf output: " + e.to_string())
+  }
+  inspect(bytes_be_u32(time_bytes, 4).to_string(), content="3")
+  inspect(time_bytes.to_string().contains("HGT_1000mb"), content="true")
+}
+
+///|
+test "run_cli supports -append for netcdf variable and time growth" {
+  let var_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let var_append = "target/cmd_main_netcdf_append_var.nc"
+  let var_ref = "target/cmd_main_netcdf_append_var_ref.nc"
+  inspect(
+    run_cli(["grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append]),
+    content="0",
   )
   inspect(
     run_cli([
-      "grib2_mbt", fixture, "-append", "-for_n", "1:1:1", "-netcdf", "target/cmd_main_netcdf_append.nc",
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:2:1", "-netcdf", var_append,
     ]),
-    content="2",
+    content="0",
   )
+  inspect(
+    run_cli(["grib2_mbt", var_fixture, "-for_n", "1:2:1", "-netcdf", var_ref]),
+    content="0",
+  )
+  let var_append_bytes = @fs.read_file_to_bytes(var_append) catch {
+    e => fail("failed to read appended variable netcdf: " + e.to_string())
+  }
+  let var_ref_bytes = @fs.read_file_to_bytes(var_ref) catch {
+    e => fail("failed to read variable reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_bytes == var_ref_bytes, content="true")
+
+  let time_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let time_append = "target/cmd_main_netcdf_append_time.nc"
+  let time_ref = "target/cmd_main_netcdf_append_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fixture, "-for_n", "1:1:1", "-netcdf", time_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fixture, "-append", "-for_n", "93:93:1", "-netcdf", time_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fixture, "-for_n", "1:93:92", "-netcdf", time_ref,
+    ]),
+    content="0",
+  )
+  let time_append_bytes = @fs.read_file_to_bytes(time_append) catch {
+    e => fail("failed to read appended time netcdf: " + e.to_string())
+  }
+  let time_ref_bytes = @fs.read_file_to_bytes(time_ref) catch {
+    e => fail("failed to read time reference netcdf: " + e.to_string())
+  }
+  inspect(time_append_bytes == time_ref_bytes, content="true")
+}
+
+///|
+test "write_netcdf_output fills missing variable-time slots" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse sparse netcdf fixture: " + e.to_string())
+  }
+  let out = "target/cmd_main_netcdf_sparse.nc"
+  match write_netcdf_output(out, context, Some([1, 2, 93]), false) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write sparse netcdf output: " + e)
+  }
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read sparse netcdf output: " + e.to_string())
+  }
+  inspect(bytes_be_u32(bytes, 4).to_string(), content="2")
+  inspect(bytes.to_string().contains("UGRD_1000mb"), content="true")
+}
+
+///|
+test "write_netcdf_output append preserves sparse variable-time fill slots" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse sparse append fixture: " + e.to_string())
+  }
+  let append_out = "target/cmd_main_netcdf_sparse_append.nc"
+  match write_netcdf_output(append_out, context, Some([1]), false) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write sparse append seed: " + e)
+  }
+  match write_netcdf_output(append_out, context, Some([2]), true) {
+    Ok(_) => ()
+    Err(e) => fail("failed to append sparse variable: " + e)
+  }
+  match write_netcdf_output(append_out, context, Some([93]), true) {
+    Ok(_) => ()
+    Err(e) => fail("failed to append sparse time: " + e)
+  }
+  let ref_out = "target/cmd_main_netcdf_sparse_append_ref.nc"
+  match write_netcdf_output(ref_out, context, Some([1, 2, 93]), false) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write sparse append reference: " + e)
+  }
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e => fail("failed to read sparse append output: " + e.to_string())
+  }
+  let ref_bytes = @fs.read_file_to_bytes(ref_out) catch {
+    e => fail("failed to read sparse append reference: " + e.to_string())
+  }
+  inspect(append_bytes == ref_bytes, content="true")
 }
 
 ///|
@@ -2636,15 +3275,283 @@ test "run_cli validates -reduced_gaussian_grid y argument" {
 }
 
 ///|
-test "run_cli supports -ncep_norm limited compatibility output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+test "run_cli supports -ncep_norm on synthetic PDT4.8 ave series" {
+  let input = "target/cmd_main_ncep_norm_input.grb2"
   let out = "target/cmd_main_ncep_norm_test.grb2"
-  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-ncep_norm", out]
-  inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read ncep_norm output: " + e.to_string())
+  match
+    write_synthetic_forecast_input(input, Ave, [
+      { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+      { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.5 },
+      { start_time: 6, duration: 3, time_increment_length: 3, scale: 3.0 },
+      { start_time: 6, duration: 6, time_increment_length: 3, scale: 3.5 },
+    ]) {
+    Ok(_) => ()
+    Err(e) => fail(e)
   }
-  inspect(bytes.length(), content="0")
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, input_templates, input_values) = match
+    decode_template48_outputs_with_values(input) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode synthetic ncep_norm input: " + e)
+  }
+  let (out_metas, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode ncep_norm output: " + e)
+  }
+  inspect(out_metas.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  inspect(
+    out_templates
+    .map(fn(template) { template.time_range_specs[0].statistical_process })
+    .to_string(),
+    content="[0, 0, 0, 0]",
+  )
+  match
+    expect_forecast_values_close(
+      "ncep_norm record 1",
+      out_values[0],
+      input_values[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "ncep_norm record 2",
+      out_values[1],
+      forecast_residual_values(
+        Ave,
+        input_values[0],
+        input_values[1],
+        input_templates[0].time_range_specs[0].time_range_length,
+        input_templates[1].time_range_specs[0].time_range_length,
+      ),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "ncep_norm record 3",
+      out_values[2],
+      input_values[2],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "ncep_norm record 4",
+      out_values[3],
+      forecast_residual_values(
+        Ave,
+        input_values[2],
+        input_values[3],
+        input_templates[2].time_range_specs[0].time_range_length,
+        input_templates[3].time_range_specs[0].time_range_length,
+      ),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let input = "target/cmd_main_ncep_norm_realworld_input.grb2"
+  let out = "target/cmd_main_ncep_norm_realworld_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [96, 188, 280, 372]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (out_metas, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode realworld ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  assert_eq(out_metas[3].section5_reference_value_ieee, 0x43790817)
+  match
+    expect_forecast_values_close(
+      "realworld ncep_norm record 1",
+      out_values[0],
+      source_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "realworld ncep_norm record 2",
+      out_values[1],
+      forecast_residual_values(Ave, source_fields[0], source_fields[1], 3, 6),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "realworld ncep_norm record 3",
+      out_values[2],
+      source_fields[2],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "realworld ncep_norm record 4",
+      out_values[3],
+      forecast_residual_values(Ave, source_fields[2], source_fields[3], 3, 6),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-33)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_ncep_norm_realworld_fh18_33_input.grb2"
+  let out = "target/cmd_main_ncep_norm_realworld_fh18_33_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh18-33 ncep_norm record 1",
+      out_values[0],
+      source_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh18-33 ncep_norm record 2",
+      out_values[1],
+      forecast_residual_values(Ave, source_fields[0], source_fields[1], 3, 6),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh18-33 ncep_norm record 3",
+      out_values[2],
+      source_fields[2],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh18-33 ncep_norm record 4",
+      out_values[3],
+      forecast_residual_values(Ave, source_fields[2], source_fields[3], 3, 6),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli keeps varying-dt ncep_norm series as pass-through" {
+  let input = "target/cmd_main_ncep_norm_passthrough_input.grb2"
+  let out = "target/cmd_main_ncep_norm_passthrough_test.grb2"
+  match
+    write_synthetic_forecast_input(input, Ave, [
+      { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+      { start_time: 0, duration: 6, time_increment_length: 6, scale: 1.5 },
+      { start_time: 6, duration: 3, time_increment_length: 3, scale: 3.0 },
+      { start_time: 6, duration: 6, time_increment_length: 6, scale: 3.5 },
+    ]) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (out_metas, out_templates, _) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode ncep_norm passthrough output: " + e)
+  }
+  inspect(out_metas.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string() +
+      "/dt=" +
+      template.time_range_specs[0].time_increment_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3/dt=3\", \"0/6/dt=6\", \"6/3/dt=3\", \"6/6/dt=6\"]",
+  )
 }
 
 ///|
@@ -3028,29 +3935,433 @@ test "run_cli validates -ens_qc version" {
 }
 
 ///|
-test "run_cli supports -merge_fcst limited compatibility output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+test "run_cli supports -merge_fcst on synthetic PDT4.8 ave series" {
+  let input = "target/cmd_main_merge_fcst_input.grb2"
   let out = "target/cmd_main_merge_fcst_test.grb2"
-  let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-merge_fcst", "0", out]
-  inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read merge_fcst output: " + e.to_string())
+  match
+    write_synthetic_forecast_input(input, Ave, [
+      { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+      { start_time: 3, duration: 3, time_increment_length: 3, scale: 2.0 },
+      { start_time: 6, duration: 3, time_increment_length: 3, scale: 3.0 },
+      { start_time: 9, duration: 3, time_increment_length: 3, scale: 4.0 },
+    ]) {
+    Ok(_) => ()
+    Err(e) => fail(e)
   }
-  inspect(bytes.length(), content="0")
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, input_templates, input_values) = match
+    decode_template48_outputs_with_values(input) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode synthetic merge_fcst input: " + e)
+  }
+  let (out_metas, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode merge_fcst output: " + e)
+  }
+  inspect(out_metas.length(), content="2")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\", \"6/6\"]",
+  )
+  inspect(
+    out_templates
+    .map(fn(template) { template.time_range_specs[0].statistical_process })
+    .to_string(),
+    content="[0, 0]",
+  )
+  let merged_01 = forecast_scale_average_values(
+    forecast_merge_values(Ave, input_values[0], input_values[1]),
+    0.5,
+  )
+  let merged_23 = forecast_scale_average_values(
+    forecast_merge_values(Ave, input_values[2], input_values[3]),
+    0.5,
+  )
+  match
+    expect_forecast_values_close(
+      "merge_fcst record 1",
+      out_values[0],
+      merged_01,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "merge_fcst record 2",
+      out_values[1],
+      merged_23,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(input_templates[0].time_range_specs[0].time_range_length, content="3")
 }
 
 ///|
-test "run_cli supports -unmerge_fcst limited compatibility output" {
-  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let out = "target/cmd_main_unmerge_fcst_test.grb2"
-  let args = [
-    "grib2_mbt", fixture, "-for_n", "1:1:1", "-unmerge_fcst", out, "0hr", "0",
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let input = "target/cmd_main_merge_fcst_realworld_input.grb2"
+  let out = "target/cmd_main_merge_fcst_realworld_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
   ]
-  inspect(run_cli(args), content="0")
-  let bytes = @fs.read_file_to_bytes(out) catch {
-    e => fail("failed to read unmerge_fcst output: " + e.to_string())
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [96, 188, 280, 372]) {
+    Ok(v) => v
+    Err(e) => fail(e)
   }
-  inspect(bytes.length(), content="0")
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode realworld merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="2")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\", \"6/6\"]",
+  )
+  let merged_01 = forecast_scale_average_values(
+    forecast_merge_values(Ave, source_fields[0], source_fields[1]),
+    0.5,
+  )
+  let merged_23 = forecast_scale_average_values(
+    forecast_merge_values(Ave, source_fields[2], source_fields[3]),
+    0.5,
+  )
+  match
+    expect_forecast_values_close(
+      "realworld merge_fcst record 1",
+      out_values[0],
+      merged_01,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "realworld merge_fcst record 2",
+      out_values[1],
+      merged_23,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18-33)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_merge_fcst_realworld_fh18_33_input.grb2"
+  let out = "target/cmd_main_merge_fcst_realworld_fh18_33_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="2")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/6\", \"6/6\"]",
+  )
+  let merged_01 = forecast_scale_average_values(
+    forecast_merge_values(Ave, source_fields[0], source_fields[1]),
+    0.5,
+  )
+  let merged_23 = forecast_scale_average_values(
+    forecast_merge_values(Ave, source_fields[2], source_fields[3]),
+    0.5,
+  )
+  match
+    expect_forecast_values_close(
+      "fh18-33 merge_fcst record 1",
+      out_values[0],
+      merged_01,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "fh18-33 merge_fcst record 2",
+      out_values[1],
+      merged_23,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on synthetic PDT4.8 acc series" {
+  let input = "target/cmd_main_unmerge_fcst_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_test.grb2"
+  match
+    write_synthetic_forecast_input(input, Acc, [
+      { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+      { start_time: 0, duration: 6, time_increment_length: 3, scale: 3.0 },
+      { start_time: 0, duration: 9, time_increment_length: 3, scale: 6.0 },
+      { start_time: 0, duration: 12, time_increment_length: 3, scale: 10.0 },
+    ]) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, input_templates, input_values) = match
+    decode_template48_outputs_with_values(input) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode synthetic unmerge_fcst input: " + e)
+  }
+  let (out_metas, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode unmerge_fcst output: " + e)
+  }
+  inspect(out_metas.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  inspect(
+    out_templates
+    .map(fn(template) { template.time_range_specs[0].statistical_process })
+    .to_string(),
+    content="[1, 1, 1, 1]",
+  )
+  match
+    expect_forecast_values_close(
+      "unmerge_fcst record 1",
+      out_values[0],
+      input_values[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "unmerge_fcst record 2",
+      out_values[1],
+      Array::make(input_values[1].length(), 0.0),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "unmerge_fcst record 3",
+      out_values[2],
+      Array::make(input_values[2].length(), 0.0),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  match
+    expect_forecast_values_close(
+      "unmerge_fcst record 4",
+      out_values[3],
+      Array::make(input_values[3].length(), 0.0),
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let input = "target/cmd_main_unmerge_fcst_realworld_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_realworld_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [96, 188, 280, 372]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode realworld unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "realworld unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  for index in 1..<out_values.length() {
+    match
+      expect_forecast_values_close(
+        "realworld unmerge_fcst zero record " + (index + 1).to_string(),
+        out_values[index],
+        Array::make(out_values[index].length(), 0.0),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH18-33)" {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
+  let input = "target/cmd_main_unmerge_fcst_realworld_fh18_33_input.grb2"
+  let out = "target/cmd_main_unmerge_fcst_realworld_fh18_33_test.grb2"
+  let specs = [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
+  ]
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, [4, 96, 188, 280]) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode FH18-33 unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="4")
+  inspect(
+    out_templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content="[\"0/3\", \"3/3\", \"6/3\", \"9/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      "fh18-33 unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  for index in 1..<out_values.length() {
+    match
+      expect_forecast_values_close(
+        "fh18-33 unmerge_fcst zero record " + (index + 1).to_string(),
+        out_values[index],
+        Array::make(out_values[index].length(), 0.0),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
 }
 
 ///|
@@ -3123,6 +4434,16 @@ test "run_cli supports -wind_uv derived output from speed/dir input" {
   }
   inspect(bytes.length() > 16, content="true")
   inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, uv_out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse wind_uv output: " + e.to_string())
+  }
+  let records = @lib.decode_records(context)
+  inspect(records.length(), content="2")
+  inspect(records[0].section5_template.id(), content="0")
+  inspect(records[0].section6_bitmap_indicator, content="255")
+  inspect(records[1].section5_template.id(), content="0")
+  inspect(records[1].section6_bitmap_indicator, content="255")
 }
 
 ///|
@@ -3141,6 +4462,8 @@ test "run_cli supports -wind_speed on jpeg2000 U/V input" {
   inspect(records.length(), content="1")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="1")
+  inspect(records[0].section5_template.id(), content="0")
+  inspect(records[0].section6_bitmap_indicator, content="0")
 }
 
 ///|
@@ -3159,6 +4482,8 @@ test "run_cli supports -wind_dir on jpeg2000 U/V input" {
   inspect(records.length(), content="1")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="0")
+  inspect(records[0].section5_template.id(), content="0")
+  inspect(records[0].section6_bitmap_indicator, content="0")
 }
 
 ///|
@@ -3177,8 +4502,12 @@ test "run_cli supports -wind_uv on jpeg2000 speed dir input" {
   inspect(records.length(), content="2")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="2")
+  inspect(records[0].section5_template.id(), content="0")
+  inspect(records[0].section6_bitmap_indicator, content="0")
   inspect(records[1].section4_parameter_category, content="2")
   inspect(records[1].section4_parameter_number, content="3")
+  inspect(records[1].section5_template.id(), content="0")
+  inspect(records[1].section6_bitmap_indicator, content="0")
 }
 
 ///|

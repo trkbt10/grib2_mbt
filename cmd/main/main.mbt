@@ -222,7 +222,7 @@ fn print_usage() -> Unit {
   println("  -small_grib lonW:lonE latS:latN file  small-domain grib (limited)")
   println("  -lola X Y file mode  lon-lat grid output (identity remap only)")
   println(
-    "  -cress_lola X Y file R  Cressman lon-lat grid output (identity/all-defined limited)",
+    "  -cress_lola X Y file R  Cressman lon-lat grid output (regular lat/lon, negative radii mask)",
   )
   println(
     "  -cubeface2global X file  current build reports unavailable like wgrib2",
@@ -251,9 +251,9 @@ fn print_usage() -> Unit {
   println("  -time_processing p i step out  generic time-processing transform")
   println("  -ens_processing out mode  ensemble stats/percentiles transform")
   println("  -ens_qc stats extreme txt version  ensemble qc compat transform")
-  println("  -ncep_norm out  normalize NCEP ave/acc (limited compat)")
-  println("  -merge_fcst n out  merge fcst intervals (limited compat)")
-  println("  -unmerge_fcst out t z  unmerge fcst (limited compat)")
+  println("  -ncep_norm out  normalize PDT4.8 NCEP-style ave/acc")
+  println("  -merge_fcst n out  merge PDT4.8 fcst ave/acc/min/max")
+  println("  -unmerge_fcst out t z  unmerge PDT4.8 fcst ave/acc")
   println("  -wind_speed out  calculate wind speed (limited compat)")
   println("  -wind_dir out  calculate wind direction (limited compat)")
   println("  -wind_uv out  calculate U/V from speed/dir (limited compat)")
@@ -3508,9 +3508,6 @@ fn parse_cress_lola_radii(spec : String) -> Array[Double]? {
       Some(v) => v
       None => return None
     }
-    if radius <= 0.0 {
-      return None
-    }
     radii.push(radius)
   }
   Some(radii)
@@ -3554,7 +3551,9 @@ fn build_identity_lola_section3_bytes(
   }
   match source_section3.template {
     @section3.GridTemplate30(grid) => {
-      let section_subdivisions = if option_name == "-new_grid" &&
+      let section_subdivisions = if (
+          option_name == "-new_grid" || option_name == "-cress_lola"
+        ) &&
         grid.basic_angle == 0 &&
         grid.subdivisions_of_basic_angle == 0 {
         -1
@@ -3866,15 +3865,13 @@ fn write_cress_lola_output(
   selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {
-  match parse_cress_lola_radii(radii_spec) {
-    Some(_) => ()
+  let radii = match parse_cress_lola_radii(radii_spec) {
+    Some(v) => v
     None =>
-      return Err(
-        "-cress_lola radius list must be positive numbers separated by ':'",
-      )
+      return Err("-cress_lola radius list must be numbers separated by ':'")
   }
-  write_identity_lola_grib_output(
-    "-cress_lola", lon_spec, lat_spec, destination, context, selected, append_mode,
+  write_cress_lola_output_impl(
+    lon_spec, lat_spec, destination, radii, context, selected, append_mode,
   )
 }
 
@@ -5166,24 +5163,25 @@ fn append_reduced_gaussian_interpolated_row(
   if row_start < 0 || row_start + row_count > values.length() {
     return Err("reduced Gaussian row slice out of bounds")
   }
+  let to_wgrib2_float = fn(value : Double) -> Double {
+    Float::from_double(value).to_double()
+  }
   for i in 0..<target_count {
     let x = i.to_double() * row_count.to_double() / target_count.to_double()
     let left = @math.floor(x).to_int()
     if linear {
-      let frac = Float::from_double(x - left.to_double()).to_double()
+      let frac = x - left.to_double()
       let right = if left + 1 < row_count { left + 1 } else { 0 }
-      let v0 = Float::from_double(values[row_start + left]).to_double()
-      let v1 = Float::from_double(values[row_start + right]).to_double()
-      let delta = Float::from_double(v1 - v0).to_double()
-      let scaled = Float::from_double(delta * frac).to_double()
-      let interpolated = Float::from_double(v0 + scaled).to_double()
-      out.push(interpolated)
+      let v0 = to_wgrib2_float(values[row_start + left])
+      let v1 = to_wgrib2_float(values[row_start + right])
+      let interpolated = (1.0 - frac) * v0 + frac * v1
+      out.push(to_wgrib2_float(interpolated))
     } else {
       let mut nearest = @math.floor(x + 0.5).to_int()
       if nearest >= row_count {
         nearest -= row_count
       }
-      out.push(values[row_start + nearest])
+      out.push(to_wgrib2_float(values[row_start + nearest]))
     }
   }
   Ok(())
@@ -5203,7 +5201,9 @@ fn regularize_reduced_gaussian_values(
     let row_count = row_counts[row_index]
     if row_count == target_ni {
       for offset in 0..<row_count {
-        out.push(values[row_offsets[row_index] + offset])
+        out.push(
+          Float::from_double(values[row_offsets[row_index] + offset]).to_double(),
+        )
       }
     } else {
       match
@@ -5407,19 +5407,6 @@ fn write_reduced_gaussian_grid_output(
 }
 
 ///|
-fn parse_unmerge_fcst_time_spec(spec : String) -> Bool {
-  if spec.has_suffix("mn") ||
-    spec.has_suffix("hr") ||
-    spec.has_suffix("dy") ||
-    spec.has_suffix("mo") ||
-    spec.has_suffix("yr") {
-    let n = spec.substring(end=spec.length() - 2)
-    return parse_int_option(n) != None
-  }
-  false
-}
-
-///|
 fn parse_time_step_spec(spec : String) -> (Int, Int)? {
   if spec.has_suffix("mn") {
     let n = spec.substring(end=spec.length() - 2)
@@ -5462,6 +5449,11 @@ fn parse_time_step_spec(spec : String) -> (Int, Int)? {
     }
   }
   None
+}
+
+///|
+fn parse_unmerge_fcst_time_spec(spec : String) -> (Int, Int)? {
+  parse_time_step_spec(spec)
 }
 
 ///|
@@ -5611,6 +5603,112 @@ fn build_simple_packed_submessage_bytes(
       Some(sec7),
     ),
   )
+}
+
+///|
+fn try_build_simple_packed_sections_with_forecast_scaling(
+  values : Array[Double],
+  reference_value_ieee : Int,
+  binary_scale_factor : Int,
+  decimal_scale_factor : Int,
+  original_field_value_type : Int,
+) -> (Bytes, Bytes)? {
+  let working_values : Array[Double] = []
+  for value in values {
+    if value != value {
+      return None
+    }
+    working_values.push(Float::from_double(value).to_double())
+  }
+  let mut min_value = Float::reinterpret_from_int(reference_value_ieee).to_double()
+  let mut max_value = min_value
+  if working_values.length() > 0 {
+    min_value = working_values[0]
+    max_value = working_values[0]
+    for value in working_values {
+      if value < min_value {
+        min_value = value
+      }
+      if value > max_value {
+        max_value = value
+      }
+    }
+  }
+  let constant_field = working_values.length() == 0 || min_value == max_value
+  let output_binary_scale_factor = if constant_field {
+    0
+  } else {
+    binary_scale_factor
+  }
+  let output_decimal_scale_factor = if constant_field {
+    0
+  } else {
+    decimal_scale_factor
+  }
+  let original_min_value = min_value
+  let decimal_scale = pow10_int(output_decimal_scale_factor)
+  if output_decimal_scale_factor != 0 {
+    min_value = Float::from_double(min_value * decimal_scale).to_double()
+    max_value = Float::from_double(max_value * decimal_scale).to_double()
+    for index in 0..<working_values.length() {
+      working_values[index] = Float::from_double(
+        working_values[index] * decimal_scale,
+      ).to_double()
+    }
+  }
+  let reference_value = if constant_field {
+    original_min_value
+  } else {
+    min_value
+  }
+  let output_reference_value_ieee = if working_values.length() == 0 {
+    0
+  } else {
+    Float::from_double(reference_value).reinterpret_as_int()
+  }
+  let binary_scale = pow2_int(-output_binary_scale_factor)
+  let packed_values : Array[Int] = []
+  let mut max_packed = 0
+  for value in working_values {
+    let packed_float = if output_binary_scale_factor == 0 {
+      Float::from_double(value - reference_value).to_double()
+    } else {
+      Float::from_double((value - reference_value) * binary_scale).to_double()
+    }
+    let packed = @math.floor(packed_float + 0.5).to_int()
+    let nonnegative = if packed < 0 { 0 } else { packed }
+    if nonnegative > max_packed {
+      max_packed = nonnegative
+    }
+    packed_values.push(nonnegative)
+  }
+  let bits_per_value = if constant_field {
+    0
+  } else {
+    required_bits_nonnegative(max_packed)
+  }
+  if bits_per_value > 31 {
+    return None
+  }
+  let sec5 = @lib.encode_section5_bytes({
+    number_of_data_points: working_values.length(),
+    template: DataRepresentationTemplate50({
+      reference_value_ieee: output_reference_value_ieee,
+      binary_scale_factor: encode_i16_sign_magnitude(output_binary_scale_factor),
+      decimal_scale_factor: encode_i16_sign_magnitude(
+        output_decimal_scale_factor,
+      ),
+      bits_per_value,
+      original_field_value_type,
+      reserved_tail: b"",
+    }),
+  })
+  let sec7 = @lib.encode_section7_bytes({
+    template: DataTemplate70({
+      data_values_raw: pack_unsigned_values_be(packed_values, bits_per_value),
+    }),
+  })
+  Some((sec5, sec7))
 }
 
 ///|
@@ -6296,18 +6394,695 @@ fn write_empty_compat_output(
 }
 
 ///|
+priv enum ForecastProcessingKind {
+  Ave
+  Acc
+  Max
+  Min
+}
+
+///|
+priv struct ForecastProcessingRecord {
+  record_ref : SelectedRecordRef
+  meta : @lib.Grib2RecordMeta
+  section1_bytes : Bytes
+  section3_bytes : Bytes
+  section4_bytes : Bytes
+  section4_key : Bytes
+  coordinate_value_count : Int
+  coordinate_values_raw : Bytes
+  template48 : @section4.Grib2ProductTemplate48
+  kind : ForecastProcessingKind
+  start_time : Int
+  duration : Int
+  values : Array[Double]
+}
+
+///|
+priv struct ForecastProcessingState {
+  record : ForecastProcessingRecord
+  count : Int
+}
+
+///|
+fn to_wgrib2_float32(value : Double) -> Double {
+  Float::from_double(value).to_double()
+}
+
+///|
+fn bigint_abs(value : BigInt) -> BigInt {
+  if value.compare_int(0) < 0 {
+    -value
+  } else {
+    value
+  }
+}
+
+///|
+fn float32_rational_from_double(value : Double) -> (BigInt, Int) {
+  let bits = Float::from_double(value).reinterpret_as_uint()
+  let exp_raw = ((bits >> 23) & 0xffU).to_int()
+  let frac = bits & 0x7fffffU
+  let negative = bits >> 31 != 0U
+  if exp_raw == 0 {
+    if frac == 0U {
+      (BigInt::from_int(0), 0)
+    } else {
+      let mantissa = BigInt::from_uint64(UInt64::extend_uint(frac))
+      (if negative { -mantissa } else { mantissa }, -149)
+    }
+  } else {
+    let mantissa = BigInt::from_uint64(UInt64::extend_uint(0x800000U | frac))
+    (if negative { -mantissa } else { mantissa }, exp_raw - 127 - 23)
+  }
+}
+
+///|
+fn compare_float32_rational_to_power_of_two(
+  abs_numerator : BigInt,
+  denominator : BigInt,
+  exp2 : Int,
+  power : Int,
+) -> Int {
+  if power >= exp2 {
+    abs_numerator.compare(denominator << (power - exp2))
+  } else {
+    (abs_numerator << (exp2 - power)).compare(denominator)
+  }
+}
+
+///|
+fn round_bigint_divide_even(numerator : BigInt, denominator : BigInt) -> BigInt {
+  let quotient = numerator / denominator
+  let remainder = numerator % denominator
+  let doubled_remainder = remainder << 1
+  if doubled_remainder > denominator ||
+    (doubled_remainder == denominator && (quotient.to_int() & 1) == 1) {
+    quotient + BigInt::from_int(1)
+  } else {
+    quotient
+  }
+}
+
+///|
+fn round_float32_rational_to_double(
+  numerator : BigInt,
+  exp2 : Int,
+  denominator_int : Int,
+) -> Double {
+  if numerator.compare_int(0) == 0 {
+    return 0.0
+  }
+  let negative = numerator.compare_int(0) < 0
+  let abs_numerator = bigint_abs(numerator)
+  let denominator = BigInt::from_int(denominator_int)
+  let mut exponent = exp2 +
+    abs_numerator.bit_length() -
+    denominator.bit_length()
+  if compare_float32_rational_to_power_of_two(
+      abs_numerator, denominator, exp2, exponent,
+    ) <
+    0 {
+    exponent -= 1
+  }
+  while compare_float32_rational_to_power_of_two(
+          abs_numerator,
+          denominator,
+          exp2,
+          exponent + 1,
+        ) >=
+        0 {
+    exponent += 1
+  }
+  let sign_bits = if negative { 0x80000000U } else { 0U }
+  if exponent < -126 {
+    let shift = exp2 + 149
+    let (scaled_numerator, scaled_denominator) = if shift >= 0 {
+      (abs_numerator << shift, denominator)
+    } else {
+      (abs_numerator, denominator << -shift)
+    }
+    let rounded = round_bigint_divide_even(scaled_numerator, scaled_denominator)
+    if rounded.compare_int(0) == 0 {
+      return Float::reinterpret_from_uint(sign_bits).to_double()
+    }
+    let smallest_normal = BigInt::from_int(1 << 23)
+    if rounded >= smallest_normal {
+      return Float::reinterpret_from_uint(sign_bits | 0x00800000U).to_double()
+    }
+    return Float::reinterpret_from_uint(sign_bits | rounded.to_uint()).to_double()
+  }
+  let shift = exp2 - exponent + 23
+  let (scaled_numerator, scaled_denominator) = if shift >= 0 {
+    (abs_numerator << shift, denominator)
+  } else {
+    (abs_numerator, denominator << -shift)
+  }
+  let mut significand = round_bigint_divide_even(
+    scaled_numerator, scaled_denominator,
+  )
+  let overflow_significand = BigInt::from_int(1 << 24)
+  if significand == overflow_significand {
+    significand = significand >> 1
+    exponent += 1
+  }
+  if exponent >= 128 {
+    return Float::reinterpret_from_uint(sign_bits | 0x7f800000U).to_double()
+  }
+  let exponent_bits = (exponent + 127).to_uint() << 23
+  let fraction_bits = significand.to_uint() - 0x800000U
+  Float::reinterpret_from_uint(sign_bits | exponent_bits | fraction_bits).to_double()
+}
+
+///|
+fn float32_mul_int(value : Double, factor : Int) -> Double {
+  let (numerator, exp2) = float32_rational_from_double(value)
+  round_float32_rational_to_double(
+    numerator * BigInt::from_int(factor),
+    exp2,
+    1,
+  )
+}
+
+///|
+fn float32_sub(lhs : Double, rhs : Double) -> Double {
+  let (lhs_numerator, lhs_exp2) = float32_rational_from_double(lhs)
+  let (rhs_numerator, rhs_exp2) = float32_rational_from_double(rhs)
+  let exp2 = if lhs_exp2 < rhs_exp2 { lhs_exp2 } else { rhs_exp2 }
+  let aligned_lhs = if lhs_exp2 > exp2 {
+    lhs_numerator << (lhs_exp2 - exp2)
+  } else {
+    lhs_numerator
+  }
+  let aligned_rhs = if rhs_exp2 > exp2 {
+    rhs_numerator << (rhs_exp2 - exp2)
+  } else {
+    rhs_numerator
+  }
+  round_float32_rational_to_double(aligned_lhs - aligned_rhs, exp2, 1)
+}
+
+///|
+fn float32_mul_int_then_sub(
+  value : Double,
+  factor : Int,
+  subtracted : Double,
+) -> Double {
+  let (value_numerator, value_exp2) = float32_rational_from_double(value)
+  let (subtracted_numerator, subtracted_exp2) = float32_rational_from_double(
+    subtracted,
+  )
+  let multiplied_numerator = value_numerator * BigInt::from_int(factor)
+  let exp2 = if value_exp2 < subtracted_exp2 {
+    value_exp2
+  } else {
+    subtracted_exp2
+  }
+  let aligned_multiplied = if value_exp2 > exp2 {
+    multiplied_numerator << (value_exp2 - exp2)
+  } else {
+    multiplied_numerator
+  }
+  let aligned_subtracted = if subtracted_exp2 > exp2 {
+    subtracted_numerator << (subtracted_exp2 - exp2)
+  } else {
+    subtracted_numerator
+  }
+  round_float32_rational_to_double(
+    aligned_multiplied - aligned_subtracted,
+    exp2,
+    1,
+  )
+}
+
+///|
+fn float32_div_int(value : Double, divisor : Int) -> Double {
+  let (numerator, exp2) = float32_rational_from_double(value)
+  round_float32_rational_to_double(numerator, exp2, divisor)
+}
+
+///|
+fn forecast_processing_kind(
+  option_name : String,
+  statistical_process : Int,
+) -> ForecastProcessingKind? {
+  if statistical_process == 0 {
+    Some(Ave)
+  } else if statistical_process == 1 {
+    Some(Acc)
+  } else if option_name == "-merge_fcst" && statistical_process == 2 {
+    Some(Max)
+  } else if option_name == "-merge_fcst" && statistical_process == 3 {
+    Some(Min)
+  } else {
+    None
+  }
+}
+
+///|
+fn forecast_processing_kind_eq(
+  lhs : ForecastProcessingKind,
+  rhs : ForecastProcessingKind,
+) -> Bool {
+  match (lhs, rhs) {
+    (Ave, Ave) => true
+    (Acc, Acc) => true
+    (Max, Max) => true
+    (Min, Min) => true
+    _ => false
+  }
+}
+
+///|
+fn forecast_processing_template48_key(
+  section4 : @lib.Grib2Section4Decoded,
+  template48 : @section4.Grib2ProductTemplate48,
+) -> Bytes {
+  let specs = template48.time_range_specs
+  let normalized_specs = if specs.length() == 0 {
+    specs
+  } else {
+    let head = specs[0]
+    [{ ..head, time_range_length: 0 }, ..specs[1:]]
+  }
+  @lib.encode_section4_bytes({
+    number_of_coordinate_values: section4.number_of_coordinate_values,
+    template: @section4.ProductTemplate48({
+      ..template48,
+      base: { ..template48.base, forecast_time: 0 },
+      end_year: 0,
+      end_month: 0,
+      end_day: 0,
+      end_hour: 0,
+      end_minute: 0,
+      end_second: 0,
+      time_range_specs: normalized_specs,
+    }),
+    coordinate_values_raw: section4.coordinate_values_raw,
+  })
+}
+
+///|
+fn decode_forecast_processing_record(
+  option_name : String,
+  context : @lib.Grib2FileContext,
+  record_ref : SelectedRecordRef,
+) -> Result[ForecastProcessingRecord?, String] {
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let meta = match find_record_meta(context, record_ref.record_index) {
+    Some(v) => v
+    None =>
+      return Err(
+        option_name +
+        ": record not found " +
+        record_ref.record_index.to_string(),
+      )
+  }
+  let template_id = meta.section5_template.id()
+  if template_id != 0 &&
+    template_id != 2 &&
+    template_id != 3 &&
+    template_id != 40 &&
+    template_id != 41 {
+    return Ok(None)
+  }
+  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    Ok(v) => v
+    Err(error) =>
+      return Err(
+        option_name +
+        ": failed to decode Section 4 for record " +
+        record_ref.record_index.to_string() +
+        ": " +
+        error.to_string(),
+      )
+  }
+  let template48 = match section4.template {
+    @section4.ProductTemplate48(v) => v
+    _ => return Ok(None)
+  }
+  if template48.time_range_specs.length() != 1 {
+    return Ok(None)
+  }
+  if template48.base.time_range_unit !=
+    template48.time_range_specs[0].time_range_unit {
+    return Ok(None)
+  }
+  let duration = template48.time_range_specs[0].time_range_length
+  if duration <= 0 {
+    return Ok(None)
+  }
+  let kind = match
+    forecast_processing_kind(
+      option_name,
+      template48.time_range_specs[0].statistical_process,
+    ) {
+    Some(v) => v
+    None => return Ok(None)
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v.values
+    Err(_) =>
+      return Err(
+        option_name +
+        ": failed to unpack record " +
+        record_ref.record_index.to_string(),
+      )
+  }
+  let normalized_values : Array[Double] = []
+  for value in unpacked {
+    normalized_values.push(to_wgrib2_float32(value))
+  }
+  Ok(
+    Some({
+      record_ref,
+      meta,
+      section1_bytes: section_frame_bytes(message, message.section1),
+      section3_bytes: section_frame_bytes(message, submessage.section3),
+      section4_bytes: section_frame_bytes(message, submessage.section4),
+      section4_key: forecast_processing_template48_key(section4, template48),
+      coordinate_value_count: section4.number_of_coordinate_values,
+      coordinate_values_raw: section4.coordinate_values_raw,
+      template48,
+      kind,
+      start_time: template48.base.forecast_time,
+      duration,
+      values: normalized_values,
+    }),
+  )
+}
+
+///|
+fn forecast_processing_records_compatible(
+  lhs : ForecastProcessingRecord,
+  rhs : ForecastProcessingRecord,
+) -> Bool {
+  forecast_processing_kind_eq(lhs.kind, rhs.kind) &&
+  lhs.section1_bytes == rhs.section1_bytes &&
+  lhs.section3_bytes == rhs.section3_bytes &&
+  lhs.section4_key == rhs.section4_key
+}
+
+///|
+fn forecast_processing_output_section4_bytes(
+  record : ForecastProcessingRecord,
+  forecast_time : Int,
+  duration : Int,
+  end_template : @section4.Grib2ProductTemplate48,
+) -> Bytes {
+  let spec = record.template48.time_range_specs[0]
+  @lib.encode_section4_bytes({
+    number_of_coordinate_values: record.coordinate_value_count,
+    template: @section4.ProductTemplate48({
+      ..record.template48,
+      base: { ..record.template48.base, forecast_time, },
+      end_year: end_template.end_year,
+      end_month: end_template.end_month,
+      end_day: end_template.end_day,
+      end_hour: end_template.end_hour,
+      end_minute: end_template.end_minute,
+      end_second: end_template.end_second,
+      time_range_specs: [{ ..spec, time_range_length: duration }],
+    }),
+    coordinate_values_raw: record.coordinate_values_raw,
+  })
+}
+
+///|
+fn build_processed_forecast_submessage_bytes(
+  option_name : String,
+  context : @lib.Grib2FileContext,
+  record : ForecastProcessingRecord,
+  section4_bytes : Bytes,
+  values : Array[Double],
+) -> Result[Bytes, String] {
+  let message = context.messages[record.record_ref.message_index]
+  let submessage = message.submessages[record.record_ref.submessage_index]
+  let (sec6, defined_values) = build_wind_section6_bytes_and_defined_values(
+    message, submessage, values,
+  )
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let (sec5, sec7) = match
+    try_build_simple_packed_sections_with_forecast_scaling(
+      defined_values,
+      record.meta.section5_reference_value_ieee,
+      record.meta.section5_binary_scale_factor,
+      record.meta.section5_decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for " +
+        option_name +
+        " record " +
+        record.meta.record_index.to_string(),
+      )
+  }
+  Ok(
+    build_submessage_grib_bytes_with_overrides(
+      message,
+      submessage,
+      Some(section4_bytes),
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
+}
+
+///|
+fn build_repacked_forecast_submessage_bytes(
+  option_name : String,
+  context : @lib.Grib2FileContext,
+  record : ForecastProcessingRecord,
+) -> Result[Bytes, String] {
+  build_processed_forecast_submessage_bytes(
+    option_name,
+    context,
+    record,
+    record.section4_bytes,
+    record.values,
+  )
+}
+
+///|
+fn forecast_merge_values(
+  kind : ForecastProcessingKind,
+  lhs : Array[Double],
+  rhs : Array[Double],
+) -> Array[Double] {
+  let out : Array[Double] = []
+  for index in 0..<lhs.length() {
+    let left = to_wgrib2_float32(lhs[index])
+    let right = to_wgrib2_float32(rhs[index])
+    let value = match kind {
+      Ave | Acc =>
+        if left == left && right == right {
+          to_wgrib2_float32(left + right)
+        } else {
+          0.0 / 0.0
+        }
+      Max =>
+        if left == left {
+          if right == right && right > left {
+            to_wgrib2_float32(right)
+          } else {
+            to_wgrib2_float32(left)
+          }
+        } else {
+          to_wgrib2_float32(right)
+        }
+      Min =>
+        if left == left {
+          if right == right && right < left {
+            to_wgrib2_float32(right)
+          } else {
+            to_wgrib2_float32(left)
+          }
+        } else {
+          to_wgrib2_float32(right)
+        }
+    }
+    out.push(value)
+  }
+  out
+}
+
+///|
+fn forecast_scale_average_values(
+  values : Array[Double],
+  factor : Double,
+) -> Array[Double] {
+  let out : Array[Double] = []
+  let factor_f32 = to_wgrib2_float32(factor)
+  for value in values {
+    if value == value {
+      out.push(to_wgrib2_float32(to_wgrib2_float32(value) * factor_f32))
+    } else {
+      out.push(value)
+    }
+  }
+  out
+}
+
+///|
+fn forecast_residual_values(
+  kind : ForecastProcessingKind,
+  shorter : Array[Double],
+  longer : Array[Double],
+  shorter_duration : Int,
+  longer_duration : Int,
+) -> Array[Double] {
+  let out : Array[Double] = []
+  for index in 0..<shorter.length() {
+    let left = to_wgrib2_float32(shorter[index])
+    let right = to_wgrib2_float32(longer[index])
+    if left != left || right != right {
+      out.push(0.0 / 0.0)
+    } else if forecast_processing_kind_eq(kind, Ave) {
+      let left_term = float32_mul_int(left, shorter_duration)
+      let numerator = float32_mul_int_then_sub(
+        right, longer_duration, left_term,
+      )
+      out.push(float32_div_int(numerator, longer_duration - shorter_duration))
+    } else {
+      out.push(float32_sub(right, left))
+    }
+  }
+  out
+}
+
+///|
 fn write_ncep_norm_output(
   destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {
-  // Limited compatibility: transformation is not implemented yet.
-  write_empty_compat_output(destination, append_mode)
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  let mut saved : ForecastProcessingRecord? = None
+  for record_ref in refs {
+    let current = match
+      decode_forecast_processing_record("-ncep_norm", context, record_ref) {
+      Ok(Some(v)) => v
+      Ok(None) => continue
+      Err(error) => return Err(error)
+    }
+    match saved {
+      None => {
+        append_bytes(
+          out,
+          match
+            build_repacked_forecast_submessage_bytes(
+              "-ncep_norm", context, current,
+            ) {
+            Ok(v) => v
+            Err(error) => return Err(error)
+          },
+        )
+        saved = Some(current)
+      }
+      Some(previous) =>
+        if !forecast_processing_records_compatible(previous, current) ||
+          previous.start_time != current.start_time {
+          append_bytes(
+            out,
+            match
+              build_repacked_forecast_submessage_bytes(
+                "-ncep_norm", context, current,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+          saved = Some(current)
+        } else if previous.duration == current.duration {
+          continue
+        } else if current.duration < previous.duration {
+          append_bytes(
+            out,
+            match
+              build_repacked_forecast_submessage_bytes(
+                "-ncep_norm", context, current,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+          saved = Some(current)
+        } else {
+          let normalized_values = forecast_residual_values(
+            previous.kind,
+            previous.values,
+            current.values,
+            previous.duration,
+            current.duration,
+          )
+          let new_start = previous.start_time + previous.duration
+          let new_duration = current.duration - previous.duration
+          let section4_bytes = forecast_processing_output_section4_bytes(
+            previous,
+            new_start,
+            new_duration,
+            current.template48,
+          )
+          append_bytes(
+            out,
+            match
+              build_processed_forecast_submessage_bytes(
+                "-ncep_norm", context, previous, section4_bytes, normalized_values,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+          saved = Some({
+            ..previous,
+            section4_bytes,
+            template48: {
+              ..previous.template48,
+              base: { ..previous.template48.base, forecast_time: new_start },
+              end_year: current.template48.end_year,
+              end_month: current.template48.end_month,
+              end_day: current.template48.end_day,
+              end_hour: current.template48.end_hour,
+              end_minute: current.template48.end_minute,
+              end_second: current.template48.end_second,
+              time_range_specs: [
+                {
+                  ..previous.template48.time_range_specs[0],
+                  time_range_length: new_duration,
+                },
+              ],
+            },
+            start_time: new_start,
+            duration: new_duration,
+            values: normalized_values,
+          })
+        }
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
 fn write_merge_fcst_output(
   intervals : String,
   destination : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {
   let n = match parse_int_option(intervals) {
@@ -6317,8 +7092,137 @@ fn write_merge_fcst_output(
   if n < 0 {
     return Err("merge_fcst: arg must be >= 0")
   }
-  // Limited compatibility: merge transformation is not implemented yet.
-  write_empty_compat_output(destination, append_mode)
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  let mut saved : ForecastProcessingState? = None
+  for record_ref in refs {
+    let current = match
+      decode_forecast_processing_record("-merge_fcst", context, record_ref) {
+      Ok(Some(v)) => v
+      Ok(None) => continue
+      Err(error) => return Err(error)
+    }
+    match saved {
+      None => {
+        if n == 0 {
+          append_bytes(
+            out,
+            match
+              build_repacked_forecast_submessage_bytes(
+                "-merge_fcst", context, current,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+        }
+        saved = Some({ record: current, count: 1 })
+      }
+      Some(state) => {
+        let expected_start = state.record.start_time +
+          state.record.duration * state.count
+        if !forecast_processing_records_compatible(state.record, current) ||
+          current.start_time != expected_start ||
+          current.duration != state.record.duration {
+          if n == 0 {
+            append_bytes(
+              out,
+              match
+                build_repacked_forecast_submessage_bytes(
+                  "-merge_fcst", context, current,
+                ) {
+                Ok(v) => v
+                Err(error) => return Err(error)
+              },
+            )
+          }
+          saved = Some({ record: current, count: 1 })
+          continue
+        }
+        let merged_values = forecast_merge_values(
+          state.record.kind,
+          state.record.values,
+          current.values,
+        )
+        let merged_count = state.count + 1
+        let merged_duration = state.record.duration * merged_count
+        let section4_bytes = forecast_processing_output_section4_bytes(
+          state.record,
+          state.record.start_time,
+          merged_duration,
+          current.template48,
+        )
+        let output_values = if forecast_processing_kind_eq(
+            state.record.kind,
+            Ave,
+          ) {
+          forecast_scale_average_values(
+            merged_values,
+            1.0 / merged_count.to_double(),
+          )
+        } else {
+          merged_values
+        }
+        if merged_count == n || n == 0 {
+          append_bytes(
+            out,
+            match
+              build_processed_forecast_submessage_bytes(
+                "-merge_fcst",
+                context,
+                state.record,
+                section4_bytes,
+                output_values,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+        }
+        if n == 0 {
+          saved = Some({
+            record: {
+              ..state.record,
+              section4_bytes,
+              template48: {
+                ..state.record.template48,
+                end_year: current.template48.end_year,
+                end_month: current.template48.end_month,
+                end_day: current.template48.end_day,
+                end_hour: current.template48.end_hour,
+                end_minute: current.template48.end_minute,
+                end_second: current.template48.end_second,
+                time_range_specs: [
+                  {
+                    ..state.record.template48.time_range_specs[0],
+                    time_range_length: merged_duration,
+                  },
+                ],
+              },
+              duration: merged_duration,
+              values: merged_values,
+            },
+            count: merged_count,
+          })
+        } else if merged_count == n {
+          saved = None
+        } else {
+          saved = Some({
+            record: { ..state.record, values: merged_values },
+            count: merged_count,
+          })
+        }
+      }
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -6326,10 +7230,13 @@ fn write_unmerge_fcst_output(
   destination : String,
   fcst_time_0 : String,
   z_arg : String,
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {
-  if !parse_unmerge_fcst_time_spec(fcst_time_0) {
-    return Err("unmerge_fcst: bad (int)(mn|hr|dy|mo|yr)")
+  let (base_unit, base_time) = match parse_unmerge_fcst_time_spec(fcst_time_0) {
+    Some(v) => v
+    None => return Err("unmerge_fcst: bad (int)(mn|hr|dy|mo|yr)")
   }
   let z = match parse_int_option(z_arg) {
     Some(v) => v
@@ -6338,8 +7245,124 @@ fn write_unmerge_fcst_output(
   if z < 0 || z > 2 {
     return Err("unmerge_fcst: z must be 0..2")
   }
-  // Limited compatibility: unmerge transformation is not implemented yet.
-  write_empty_compat_output(destination, append_mode)
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return write_empty_compat_output(destination, append_mode)
+  }
+  let out : Array[Byte] = []
+  let mut saved : ForecastProcessingRecord? = None
+  for record_ref in refs {
+    let current = match
+      decode_forecast_processing_record("-unmerge_fcst", context, record_ref) {
+      Ok(Some(v)) => v
+      Ok(None) => continue
+      Err(error) => return Err(error)
+    }
+    if !forecast_processing_kind_eq(current.kind, Ave) &&
+      !forecast_processing_kind_eq(current.kind, Acc) {
+      continue
+    }
+    if current.start_time != base_time {
+      continue
+    }
+    if base_time != 0 && current.template48.base.time_range_unit != base_unit {
+      continue
+    }
+    match saved {
+      None => {
+        if z > 0 {
+          append_bytes(
+            out,
+            match
+              build_repacked_forecast_submessage_bytes(
+                "-unmerge_fcst", context, current,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+        }
+        saved = Some(current)
+      }
+      Some(previous) => {
+        if !forecast_processing_records_compatible(previous, current) {
+          if z > 0 {
+            append_bytes(
+              out,
+              match
+                build_repacked_forecast_submessage_bytes(
+                  "-unmerge_fcst", context, current,
+                ) {
+                Ok(v) => v
+                Err(error) => return Err(error)
+              },
+            )
+          }
+          saved = Some(current)
+          continue
+        }
+        if previous.section4_bytes == current.section4_bytes {
+          continue
+        }
+        if current.duration <= previous.duration {
+          if z > 0 {
+            append_bytes(
+              out,
+              match
+                build_repacked_forecast_submessage_bytes(
+                  "-unmerge_fcst", context, current,
+                ) {
+                Ok(v) => v
+                Err(error) => return Err(error)
+              },
+            )
+          }
+          saved = Some(current)
+          continue
+        }
+        if z > 1 {
+          append_bytes(
+            out,
+            match
+              build_repacked_forecast_submessage_bytes(
+                "-unmerge_fcst", context, current,
+              ) {
+              Ok(v) => v
+              Err(error) => return Err(error)
+            },
+          )
+        }
+        let section4_bytes = forecast_processing_output_section4_bytes(
+          current,
+          base_time + previous.duration,
+          current.duration - previous.duration,
+          current.template48,
+        )
+        let message = context.messages[current.record_ref.message_index]
+        let submessage = message.submessages[current.record_ref.submessage_index]
+        append_bytes(
+          out,
+          match
+            build_defined_zero_field_submessage_bytes(
+              "-unmerge_fcst",
+              message,
+              submessage,
+              current.meta,
+              section4_bytes,
+            ) {
+            Ok(v) => v
+            Err(error) => return Err(error)
+          },
+        )
+        saved = Some(current)
+      }
+    }
+  }
+  if append_mode {
+    native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    native_write_bytes(destination, Bytes::from_array(out))
+  }
 }
 
 ///|
@@ -6414,15 +7437,6 @@ fn build_wind_pair_key(
 }
 
 ///|
-fn f32_ieee_big_endian_bytes(values : Array[Double]) -> Bytes {
-  let out : Array[Byte] = []
-  for value in values {
-    append_f32_bytes(out, value, true)
-  }
-  Bytes::from_array(out)
-}
-
-///|
 fn patch_section4_parameter_ids(
   message : @lib.Grib2MessageContext,
   submessage : @lib.Grib2SubmessageFrame,
@@ -6447,11 +7461,13 @@ fn wind_dir_from_uv(u : Double, v : Double) -> Double {
   if u != u || v != v {
     return 0.0 / 0.0
   }
-  let mut deg = @math.atan2(-u, -v) * 180.0 / @math.PI
-  if deg < 0.0 {
+  let u_f = Float::from_double(u).to_double()
+  let v_f = Float::from_double(v).to_double()
+  let mut deg = @math.atan2(-u_f, -v_f) * 180.0 / @math.PI
+  if deg <= 0.0 {
     deg += 360.0
   }
-  deg
+  Float::from_double(deg).to_double()
 }
 
 ///|
@@ -6461,7 +7477,10 @@ fn wind_derived_value(u : Double, v : Double, mode : WindDerivedMode) -> Double 
       if u != u || v != v {
         0.0 / 0.0
       } else {
-        @math.hypot(u, v)
+        let u_f = Float::from_double(u).to_double()
+        let v_f = Float::from_double(v).to_double()
+        let sum_sq = Float::from_double(u_f * u_f + v_f * v_f).to_double()
+        Float::from_double(sqrt_newton(sum_sq)).to_double()
       }
     WindDerivedDir => wind_dir_from_uv(u, v)
   }
@@ -6486,23 +7505,6 @@ fn wind_uv_from_speed_dir(
   let u = Float::from_double(-speed_f * @math.sin(rad)).to_double()
   let v = Float::from_double(-speed_f * @math.cos(rad)).to_double()
   (u, v)
-}
-
-///|
-fn round_to_int(v : Double) -> Int {
-  let lower_f = @math.floor(v)
-  let frac = v - lower_f
-  let lower = lower_f.to_int()
-  if frac < 0.5 {
-    lower
-  } else if frac > 0.5 {
-    lower + 1
-    // Tie: round to nearest even.
-  } else if lower % 2 == 0 {
-    lower
-  } else {
-    lower + 1
-  }
 }
 
 ///|
@@ -6533,6 +7535,18 @@ fn pow10_int(n : Int) -> Double {
     }
   }
   out
+}
+
+///|
+fn sqrt_newton(x : Double) -> Double {
+  if x <= 0.0 {
+    return 0.0
+  }
+  let mut guess = if x >= 1.0 { x } else { 1.0 }
+  for _ in 0..<12 {
+    guess = 0.5 * (guess + x / guess)
+  }
+  guess
 }
 
 ///|
@@ -6811,12 +7825,15 @@ fn try_build_simple_packed_sections_with_scaling(
   decimal_scale_factor : Int,
   original_field_value_type : Int,
 ) -> (Bytes, Bytes)? {
+  let to_wgrib2_float = fn(value : Double) -> Double {
+    Float::from_double(value).to_double()
+  }
   let normalized_values : Array[Double] = []
   for value in values {
     if value != value {
       return None
     }
-    normalized_values.push(Float::from_double(value).to_double())
+    normalized_values.push(to_wgrib2_float(value))
   }
   let mut min_value = Float::reinterpret_from_int(reference_value_ieee).to_double()
   let mut max_value = min_value
@@ -6847,18 +7864,26 @@ fn try_build_simple_packed_sections_with_scaling(
   let output_reference_value_ieee = if normalized_values.length() == 0 {
     0
   } else if constant_field {
-    Float::from_double(min_value).reinterpret_as_int()
+    Float::from_double(to_wgrib2_float(min_value)).reinterpret_as_int()
   } else {
-    Float::from_double(min_value * decimal_scale).reinterpret_as_int()
+    Float::from_double(to_wgrib2_float(min_value * decimal_scale)).reinterpret_as_int()
   }
   let reference_value = Float::reinterpret_from_int(output_reference_value_ieee).to_double()
   let binary_scale = pow2_int(output_binary_scale_factor)
   let packed_values : Array[Int] = []
   let mut max_packed = 0
   for value in normalized_values {
-    let packed = round_to_int(
-      (value * decimal_scale - reference_value) / binary_scale,
-    )
+    let decimal_scaled = if output_decimal_scale_factor == 0 {
+      value
+    } else {
+      to_wgrib2_float(value * decimal_scale)
+    }
+    let packed_float = if output_binary_scale_factor == 0 {
+      to_wgrib2_float(decimal_scaled - reference_value)
+    } else {
+      to_wgrib2_float((decimal_scaled - reference_value) / binary_scale)
+    }
+    let packed = @math.floor(packed_float + 0.5).to_int()
     let nonnegative = if packed < 0 { 0 } else { packed }
     if nonnegative > max_packed {
       max_packed = nonnegative
@@ -6972,59 +7997,82 @@ fn build_grib_out_submessage_bytes(
 }
 
 ///|
-fn try_build_wind_simple_packed_sections(
-  derived_values : Array[Double],
-) -> (Bytes, Bytes)? {
-  if derived_values.length() == 0 {
-    return None
-  }
-  let mut min_value = derived_values[0]
-  let mut max_value = derived_values[0]
-  for v in derived_values {
-    if v != v {
-      return None
+fn build_wind_section6_bytes_and_defined_values(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  values : Array[Double],
+) -> (Bytes, Array[Double]) {
+  let input_order = restore_input_scan_order_for_grib_out(
+    message, submessage, values,
+  )
+  let defined_values : Array[Double] = []
+  let bitmap = Array::make((input_order.length() + 7) / 8, b'\x00')
+  let mut has_undefined = false
+  for index in 0..<input_order.length() {
+    let value = input_order[index]
+    if value != value {
+      has_undefined = true
+      continue
     }
-    if v < min_value {
-      min_value = v
-    }
-    if v > max_value {
-      max_value = v
-    }
+    defined_values.push(value)
+    let byte_index = index / 8
+    let bit_offset = 7 - index % 8
+    let current = bitmap[byte_index].to_uint().reinterpret_as_int()
+    bitmap[byte_index] = (current | (1 << bit_offset)).to_byte()
   }
-  let decimal_scale_factor = if max_value <= 180.0 { 1 } else { 0 }
-  let scale = pow10_int(decimal_scale_factor)
-  let reference_value = Float::from_double(min_value * scale).to_double()
-  let scaled_ints : Array[Int] = []
-  let mut max_scaled = 0
-  for v in derived_values {
-    let x = round_to_int(v * scale - reference_value)
-    let nonneg = if x < 0 { 0 } else { x }
-    if nonneg > max_scaled {
-      max_scaled = nonneg
-    }
-    scaled_ints.push(nonneg)
+  let sec6 = if has_undefined {
+    @lib.encode_section6_bytes({
+      bitmap_indicator: 0,
+      bitmap_raw: Bytes::from_array(bitmap),
+    })
+  } else {
+    build_no_bitmap_section6_bytes()
   }
-  let bits_per_value = required_bits_nonnegative(max_scaled)
-  if bits_per_value > 31 {
-    return None
+  (sec6, defined_values)
+}
+
+///|
+fn build_wind_simple_packed_submessage_bytes(
+  option_name : String,
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+  section4 : Bytes,
+  values : Array[Double],
+  reference_value_ieee : Int,
+  binary_scale_factor : Int,
+  decimal_scale_factor : Int,
+) -> Result[Bytes, String] {
+  let (sec6, defined_values) = build_wind_section6_bytes_and_defined_values(
+    message, submessage, values,
+  )
+  let original_field_value_type = section5_original_field_value_type(
+    message, submessage,
+  )
+  let (sec5, sec7) = match
+    try_build_simple_packed_sections_with_scaling(
+      defined_values, reference_value_ieee, binary_scale_factor, decimal_scale_factor,
+      original_field_value_type,
+    ) {
+    Some(v) => v
+    None =>
+      return Err(
+        "failed to rebuild simple-packed data for " +
+        option_name +
+        " record " +
+        meta.record_index.to_string(),
+      )
   }
-  let sec5 = @lib.encode_section5_bytes({
-    number_of_data_points: derived_values.length(),
-    template: DataRepresentationTemplate50({
-      reference_value_ieee: Float::from_double(reference_value).reinterpret_as_int(),
-      binary_scale_factor: 0,
-      decimal_scale_factor,
-      bits_per_value,
-      original_field_value_type: 0,
-      reserved_tail: b"",
-    }),
-  })
-  let sec7 = @lib.encode_section7_bytes({
-    template: DataTemplate70({
-      data_values_raw: pack_unsigned_values_be(scaled_ints, bits_per_value),
-    }),
-  })
-  Some((sec5, sec7))
+  Ok(
+    build_submessage_grib_bytes_with_overrides(
+      message,
+      submessage,
+      Some(section4),
+      Some(sec5),
+      Some(sec6),
+      Some(sec7),
+    ),
+  )
 }
 
 ///|
@@ -7128,6 +8176,7 @@ fn write_wind_derived_output(
             wind_derived_value(u_values[i], v_values[i], mode),
           )
         }
+        let u_meta = metas[u_candidate.record_index - 1]
         let sec4 = match mode {
           WindDerivedSpeed =>
             match patch_section4_parameter_ids(u_message, u_submessage, 2, 1) {
@@ -7140,40 +8189,30 @@ fn write_wind_derived_output(
               Err(e) => return Err(e)
             }
         }
-        let (sec5, sec7) = match
-          try_build_wind_simple_packed_sections(derived_values) {
-          Some((p5, p7)) => (p5, p7)
-          None => {
-            let p5 = @lib.encode_section5_bytes({
-              number_of_data_points: derived_values.length(),
-              template: DataRepresentationTemplate54({
-                precision: 1,
-                reserved_tail: b"",
-              }),
-            })
-            let p7 = @lib.encode_section7_bytes({
-              template: DataTemplate74({
-                data_values_raw: f32_ieee_big_endian_bytes(derived_values),
-              }),
-            })
-            (p5, p7)
-          }
+        let (
+          option_name,
+          reference_value_ieee,
+          binary_scale_factor,
+          decimal_scale_factor,
+        ) = match mode {
+          WindDerivedSpeed =>
+            (
+              "-wind_speed",
+              u_meta.section5_reference_value_ieee,
+              u_meta.section5_binary_scale_factor,
+              u_meta.section5_decimal_scale_factor,
+            )
+          WindDerivedDir => ("-wind_dir", 0, 0, 0)
         }
-        let sec6 = @lib.encode_section6_bytes({
-          bitmap_indicator: 255,
-          bitmap_raw: b"",
-        })
-        append_bytes(
-          out,
-          build_submessage_grib_bytes_with_overrides(
-            u_message,
-            u_submessage,
-            Some(sec4),
-            Some(sec5),
-            Some(sec6),
-            Some(sec7),
-          ),
-        )
+        let built = match
+          build_wind_simple_packed_submessage_bytes(
+            option_name, u_message, u_submessage, u_meta, sec4, derived_values, reference_value_ieee,
+            binary_scale_factor, decimal_scale_factor,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        append_bytes(out, built)
       }
     }
   }
@@ -7279,81 +8318,50 @@ fn write_wind_uv_output(
           u_values.push(u)
           v_values.push(v)
         }
-        let sec6 = @lib.encode_section6_bytes({
-          bitmap_indicator: 255,
-          bitmap_raw: b"",
-        })
+        let speed_meta = metas[speed_candidate.record_index - 1]
         // Match wgrib2 ordering: UGRD first, then VGRD.
         let u_sec4 = match
           patch_section4_parameter_ids(speed_message, speed_submessage, 2, 2) {
           Ok(v) => v
           Err(e) => return Err(e)
         }
-        let (u_sec5, u_sec7) = match
-          try_build_wind_simple_packed_sections(u_values) {
-          Some((p5, p7)) => (p5, p7)
-          None => {
-            let p5 = @lib.encode_section5_bytes({
-              number_of_data_points: u_values.length(),
-              template: DataRepresentationTemplate54({
-                precision: 1,
-                reserved_tail: b"",
-              }),
-            })
-            let p7 = @lib.encode_section7_bytes({
-              template: DataTemplate74({
-                data_values_raw: f32_ieee_big_endian_bytes(u_values),
-              }),
-            })
-            (p5, p7)
-          }
-        }
-        append_bytes(
-          out,
-          build_submessage_grib_bytes_with_overrides(
+        let u_built = match
+          build_wind_simple_packed_submessage_bytes(
+            "-wind_uv",
             speed_message,
             speed_submessage,
-            Some(u_sec4),
-            Some(u_sec5),
-            Some(sec6),
-            Some(u_sec7),
-          ),
-        )
+            speed_meta,
+            u_sec4,
+            u_values,
+            speed_meta.section5_reference_value_ieee,
+            speed_meta.section5_binary_scale_factor,
+            speed_meta.section5_decimal_scale_factor,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        append_bytes(out, u_built)
         let v_sec4 = match
           patch_section4_parameter_ids(speed_message, speed_submessage, 2, 3) {
           Ok(v) => v
           Err(e) => return Err(e)
         }
-        let (v_sec5, v_sec7) = match
-          try_build_wind_simple_packed_sections(v_values) {
-          Some((p5, p7)) => (p5, p7)
-          None => {
-            let p5 = @lib.encode_section5_bytes({
-              number_of_data_points: v_values.length(),
-              template: DataRepresentationTemplate54({
-                precision: 1,
-                reserved_tail: b"",
-              }),
-            })
-            let p7 = @lib.encode_section7_bytes({
-              template: DataTemplate74({
-                data_values_raw: f32_ieee_big_endian_bytes(v_values),
-              }),
-            })
-            (p5, p7)
-          }
-        }
-        append_bytes(
-          out,
-          build_submessage_grib_bytes_with_overrides(
+        let v_built = match
+          build_wind_simple_packed_submessage_bytes(
+            "-wind_uv",
             speed_message,
             speed_submessage,
-            Some(v_sec4),
-            Some(v_sec5),
-            Some(sec6),
-            Some(v_sec7),
-          ),
-        )
+            speed_meta,
+            v_sec4,
+            v_values,
+            speed_meta.section5_reference_value_ieee,
+            speed_meta.section5_binary_scale_factor,
+            speed_meta.section5_decimal_scale_factor,
+          ) {
+          Ok(v) => v
+          Err(e) => return Err(e)
+        }
+        append_bytes(out, v_built)
       }
     }
   }
@@ -9147,7 +10155,8 @@ fn run_cli(args : Array[String]) -> Int {
         }
         None => ()
       }
-      match write_ncep_norm_output(destination, init.append_mode) {
+      match
+        write_ncep_norm_output(destination, context, selected, init.append_mode) {
         Ok(_) => return 0
         Err(error) => {
           println("error: " + error)
@@ -9538,7 +10547,14 @@ fn run_cli(args : Array[String]) -> Int {
         }
         None => ()
       }
-      match write_merge_fcst_output(intervals, destination, init.append_mode) {
+      match
+        write_merge_fcst_output(
+          intervals,
+          destination,
+          context,
+          selected,
+          init.append_mode,
+        ) {
         Ok(_) => return 0
         Err(error) => {
           println("error: " + error)
@@ -9574,6 +10590,8 @@ fn run_cli(args : Array[String]) -> Int {
           destination,
           fcst_time_0,
           z_arg,
+          context,
+          selected,
           init.append_mode,
         ) {
         Ok(_) => return 0

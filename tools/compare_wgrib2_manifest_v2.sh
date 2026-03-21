@@ -133,6 +133,15 @@ compare_multi_file_outputs() {
   done
 }
 
+run_combined_output() {
+  local cmd="$1"
+  local out_txt="$2"
+
+  set +e
+  bash -lc "${cmd}" > "${out_txt}" 2>&1
+  set -e
+}
+
 run_case() {
   local case_id="$1"
   local fixture_path="$2"
@@ -168,6 +177,17 @@ run_case() {
         compare_stats_files "${txt_w}" "${txt_m}" "${case_dir}"
       else
         diff -u "${txt_w}" "${txt_m}" > "${case_dir}/diff.txt"
+      fi
+      ;;
+    combined_diff)
+      run_combined_output "${wcmd}" "${txt_w}"
+      run_combined_output "${mcmd}" "${txt_m}"
+      diff -u "${txt_w}" "${txt_m}" > "${case_dir}/diff.txt"
+      if [[ -f "${out_w}" || -f "${out_m}" ]]; then
+        if [[ ! -f "${out_w}" || ! -f "${out_m}" ]]; then
+          return 1
+        fi
+        cmp -s "${out_w}" "${out_m}"
       fi
       ;;
     binary_cmp)
