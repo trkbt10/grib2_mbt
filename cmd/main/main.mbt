@@ -237,7 +237,7 @@ fn print_usage() -> Unit {
     "  -grib_out_irr2 N G R UUID file  irregular-grid grib2 (template 3.101 compat)",
   )
   println(
-    "  -new_grid projection xspec yspec out  limited latlon identity remap",
+    "  -new_grid projection xspec yspec out  limited latlon bilinear remap",
   )
   println("  -new_grid_order out out2  vector ordering compat (limited)")
   println("  -submsg_uv file  vector submessage combine (UGRD/VGRD pairs)")
@@ -3876,14 +3876,6 @@ fn write_cress_lola_output(
 }
 
 ///|
-fn new_grid_rejects_identity_parameter(var_name : String) -> Bool {
-  var_name == "UGRD" ||
-  var_name == "VGRD" ||
-  var_name == "WIND" ||
-  var_name == "WDIR"
-}
-
-///|
 fn write_new_grid_output(
   projection : String,
   lon_spec : String,
@@ -3896,37 +3888,121 @@ fn write_new_grid_output(
   if projection != "latlon" {
     return Err("-new_grid currently supports only latlon projection")
   }
-  let mut record_index = 1
-  for message in context.messages {
-    for _ in message.submessages {
-      if record_is_selected(record_index, selected) {
-        let meta = match find_record_meta(context, record_index) {
-          Some(v) => v
-          None =>
-            return Err(
-              "record not found for -new_grid: " + record_index.to_string(),
-            )
-        }
-        if !lola_matches_meta(meta, lon_spec, lat_spec) {
-          return Err(
-            "-new_grid currently supports only identity remap (same regular lat/lon grid)",
-          )
-        }
-        let var_name = name_lookup_text(meta.parameter_name)
-        if new_grid_rejects_identity_parameter(var_name) {
-          return Err(
-            "-new_grid currently rejects vector/wind fields in limited identity mode (" +
-            var_name +
-            ")",
-          )
-        }
-      }
-      record_index += 1
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, selected)
+  let u_candidates : Map[Bytes, SelectedRecordRef] = {}
+  let v_candidates : Map[Bytes, SelectedRecordRef] = {}
+  for record_ref in refs {
+    let meta_index = record_ref.record_index - 1
+    if meta_index >= metas.length() {
+      continue
+    }
+    let meta = metas[meta_index]
+    if !is_wind_u_component(meta) && !is_wind_v_component(meta) {
+      continue
+    }
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let pair_key = build_wind_pair_key(message, submessage)
+    if pair_key.length() == 0 {
+      continue
+    }
+    if is_wind_u_component(meta) {
+      u_candidates.set(pair_key, record_ref)
+    } else if is_wind_v_component(meta) {
+      v_candidates.set(pair_key, record_ref)
     }
   }
-  write_identity_lola_grib_output(
-    "-new_grid", lon_spec, lat_spec, destination, context, selected, append_mode,
-  )
+  let consumed = Array::make(metas.length() + 1, false)
+  let out : Array[Byte] = []
+  for record_ref in refs {
+    if record_ref.record_index < consumed.length() &&
+      consumed[record_ref.record_index] {
+      continue
+    }
+    let record_index = record_ref.record_index
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let meta_index = record_index - 1
+    if meta_index >= metas.length() {
+      continue
+    }
+    let meta = metas[meta_index]
+    let is_identity = lola_matches_meta(meta, lon_spec, lat_spec)
+    if !is_identity && (is_wind_u_component(meta) || is_wind_v_component(meta)) {
+      let pair_key = build_wind_pair_key(message, submessage)
+      if pair_key.length() == 0 {
+        consumed[record_index] = true
+        continue
+      }
+      let u_ref = match u_candidates.get(pair_key) {
+        Some(v) => v
+        None => {
+          consumed[record_index] = true
+          continue
+        }
+      }
+      let v_ref = match v_candidates.get(pair_key) {
+        Some(v) => v
+        None => {
+          consumed[record_index] = true
+          continue
+        }
+      }
+      let first_index = if u_ref.record_index < v_ref.record_index {
+        u_ref.record_index
+      } else {
+        v_ref.record_index
+      }
+      if record_index != first_index {
+        continue
+      }
+      let u_meta = metas[u_ref.record_index - 1]
+      let v_meta = metas[v_ref.record_index - 1]
+      let u_message = context.messages[u_ref.message_index]
+      let u_submessage = u_message.submessages[u_ref.submessage_index]
+      let v_message = context.messages[v_ref.message_index]
+      let v_submessage = v_message.submessages[v_ref.submessage_index]
+      let (u_bytes, v_bytes) = match
+        build_new_grid_wind_pair_submessage_bytes(
+          lon_spec, lat_spec, u_message, u_submessage, u_meta, v_message, v_submessage,
+          v_meta,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      append_bytes(out, u_bytes)
+      append_bytes(out, v_bytes)
+      consumed[u_ref.record_index] = true
+      consumed[v_ref.record_index] = true
+      continue
+    }
+    let bytes = if is_identity {
+      match
+        build_identity_lola_submessage_bytes(
+          "-new_grid", lon_spec, lat_spec, message, submessage, meta,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+    } else {
+      match
+        build_new_grid_submessage_bytes(
+          lon_spec, lat_spec, message, submessage, meta,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+    }
+    append_bytes(out, bytes)
+    consumed[record_index] = true
+  }
+  if append_mode {
+    let _ = native_append_bytes(destination, Bytes::from_array(out))
+  } else {
+    let _ = native_write_bytes(destination, Bytes::from_array(out))
+  }
+  Ok(())
 }
 
 ///|
