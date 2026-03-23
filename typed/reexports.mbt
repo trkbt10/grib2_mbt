@@ -160,6 +160,20 @@ pub fn get_section3_grid_info(
         scan_mode: g.base.scanning_mode,
         res_flags: g.base.resolution_and_component_flags,
       }
+    @section3.GridTemplate310(g) =>
+      {
+        template_id: 10,
+        ni: g.ni,
+        nj: g.nj,
+        la1: g.la1,
+        lo1: g.lo1,
+        la2: g.la2,
+        lo2: g.lo2,
+        di: g.di,
+        dj: g.dj,
+        scan_mode: g.scanning_mode,
+        res_flags: g.resolution_and_component_flags,
+      }
     @section3.GridTemplate340(g) =>
       {
         template_id: 40,

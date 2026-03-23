@@ -430,6 +430,676 @@ fn write_forecast_input_with_values(
 }
 
 ///|
+fn build_submessage_grib_bytes_with_section1_override_for_test(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  section1_override : Bytes?,
+) -> Bytes {
+  let sec1 = match section1_override {
+    Some(v) => v
+    None => section_frame_bytes(message, message.section1)
+  }
+  let sec2 = match submessage.section2 {
+    Some(s) => section_frame_bytes(message, s)
+    None => Bytes::new(0)
+  }
+  let sec3 = section_frame_bytes(message, submessage.section3)
+  let sec4 = section_frame_bytes(message, submessage.section4)
+  let sec5 = section_frame_bytes(message, submessage.section5)
+  let sec6 = section_frame_bytes(message, submessage.section6)
+  let sec7 = section_frame_bytes(message, submessage.section7)
+  let body_len = sec1.length() +
+    sec2.length() +
+    sec3.length() +
+    sec4.length() +
+    sec5.length() +
+    sec6.length() +
+    sec7.length()
+  let total_len = 16 + body_len + 4
+  let sec0 = build_sec0_with_length(message, total_len)
+  let out : Array[Byte] = []
+  append_bytes(out, sec0)
+  append_bytes(out, sec1)
+  append_bytes(out, sec2)
+  append_bytes(out, sec3)
+  append_bytes(out, sec4)
+  append_bytes(out, sec5)
+  append_bytes(out, sec6)
+  append_bytes(out, sec7)
+  append_ascii_string_bytes(out, "7777")
+  Bytes::from_array(out)
+}
+
+///|
+fn build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  section1_override : Bytes?,
+  section3_override : Bytes?,
+) -> Bytes {
+  let sec1 = match section1_override {
+    Some(v) => v
+    None => section_frame_bytes(message, message.section1)
+  }
+  let sec2 = match submessage.section2 {
+    Some(s) => section_frame_bytes(message, s)
+    None => Bytes::new(0)
+  }
+  let sec3 = match section3_override {
+    Some(v) => v
+    None => section_frame_bytes(message, submessage.section3)
+  }
+  let sec4 = section_frame_bytes(message, submessage.section4)
+  let sec5 = section_frame_bytes(message, submessage.section5)
+  let sec6 = section_frame_bytes(message, submessage.section6)
+  let sec7 = section_frame_bytes(message, submessage.section7)
+  let body_len = sec1.length() +
+    sec2.length() +
+    sec3.length() +
+    sec4.length() +
+    sec5.length() +
+    sec6.length() +
+    sec7.length()
+  let total_len = 16 + body_len + 4
+  let sec0 = build_sec0_with_length(message, total_len)
+  let out : Array[Byte] = []
+  append_bytes(out, sec0)
+  append_bytes(out, sec1)
+  append_bytes(out, sec2)
+  append_bytes(out, sec3)
+  append_bytes(out, sec4)
+  append_bytes(out, sec5)
+  append_bytes(out, sec6)
+  append_bytes(out, sec7)
+  append_ascii_string_bytes(out, "7777")
+  Bytes::from_array(out)
+}
+
+///|
+fn shift_section1_reference_time_for_test(
+  section1_bytes : Bytes,
+  unix_rt : Int64,
+  hour_offset : Int,
+) -> Result[Bytes, String] {
+  if section1_bytes.length() < 19 {
+    return Err("section1 bytes too short for mixed-reference rewrite")
+  }
+  let timestamp = format_timestamp14_from_unix(
+    unix_rt + hour_offset.to_int64() * 3600L,
+  )
+  let (
+    reference_year,
+    reference_month,
+    reference_day,
+    reference_hour,
+    reference_minute,
+    reference_second,
+  ) = match parse_timestamp14_components(timestamp) {
+    Some(v) => v
+    None => return Err("failed to shift mixed-reference section1 timestamp")
+  }
+  let out = section1_bytes.to_array()
+  out[12] = ((reference_year >> 8) & 0xff).to_byte()
+  out[13] = (reference_year & 0xff).to_byte()
+  out[14] = reference_month.to_byte()
+  out[15] = reference_day.to_byte()
+  out[16] = reference_hour.to_byte()
+  out[17] = reference_minute.to_byte()
+  out[18] = reference_second.to_byte()
+  Ok(Bytes::from_array(out))
+}
+
+///|
+fn write_mixed_reference_netcdf_input(path : String) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err("failed to parse mixed-reference source: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  if metas.length() == 0 {
+    return Err("mixed-reference netcdf source fixture is empty")
+  }
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select mixed-reference netcdf source record")
+  }
+  let record_ref = refs[0]
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let original_bytes = build_submessage_grib_bytes_with_overrides(
+    message,
+    submessage,
+    None,
+    None,
+    None,
+    None,
+  )
+  let shifted_section1 = match
+    shift_section1_reference_time_for_test(
+      section_frame_bytes(message, message.section1),
+      metas[record_ref.record_index - 1].unix_rt,
+      6,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let shifted_bytes = build_submessage_grib_bytes_with_section1_override_for_test(
+    message,
+    submessage,
+    Some(shifted_section1),
+  )
+  let out : Array[Byte] = []
+  append_bytes(out, original_bytes)
+  append_bytes(out, shifted_bytes)
+  match native_write_bytes(path, Bytes::from_array(out)) {
+    Ok(_) => Ok(())
+    Err(e) => Err(e)
+  }
+}
+
+///|
+fn write_synthetic_mercator_netcdf_input(path : String) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err("failed to parse synthetic Mercator source: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select synthetic Mercator source record")
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return Err("synthetic Mercator source must be template 3.0")
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let lat1 = meta.section3_lat1_microdeg.to_double() * 0.000001
+  let lat2 = meta.section3_lat2_microdeg.to_double() * 0.000001
+  let lon1 = meta.section3_lon1_microdeg.to_double() * 0.000001
+  let lon2 = meta.section3_lon2_microdeg.to_double() * 0.000001
+  let south_lat = if (meta.section3_scanning_mode & 0x40) != 0 {
+    lat1
+  } else {
+    lat2
+  }
+  let north_lat = if (meta.section3_scanning_mode & 0x40) != 0 {
+    lat2
+  } else {
+    lat1
+  }
+  let west_lon = if (meta.section3_scanning_mode & 0x80) == 0 {
+    lon1
+  } else {
+    lon2
+  }
+  let mut east_lon = if (meta.section3_scanning_mode & 0x80) == 0 {
+    lon2
+  } else {
+    lon1
+  }
+  if east_lon <= west_lon {
+    east_lon += 360.0
+  }
+  let latd = ((south_lat + north_lat) / 2.0).abs()
+  let earth_radius_m = cress_lola_earth_radius_from_meta(meta)
+  let scale = @math.cos(latd * @math.PI / 180.0)
+  let dx_m = if meta.section3_ni > 1 {
+    2.0 *
+    @math.PI *
+    earth_radius_m *
+    scale *
+    ((east_lon - west_lon) / (meta.section3_ni - 1).to_double()) /
+    360.0
+  } else {
+    0.0
+  }
+  let dy_m = if meta.section3_nj > 1 {
+    earth_radius_m *
+    scale *
+    (netcdf_mercator_projected_y(north_lat) -
+    netcdf_mercator_projected_y(south_lat)).abs() /
+    (meta.section3_nj - 1).to_double()
+  } else {
+    0.0
+  }
+  let section3 : @section3.Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: meta.section3_npts,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: @section3.GridTemplate310({
+      shape_of_earth: meta.section3_shape_of_earth,
+      scale_factor_radius: meta.section3_scale_factor_radius,
+      scaled_value_radius: meta.section3_scaled_value_radius,
+      scale_factor_major_axis: meta.section3_scale_factor_major,
+      scaled_value_major_axis: meta.section3_scaled_value_major,
+      scale_factor_minor_axis: meta.section3_scale_factor_minor,
+      scaled_value_minor_axis: meta.section3_scaled_value_minor,
+      ni: meta.section3_ni,
+      nj: meta.section3_nj,
+      la1: meta.section3_lat1_microdeg,
+      lo1: if meta.section3_lon1_microdeg < 0 {
+        meta.section3_lon1_microdeg + 360000000
+      } else {
+        meta.section3_lon1_microdeg
+      },
+      resolution_and_component_flags: meta.section3_resolution_flags,
+      lad: (latd * 1000000.0 + 0.5).to_int(),
+      la2: meta.section3_lat2_microdeg,
+      lo2: if meta.section3_lon2_microdeg < 0 {
+        meta.section3_lon2_microdeg + 360000000
+      } else {
+        meta.section3_lon2_microdeg
+      },
+      scanning_mode: meta.section3_scanning_mode,
+      orientation_of_the_grid: 0,
+      di: (dx_m * 1000.0 + 0.5).to_int(),
+      dj: (dy_m * 1000.0 + 0.5).to_int(),
+    }),
+    optional_points_raw: b"",
+  }
+  let bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    None,
+    Some(@lib.encode_section3_bytes(section3)),
+  )
+  native_write_bytes(path, bytes)
+}
+
+///|
+fn write_synthetic_mercator_mixed_reference_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic Mercator mixed-reference source: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select synthetic Mercator mixed-reference source")
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return Err("synthetic Mercator mixed-reference source must be template 3.0")
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let lat1 = meta.section3_lat1_microdeg.to_double() * 0.000001
+  let lat2 = meta.section3_lat2_microdeg.to_double() * 0.000001
+  let lon1 = meta.section3_lon1_microdeg.to_double() * 0.000001
+  let lon2 = meta.section3_lon2_microdeg.to_double() * 0.000001
+  let south_lat = if (meta.section3_scanning_mode & 0x40) != 0 {
+    lat1
+  } else {
+    lat2
+  }
+  let north_lat = if (meta.section3_scanning_mode & 0x40) != 0 {
+    lat2
+  } else {
+    lat1
+  }
+  let west_lon = if (meta.section3_scanning_mode & 0x80) == 0 {
+    lon1
+  } else {
+    lon2
+  }
+  let mut east_lon = if (meta.section3_scanning_mode & 0x80) == 0 {
+    lon2
+  } else {
+    lon1
+  }
+  if east_lon <= west_lon {
+    east_lon += 360.0
+  }
+  let latd = ((south_lat + north_lat) / 2.0).abs()
+  let earth_radius_m = cress_lola_earth_radius_from_meta(meta)
+  let scale = @math.cos(latd * @math.PI / 180.0)
+  let dx_m = if meta.section3_ni > 1 {
+    2.0 *
+    @math.PI *
+    earth_radius_m *
+    scale *
+    ((east_lon - west_lon) / (meta.section3_ni - 1).to_double()) /
+    360.0
+  } else {
+    0.0
+  }
+  let dy_m = if meta.section3_nj > 1 {
+    earth_radius_m *
+    scale *
+    (netcdf_mercator_projected_y(north_lat) -
+    netcdf_mercator_projected_y(south_lat)).abs() /
+    (meta.section3_nj - 1).to_double()
+  } else {
+    0.0
+  }
+  let section3 : @section3.Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: meta.section3_npts,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: @section3.GridTemplate310({
+      shape_of_earth: meta.section3_shape_of_earth,
+      scale_factor_radius: meta.section3_scale_factor_radius,
+      scaled_value_radius: meta.section3_scaled_value_radius,
+      scale_factor_major_axis: meta.section3_scale_factor_major,
+      scaled_value_major_axis: meta.section3_scaled_value_major,
+      scale_factor_minor_axis: meta.section3_scale_factor_minor,
+      scaled_value_minor_axis: meta.section3_scaled_value_minor,
+      ni: meta.section3_ni,
+      nj: meta.section3_nj,
+      la1: meta.section3_lat1_microdeg,
+      lo1: if meta.section3_lon1_microdeg < 0 {
+        meta.section3_lon1_microdeg + 360000000
+      } else {
+        meta.section3_lon1_microdeg
+      },
+      resolution_and_component_flags: meta.section3_resolution_flags,
+      lad: (latd * 1000000.0 + 0.5).to_int(),
+      la2: meta.section3_lat2_microdeg,
+      lo2: if meta.section3_lon2_microdeg < 0 {
+        meta.section3_lon2_microdeg + 360000000
+      } else {
+        meta.section3_lon2_microdeg
+      },
+      scanning_mode: meta.section3_scanning_mode,
+      orientation_of_the_grid: 0,
+      di: (dx_m * 1000.0 + 0.5).to_int(),
+      dj: (dy_m * 1000.0 + 0.5).to_int(),
+    }),
+    optional_points_raw: b"",
+  }
+  let section3_bytes = @lib.encode_section3_bytes(section3)
+  let original_bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    None,
+    Some(section3_bytes),
+  )
+  let shifted_section1 = match
+    shift_section1_reference_time_for_test(
+      section_frame_bytes(message, message.section1),
+      metas[record_ref.record_index - 1].unix_rt,
+      6,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let shifted_bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    Some(shifted_section1),
+    Some(section3_bytes),
+  )
+  let out : Array[Byte] = []
+  append_bytes(out, original_bytes)
+  append_bytes(out, shifted_bytes)
+  native_write_bytes(path, Bytes::from_array(out))
+}
+
+///|
+fn patch_grib_signed_u32_be(bytes : Bytes, offset : Int, value : Int) -> Bytes {
+  if offset < 0 || offset + 4 > bytes.length() {
+    return bytes
+  }
+  let magnitude = if value < 0 { -value } else { value }
+  let sign_bit = if value < 0 { 0x80 } else { 0x00 }
+  let out = bytes.to_array()
+  out[offset] = ((((magnitude >> 24) & 0x7f) | sign_bit) & 0xff).to_byte()
+  out[offset + 1] = ((magnitude >> 16) & 0xff).to_byte()
+  out[offset + 2] = ((magnitude >> 8) & 0xff).to_byte()
+  out[offset + 3] = (magnitude & 0xff).to_byte()
+  Bytes::from_array(out)
+}
+
+///|
+fn write_synthetic_rotated_latlon_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic rotated lat-lon source: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select synthetic rotated lat-lon source record")
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return Err("synthetic rotated lat-lon source must be template 3.0")
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let section3 : @section3.Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: meta.section3_npts,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: @section3.GridTemplate31({
+      base: {
+        shape_of_earth: meta.section3_shape_of_earth,
+        scale_factor_radius: meta.section3_scale_factor_radius,
+        scaled_value_radius: meta.section3_scaled_value_radius,
+        scale_factor_major_axis: meta.section3_scale_factor_major,
+        scaled_value_major_axis: meta.section3_scaled_value_major,
+        scale_factor_minor_axis: meta.section3_scale_factor_minor,
+        scaled_value_minor_axis: meta.section3_scaled_value_minor,
+        ni: meta.section3_ni,
+        nj: meta.section3_nj,
+        basic_angle: 0,
+        subdivisions_of_basic_angle: 0,
+        la1: meta.section3_lat1_microdeg,
+        lo1: if meta.section3_lon1_microdeg < 0 {
+          meta.section3_lon1_microdeg + 360000000
+        } else {
+          meta.section3_lon1_microdeg
+        },
+        resolution_and_component_flags: meta.section3_resolution_flags,
+        la2: meta.section3_lat2_microdeg,
+        lo2: if meta.section3_lon2_microdeg < 0 {
+          meta.section3_lon2_microdeg + 360000000
+        } else {
+          meta.section3_lon2_microdeg
+        },
+        di: meta.section3_di_microdeg,
+        dj: meta.section3_dj_microdeg,
+        scanning_mode: meta.section3_scanning_mode,
+      },
+      latitude_of_southern_pole: -36088520,
+      longitude_of_southern_pole: 245305142,
+      angle_of_rotation: 0,
+    }),
+    optional_points_raw: b"",
+  }
+  let mut section3_bytes = @lib.encode_section3_bytes(section3)
+  section3_bytes = patch_grib_signed_u32_be(
+    section3_bytes,
+    14 + 32,
+    meta.section3_lat1_microdeg,
+  )
+  section3_bytes = patch_grib_signed_u32_be(
+    section3_bytes,
+    14 + 41,
+    meta.section3_lat2_microdeg,
+  )
+  section3_bytes = patch_grib_signed_u32_be(section3_bytes, 14 + 58, -36088520)
+  section3_bytes = patch_grib_signed_u32_be(section3_bytes, 14 + 66, 0)
+  let bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    None,
+    Some(section3_bytes),
+  )
+  native_write_bytes(path, bytes)
+}
+
+///|
+fn write_synthetic_polar_stereographic_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic polar stereographic source: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select synthetic polar stereographic source record")
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return Err("synthetic polar stereographic source must be template 3.0")
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let lon1 = if meta.section3_lon1_microdeg < 0 {
+    meta.section3_lon1_microdeg + 360000000
+  } else {
+    meta.section3_lon1_microdeg
+  }
+  let section3 : @section3.Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: meta.section3_npts,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: @section3.GridTemplate320({
+      shape_of_earth: meta.section3_shape_of_earth,
+      scale_factor_radius: meta.section3_scale_factor_radius,
+      scaled_value_radius: meta.section3_scaled_value_radius,
+      scale_factor_major_axis: meta.section3_scale_factor_major,
+      scaled_value_major_axis: meta.section3_scaled_value_major,
+      scale_factor_minor_axis: meta.section3_scale_factor_minor,
+      scaled_value_minor_axis: meta.section3_scaled_value_minor,
+      nx: meta.section3_ni,
+      ny: meta.section3_nj,
+      la1: meta.section3_lat1_microdeg,
+      lo1: lon1,
+      resolution_and_component_flags: meta.section3_resolution_flags,
+      lad: 60000000,
+      lov: lon1,
+      dx: 10000,
+      dy: 10000,
+      projection_center_flag: 0,
+      scanning_mode: meta.section3_scanning_mode,
+    }),
+    optional_points_raw: b"",
+  }
+  let bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    None,
+    Some(@lib.encode_section3_bytes(section3)),
+  )
+  native_write_bytes(path, bytes)
+}
+
+///|
+fn write_synthetic_lambert_conformal_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic Lambert conformal source: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err("failed to select synthetic Lambert conformal source record")
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 0 ||
+    meta.section3_ni <= 0 ||
+    meta.section3_nj <= 0 {
+    return Err("synthetic Lambert conformal source must be template 3.0")
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let lon1 = if meta.section3_lon1_microdeg < 0 {
+    meta.section3_lon1_microdeg + 360000000
+  } else {
+    meta.section3_lon1_microdeg
+  }
+  let section3 : @section3.Grib2Section3Decoded = {
+    source_of_grid_definition: 0,
+    number_of_data_points: meta.section3_npts,
+    optional_points_octet_count: 0,
+    optional_points_interpretation: 0,
+    template: @section3.GridTemplate330({
+      base: {
+        shape_of_earth: meta.section3_shape_of_earth,
+        scale_factor_radius: meta.section3_scale_factor_radius,
+        scaled_value_radius: meta.section3_scaled_value_radius,
+        scale_factor_major_axis: meta.section3_scale_factor_major,
+        scaled_value_major_axis: meta.section3_scaled_value_major,
+        scale_factor_minor_axis: meta.section3_scale_factor_minor,
+        scaled_value_minor_axis: meta.section3_scaled_value_minor,
+        nx: meta.section3_ni,
+        ny: meta.section3_nj,
+        la1: meta.section3_lat1_microdeg,
+        lo1: lon1,
+        resolution_and_component_flags: meta.section3_resolution_flags,
+        lad: 60000000,
+        lov: lon1,
+        dx: 10000,
+        dy: 10000,
+        projection_center_flag: 0,
+        scanning_mode: meta.section3_scanning_mode,
+      },
+      latin1: 30000000,
+      latin2: 60000000,
+      latitude_of_southern_pole: -90000000,
+      longitude_of_southern_pole: 0,
+    }),
+    optional_points_raw: b"",
+  }
+  let bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
+    message,
+    submessage,
+    None,
+    Some(@lib.encode_section3_bytes(section3)),
+  )
+  native_write_bytes(path, bytes)
+}
+
+///|
 fn build_running_accumulated_forecast_values(
   fields : Array[Array[Double]],
 ) -> Array[Array[Double]] {
@@ -1316,6 +1986,75 @@ test "unavailable_out_action_lines matches wgrib2 messages" {
     unavailable_out_action_lines(WriteText("target/out.txt")),
     content="None",
   )
+}
+
+///|
+test "netcdf_wgrib2_fatal_lines matches reduced Gaussian wgrib2 message" {
+  let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse reduced Gaussian fixture: " + e.to_string())
+  }
+  inspect(
+    netcdf_wgrib2_fatal_lines(context, Some([1])),
+    content="Some([\"1:0\", \"*** FATAL ERROR: netcdf: only works in we:sn order ***\", \"\"])",
+  )
+}
+
+///|
+test "netcdf_wgrib2_notice_lines matches rotated lat-lon wgrib2 message" {
+  let fixture = "target/cmd_main_netcdf_rotated_input.grib2"
+  match write_synthetic_rotated_latlon_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic rotated lat-lon fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic rotated lat-lon fixture: " + e.to_string(),
+      )
+  }
+  inspect(
+    netcdf_wgrib2_notice_lines(context, Some([1])),
+    content="Some([\"netcdf: doesn't support yet grid_template 1\", \"1:0:d=2026022100:PRMSL:mean sea level:anl:\"])",
+  )
+}
+
+///|
+test "netcdf_wgrib2_notice_lines ignores polar stereographic like current wgrib2" {
+  let fixture = "target/cmd_main_netcdf_polar_input.grib2"
+  match write_synthetic_polar_stereographic_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) =>
+      fail("failed to write synthetic polar stereographic fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic fixture: " +
+        e.to_string(),
+      )
+  }
+  inspect(netcdf_wgrib2_notice_lines(context, Some([1])), content="None")
+}
+
+///|
+test "netcdf_wgrib2_notice_lines ignores Lambert conformal like current wgrib2" {
+  let fixture = "target/cmd_main_netcdf_lambert_input.grib2"
+  match write_synthetic_lambert_conformal_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic Lambert conformal fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal fixture: " + e.to_string(),
+      )
+  }
+  inspect(netcdf_wgrib2_notice_lines(context, Some([1])), content="None")
 }
 
 ///|
@@ -2414,6 +3153,149 @@ test "run_cli supports -cress_lola regular lat/lon output" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid output on pgrb2" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_pgrb2_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse off-grid cress_lola output: " + e.to_string())
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v.values
+    Err(e) =>
+      fail(
+        "failed to unpack off-grid cress_lola output: " + unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.length(), content="30")
+  inspect((unpacked[0] - 101919.0).abs() < 1.0, content="true")
+  inspect((unpacked[1] - 102011.0).abs() < 1.0, content="true")
+  inspect((unpacked[2] - 102011.0).abs() < 1.0, content="true")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid output on scan32 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
+  let out = "target/cmd_main_cress_lola_scan32_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse scan32 cress_lola output: " + e.to_string())
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v.values
+    Err(e) =>
+      fail(
+        "failed to unpack scan32 cress_lola output: " + unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.length(), content="30")
+  inspect((unpacked[0] - 102196.0).abs() < 1.0, content="true")
+  inspect((unpacked[1] - 102012.0).abs() < 1.0, content="true")
+  inspect((unpacked[2] - 102012.0).abs() < 1.0, content="true")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid output on scan48 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2"
+  let out = "target/cmd_main_cress_lola_scan48_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse scan48 cress_lola output: " + e.to_string())
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v.values
+    Err(e) =>
+      fail(
+        "failed to unpack scan48 cress_lola output: " + unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.length(), content="30")
+  inspect((unpacked[0] - 102216.0).abs() < 1.0, content="true")
+  inspect((unpacked[1] - 102272.0).abs() < 1.0, content="true")
+  inspect((unpacked[2] - 102272.0).abs() < 1.0, content="true")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid UGRD/VGRD output on scan32 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+  let out = "target/cmd_main_cress_lola_scan32_uv_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read scan32 uv cress_lola output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan32 uv cress_lola output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="6")
+  inspect(metas[0].section3_nj, content="5")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid UGRD/VGRD output on scan48 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let out = "target/cmd_main_cress_lola_scan48_uv_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read scan48 uv cress_lola output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan48 uv cress_lola output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="6")
+  inspect(metas[0].section3_nj, content="5")
+}
+
+///|
 test "run_cli -cress_lola fills bitmap gaps for gfswave same-grid output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_cress_lola_gfswave_test.grib2"
@@ -2858,6 +3740,62 @@ test "new_grid bilinear interpolation renormalizes bitmap weights" {
 }
 
 ///|
+test "new_grid raw bilinear interpolation supports consecutive_j scan order" {
+  let source : NewGridRawSourceGrid = {
+    ni: 2,
+    nj: 2,
+    scan_mode: 32,
+    lon1: 0.0,
+    lat1: 1.0,
+    dlon: 1.0,
+    dlat: -1.0,
+    hi: 1.0,
+    x_max: 3.0,
+    y_max: 3.0,
+    iwrap: 0,
+  }
+  let value = match
+    new_grid_bilinear_interpolate_raw_regular_latlon_value(
+      source,
+      [10.0, 30.0, 20.0, 40.0],
+      0.5,
+      0.5,
+    ) {
+    Some(v) => v
+    None => fail("expected raw bilinear interpolation result for scan32")
+  }
+  inspect(value, content="25")
+}
+
+///|
+test "new_grid raw bilinear interpolation supports alternating consecutive_j scan order" {
+  let source : NewGridRawSourceGrid = {
+    ni: 2,
+    nj: 2,
+    scan_mode: 48,
+    lon1: 0.0,
+    lat1: 1.0,
+    dlon: 1.0,
+    dlat: -1.0,
+    hi: 1.0,
+    x_max: 3.0,
+    y_max: 3.0,
+    iwrap: 0,
+  }
+  let value = match
+    new_grid_bilinear_interpolate_raw_regular_latlon_value(
+      source,
+      [10.0, 30.0, 40.0, 20.0],
+      0.5,
+      0.5,
+    ) {
+    Some(v) => v
+    None => fail("expected raw bilinear interpolation result for scan48")
+  }
+  inspect(value, content="25")
+}
+
+///|
 test "run_cli supports -new_grid latlon bilinear scalar output" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_new_grid_bilinear_out.grib2"
@@ -2887,6 +3825,123 @@ test "run_cli supports -new_grid latlon bilinear scalar output" {
       )
   }
   inspect(unpacked.length(), content="64")
+}
+
+///|
+test "run_cli supports -new_grid latlon bilinear scalar output on scan32 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
+  let out = "target/cmd_main_new_grid_bilinear_scan32_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "0.25:6:0.5",
+    "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan32 bilinear new_grid output: " + e.to_string())
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(
+      context.messages[0],
+      context.messages[0].submessages[0],
+    ) {
+    Ok(v) => v.values
+    Err(e) =>
+      fail(
+        "failed to unpack scan32 bilinear new_grid output: " +
+        unpack_error_string(e),
+      )
+  }
+  inspect(unpacked.length(), content="30")
+  inspect((unpacked[0] - 102106.0).abs() < 1.0, content="true")
+  inspect((unpacked[1] - 102042.0).abs() < 1.0, content="true")
+  inspect((unpacked[2] - 102082.0).abs() < 1.0, content="true")
+}
+
+///|
+test "run_cli matches wgrib2 empty output for -new_grid on alternating scan rows" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2"
+  let out = "target/cmd_main_new_grid_bilinear_scan48_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "0.25:6:0.5",
+    "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to read scan48 bilinear new_grid output: " + e.to_string())
+  }
+  inspect(bytes.length(), content="0")
+}
+
+///|
+test "new_grid alternating-row wind pair notice lines match wgrib2 order" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse scan48 uv fixture: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let lines = new_grid_wgrib2_alternating_rows_pair_notice_lines(
+    metas[0],
+    metas[1],
+  )
+  inspect(lines.length(), content="5")
+  inspect(lines[0], content="Warning: -new_grid_winds set to earth")
+  inspect(lines[1], content="new_grid: rows must scan in same direction")
+  inspect(
+    lines[2],
+    content="1:0:d=2026022100:UGRD:planetary boundary layer:anl:",
+  )
+  inspect(
+    lines[3],
+    content="2:97919:d=2026022100:VGRD:planetary boundary layer:anl:",
+  )
+  inspect(lines[4], content="new_grid: rows must scan in same direction")
+}
+
+///|
+test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output on scan32 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+  let out = "target/cmd_main_new_grid_bilinear_uv_scan32_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-new_grid", "latlon", "0.25:6:0.5",
+    "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read scan32 uv new_grid output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan32 uv new_grid output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="6")
+  inspect(metas[0].section3_nj, content="5")
+}
+
+///|
+test "run_cli matches wgrib2 empty output for -new_grid UV on alternating scan rows" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let out = "target/cmd_main_new_grid_bilinear_uv_scan48_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-new_grid", "latlon", "0.25:6:0.5",
+    "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to read scan48 uv new_grid output: " + e.to_string())
+  }
+  inspect(bytes.length(), content="0")
 }
 
 ///|
@@ -3046,6 +4101,46 @@ test "build_netcdf axis values match wgrib2 rounding for gfswave" {
 }
 
 ///|
+test "build_netcdf Mercator axis values follow COARDS orientation" {
+  let grid : @section3.Grib2GridTemplate310 = {
+    shape_of_earth: 6,
+    scale_factor_radius: 0,
+    scaled_value_radius: 0,
+    scale_factor_major_axis: 0,
+    scaled_value_major_axis: 0,
+    scale_factor_minor_axis: 0,
+    scaled_value_minor_axis: 0,
+    ni: 3,
+    nj: 331,
+    la1: 55000000,
+    lo1: 260000000,
+    resolution_and_component_flags: 48,
+    lad: 27500000,
+    la2: 0,
+    lo2: 310000000,
+    scanning_mode: 0,
+    orientation_of_the_grid: 0,
+    di: 16439108,
+    dj: 19766614,
+  }
+  let latitudes = match build_netcdf_mercator_latitude_values(grid) {
+    Ok(v) => v
+    Err(e) => fail("failed to build Mercator latitude values: " + e)
+  }
+  let longitudes = match build_netcdf_mercator_longitude_values(grid) {
+    Ok(v) => v
+    Err(e) => fail("failed to build Mercator longitude values: " + e)
+  }
+  inspect((latitudes[0] + 1.66149141038266e-06).abs() < 1.0e-12, content="true")
+  inspect(latitudes[0] < latitudes[1], content="true")
+  inspect((latitudes[1] - 0.200400263699615).abs() < 1.0e-12, content="true")
+  inspect((latitudes[330] - 55.0).abs() < 1.0e-12, content="true")
+  inspect((longitudes[0] + 100.0).abs() < 1.0e-12, content="true")
+  inspect((longitudes[1] + 99.8333333362677).abs() < 1.0e-12, content="true")
+  inspect((longitudes[2] + 99.6666666725355).abs() < 1.0e-12, content="true")
+}
+
+///|
 test "netcdf forecast helpers preserve verification metadata and unit mapping" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
   let context = match @lib.parse_with_io(native_read_bytes, fixture) {
@@ -3076,6 +4171,185 @@ test "netcdf unit mapping follows wgrib2 conventions" {
   let (long_name, units) = netcdf_long_name_units(meta)
   inspect(long_name, content="Relative Humidity")
   inspect(units, content="percent")
+}
+
+///|
+test "netcdf reference attrs follow wgrib2 mixed-reference transitions" {
+  let attrs = match
+    build_netcdf_reference_attrs([
+      { reference_time: 1000L, is_analysis: true },
+      { reference_time: 1000L, is_analysis: false },
+    ]) {
+    Ok(v) => v
+    Err(e) => fail("failed to build mixed-reference attrs: " + e)
+  }
+  inspect(attrs.reference_time_type.to_string(), content="3")
+  inspect(
+    attrs.reference_time_description,
+    content="forecasts or accumulated (including analyses), reference date is fixed",
+  )
+  let reverse_attrs = match
+    build_netcdf_reference_attrs([
+      { reference_time: 1000L, is_analysis: false },
+      { reference_time: 1000L, is_analysis: true },
+    ]) {
+    Ok(v) => v
+    Err(e) => fail("failed to build reverse mixed-reference attrs: " + e)
+  }
+  inspect(reverse_attrs.reference_time_type.to_string(), content="3")
+  inspect(
+    reverse_attrs.reference_time_description,
+    content="forecast or accumulated, reference date is fixed",
+  )
+  let variable_analysis_attrs = match
+    build_netcdf_reference_attrs([
+      { reference_time: 2000L, is_analysis: true },
+      { reference_time: 1000L, is_analysis: true },
+    ]) {
+    Ok(v) => v
+    Err(e) => fail("failed to build variable-analysis attrs: " + e)
+  }
+  inspect(variable_analysis_attrs.reference_time_type.to_string(), content="2")
+  inspect(variable_analysis_attrs.reference_time.to_string(), content="1000")
+  inspect(
+    variable_analysis_attrs.reference_time_description,
+    content="analyses, reference date is variable, min found reference date is given",
+  )
+}
+
+///|
+test "writes mixed-reference analysis netcdf fixture" {
+  let out = "target/cmd_main_netcdf_mixed_reference_input.grib2"
+  match write_mixed_reference_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write mixed-reference netcdf fixture: " + e)
+  }
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read mixed-reference netcdf fixture: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes).to_string(), content="2")
+}
+
+///|
+test "writes synthetic Mercator netcdf fixture" {
+  let out = "target/cmd_main_netcdf_mercator_input.grib2"
+  match write_synthetic_mercator_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic Mercator netcdf fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic Mercator fixture: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="10")
+}
+
+///|
+test "writes synthetic Mercator mixed-reference netcdf fixture" {
+  let out = "target/cmd_main_netcdf_mercator_mixed_reference_input.grib2"
+  match write_synthetic_mercator_mixed_reference_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail("failed to write synthetic Mercator mixed-reference fixture: " + e)
+  }
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Mercator mixed-reference fixture: " +
+        e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(bytes).to_string(), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Mercator mixed-reference fixture: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section3_template.id(), content="10")
+  inspect(metas[1].section3_template.id(), content="10")
+}
+
+///|
+test "writes synthetic rotated lat-lon netcdf fixture" {
+  let out = "target/cmd_main_netcdf_rotated_input.grib2"
+  match write_synthetic_rotated_latlon_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic rotated lat-lon fixture: " + e)
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to read synthetic rotated lat-lon fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic rotated lat-lon fixture: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(bytes.length() > 0, content="true")
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="1")
+}
+
+///|
+test "writes synthetic polar stereographic netcdf fixture" {
+  let out = "target/cmd_main_netcdf_polar_input.grib2"
+  match write_synthetic_polar_stereographic_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail("failed to write synthetic polar stereographic netcdf fixture: " + e)
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to read synthetic polar stereographic fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic fixture: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(bytes.length() > 0, content="true")
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="20")
+}
+
+///|
+test "writes synthetic Lambert conformal netcdf fixture" {
+  let out = "target/cmd_main_netcdf_lambert_input.grib2"
+  match write_synthetic_lambert_conformal_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail("failed to write synthetic Lambert conformal netcdf fixture: " + e)
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to read synthetic Lambert conformal fixture: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal fixture: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(bytes.length() > 0, content="true")
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_template.id(), content="30")
 }
 
 ///|
@@ -3118,6 +4392,512 @@ test "run_cli supports single and multi-record -netcdf output" {
   }
   inspect(bytes_be_u32(time_bytes, 4).to_string(), content="3")
   inspect(time_bytes.to_string().contains("HGT_1000mb"), content="true")
+}
+
+///|
+test "run_cli supports synthetic Mercator -netcdf output" {
+  let fixture = "target/cmd_main_netcdf_mercator_input.grib2"
+  match write_synthetic_mercator_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic Mercator netcdf input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic Mercator netcdf input: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to build synthetic Mercator grid info: " + e)
+  }
+  let out = "target/cmd_main_netcdf_mercator.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail("failed to read synthetic Mercator netcdf output: " + e.to_string())
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse synthetic Mercator netcdf output: " + e)
+  }
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+}
+
+///|
+test "run_cli supports synthetic Mercator mixed-reference -netcdf and append" {
+  let fixture = "target/cmd_main_netcdf_mercator_mixed_reference_input.grib2"
+  match write_synthetic_mercator_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic Mercator mixed-reference netcdf input: " + e,
+      )
+  }
+  let out = "target/cmd_main_netcdf_mercator_mixed_reference.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Mercator mixed-reference output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic Mercator mixed-reference output: " + e)
+  }
+  inspect(parsed.time_values.length().to_string(), content="2")
+  inspect(parsed.reference_time_type.to_string(), content="2")
+
+  let append_out = "target/cmd_main_netcdf_mercator_mixed_reference_append.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Mercator mixed-reference append output: " +
+        e.to_string(),
+      )
+  }
+  inspect(append_bytes == bytes, content="true")
+}
+
+///|
+test "run_cli supports JPEG2000 regular lat/lon -netcdf output" {
+  let fixture = "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse JPEG2000 netcdf input: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to build JPEG2000 netcdf grid info: " + e)
+  }
+  let out = "target/cmd_main_netcdf_eccodes_jpeg.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read JPEG2000 netcdf output: " + e.to_string())
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse JPEG2000 netcdf output: " + e)
+  }
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+}
+
+///|
+test "run_cli reports reduced Gaussian netcdf unavailable like wgrib2" {
+  let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
+  let out = "target/cmd_main_reduced_gaussian_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1", "-netcdf", out]),
+    content="8",
+  )
+}
+
+///|
+test "run_cli supports rotated lat-lon -netcdf output with wgrib2 notice lines" {
+  let fixture = "target/cmd_main_netcdf_rotated_input.grib2"
+  match write_synthetic_rotated_latlon_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic rotated lat-lon input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic rotated lat-lon input: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to build synthetic rotated lat-lon grid info: " + e)
+  }
+  let out = "target/cmd_main_rotated_latlon_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic rotated lat-lon netcdf output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic rotated lat-lon netcdf output: " + e)
+  }
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+  inspect(
+    netcdf_read_double_be(parsed.latitude_bytes, 0) < -36.08851 &&
+    netcdf_read_double_be(parsed.latitude_bytes, 0) > -36.08853,
+    content="true",
+  )
+  inspect(
+    netcdf_read_double_be(parsed.latitude_bytes, 8) ==
+    netcdf_read_double_be(parsed.latitude_bytes, 0),
+    content="true",
+  )
+  inspect(bytes.to_string().contains("projection_x_coordinate"), content="true")
+  inspect(bytes.to_string().contains("longitude latitude"), content="true")
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+}
+
+///|
+test "build_netcdf rotated lat-lon axis values match wgrib2 at corrected points" {
+  let fixture = "target/cmd_main_netcdf_rotated_input.grib2"
+  match write_synthetic_rotated_latlon_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic rotated lat-lon input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic rotated lat-lon input: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to build synthetic rotated lat-lon grid info: " + e)
+  }
+  inspect(
+    netcdf_read_double_be(grid_info.latitude_bytes, 0)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="13853647861827536221",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.latitude_bytes, 363 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="13853507314812790732",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 0)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4642834923955672154",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 752 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4642880104229469422",
+  )
+}
+
+///|
+test "rotated lat-lon netcdf longitude keeps singular meridian on positive pi branch" {
+  let (_lat, lon) = netcdf_rotate_rotated_latlon_to_geographic(
+    20.0, 180.0, -36.08852, 245.305142, 0.0,
+  )
+  inspect(lon > 425.305141 && lon < 425.305143, content="true")
+}
+
+///|
+test "rotated lat-lon netcdf longitude wraps west-column singularity like wgrib2" {
+  let (_lat, lon) = netcdf_rotate_rotated_latlon_to_geographic(
+    37.0, 0.0, -36.08852, 245.305142, 0.0,
+  )
+  inspect(lon > 65.305141 && lon < 65.305143, content="true")
+}
+
+///|
+test "run_cli supports synthetic polar stereographic -netcdf output" {
+  let fixture = "target/cmd_main_netcdf_polar_input.grib2"
+  match write_synthetic_polar_stereographic_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic polar stereographic input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic input: " + e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to build synthetic polar stereographic grid info: " + e)
+  }
+  let out = "target/cmd_main_polar_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic polar stereographic netcdf output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic polar stereographic netcdf output: " + e)
+  }
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+  inspect(bytes.to_string().contains("projection_x_coordinate"), content="true")
+  inspect(bytes.to_string().contains("longitude latitude"), content="true")
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+}
+
+///|
+test "build_netcdf polar stereographic longitude values match wgrib2 at corrected points" {
+  let fixture = "target/cmd_main_netcdf_polar_input.grib2"
+  match write_synthetic_polar_stereographic_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic polar stereographic input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic input: " + e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to build synthetic polar stereographic grid info: " + e)
+  }
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 8 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4612912808828345939",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 46 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4624259750756451479",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 5000 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4633984616628478541",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 65000 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4636033603912859648",
+  )
+}
+
+///|
+test "run_cli supports synthetic Lambert conformal -netcdf output" {
+  let fixture = "target/cmd_main_netcdf_lambert_input.grib2"
+  match write_synthetic_lambert_conformal_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic Lambert conformal input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal input: " + e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to build synthetic Lambert conformal grid info: " + e)
+  }
+  let out = "target/cmd_main_lambert_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Lambert conformal netcdf output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse synthetic Lambert conformal netcdf output: " + e)
+  }
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+  inspect(bytes.to_string().contains("projection_y_coordinate"), content="true")
+  inspect(bytes.to_string().contains("longitude latitude"), content="true")
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+}
+
+///|
+test "build_netcdf Lambert conformal longitude values match wgrib2 at corrected points" {
+  let fixture = "target/cmd_main_netcdf_lambert_input.grib2"
+  match write_synthetic_lambert_conformal_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write synthetic Lambert conformal input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal input: " + e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to build synthetic Lambert conformal grid info: " + e)
+  }
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 8 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4615190601474922736",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 46 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4626332196579411408",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 5000 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4635840863041663281",
+  )
+  inspect(
+    netcdf_read_double_be(grid_info.longitude_bytes, 65000 * 8)
+    .reinterpret_as_uint64()
+    .to_string(),
+    content="4638551004412998584",
+  )
+}
+
+///|
+test "run_cli supports mixed-reference analysis -netcdf output" {
+  let fixture = "target/cmd_main_netcdf_mixed_reference_input.grib2"
+  match write_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write mixed-reference netcdf input: " + e)
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse mixed-reference netcdf input: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  let out = "target/cmd_main_netcdf_mixed_reference.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read mixed-reference netcdf output: " + e.to_string())
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse mixed-reference netcdf output: " + e)
+  }
+  inspect(bytes_be_u32(bytes, 4).to_string(), content="2")
+  inspect(parsed.reference_time_type.to_string(), content="2")
+  inspect(
+    parsed.reference_time_description,
+    content="analyses, reference date is variable, min found reference date is given",
+  )
+  inspect(
+    parsed.reference_time.to_string(),
+    content=metas[0].unix_rt.to_string(),
+  )
+  inspect(parsed.time_values.length().to_string(), content="2")
 }
 
 ///|
@@ -3175,6 +4955,39 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read time reference netcdf: " + e.to_string())
   }
   inspect(time_append_bytes == time_ref_bytes, content="true")
+}
+
+///|
+test "run_cli supports -append for mixed-reference analysis netcdf" {
+  let fixture = "target/cmd_main_netcdf_mixed_reference_input.grib2"
+  match write_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) => fail("failed to write mixed-reference append input: " + e)
+  }
+  let append_out = "target/cmd_main_netcdf_append_mixed_reference.nc"
+  let ref_out = "target/cmd_main_netcdf_append_mixed_reference_ref.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", ref_out]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e => fail("failed to read mixed-reference append output: " + e.to_string())
+  }
+  let ref_bytes = @fs.read_file_to_bytes(ref_out) catch {
+    e =>
+      fail("failed to read mixed-reference reference output: " + e.to_string())
+  }
+  inspect(append_bytes == ref_bytes, content="true")
 }
 
 ///|

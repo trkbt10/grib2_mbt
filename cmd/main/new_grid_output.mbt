@@ -25,6 +25,47 @@ priv struct NewGridRawSourceGrid {
 }
 
 ///|
+fn new_grid_wgrib2_notice_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
+  meta.record_id +
+  ":" +
+  meta.message_offset.to_string() +
+  ":d=" +
+  meta.reference_time +
+  ":" +
+  meta.parameter_name.display() +
+  ":" +
+  meta.level_name.display() +
+  ":" +
+  meta.tail +
+  ":"
+}
+
+///|
+fn new_grid_wgrib2_alternating_rows_notice_lines(
+  meta : @lib.Grib2RecordMeta,
+) -> Array[String] {
+  [
+    "Warning: -new_grid_winds set to earth",
+    "new_grid: rows must scan in same direction",
+    new_grid_wgrib2_notice_inventory_line(meta),
+  ]
+}
+
+///|
+fn new_grid_wgrib2_alternating_rows_pair_notice_lines(
+  first_meta : @lib.Grib2RecordMeta,
+  second_meta : @lib.Grib2RecordMeta,
+) -> Array[String] {
+  [
+    "Warning: -new_grid_winds set to earth",
+    "new_grid: rows must scan in same direction",
+    new_grid_wgrib2_notice_inventory_line(first_meta),
+    new_grid_wgrib2_notice_inventory_line(second_meta),
+    "new_grid: rows must scan in same direction",
+  ]
+}
+
+///|
 fn build_new_grid_target_grid(
   lon_spec : String,
   lat_spec : String,
@@ -72,10 +113,6 @@ fn build_new_grid_raw_source_grid(
   let ni = meta.section3_ni
   let nj = meta.section3_nj
   let scan_mode = meta.section3_scanning_mode
-  let scan = @lib.parse_scanning_mode(scan_mode)
-  if scan.consecutive_j || scan.alternating_rows {
-    return Err("-new_grid is not implemented for this scanning mode")
-  }
   let mut lon1 = meta.section3_lon1_microdeg.to_double() / 1000000.0
   let lat1 = meta.section3_lat1_microdeg.to_double() / 1000000.0
   let mut lon2 = meta.section3_lon2_microdeg.to_double() / 1000000.0
@@ -259,13 +296,10 @@ fn new_grid_raw_source_value_at(
   if ii < 1 || ii > source.ni || j < 1 || j > source.nj {
     return None
   }
-  let index = regular_grid_source_index_for_scan(
-    source.ni,
-    source.nj,
-    source.scan_mode,
-    ii - 1,
-    j - 1,
-  )
+  let scan = @lib.parse_scanning_mode(source.scan_mode)
+  let i_out = if scan.i_negative { source.ni - ii } else { ii - 1 }
+  let j_out = if scan.j_positive { j - 1 } else { source.nj - j }
+  let index = i_out + j_out * source.ni
   if index < 0 || index >= values.length() {
     None
   } else {
@@ -543,6 +577,66 @@ fn new_grid_bilinear_interpolate_regular_latlon_uv(
 }
 
 ///|
+fn new_grid_bilinear_interpolate_raw_regular_latlon_value(
+  source : NewGridRawSourceGrid,
+  values : Array[Double],
+  lon : Double,
+  lat : Double,
+) -> Double? {
+  if source.ni <= 0 ||
+    source.nj <= 0 ||
+    values.length() != source.ni * source.nj {
+    return None
+  }
+  let (xij, yij) = match new_grid_raw_source_xij_yij(source, lon, lat) {
+    Some(v) => v
+    None => return None
+  }
+  let mut ix = if source.ni <= 1 { 1 } else { @math.floor(xij).to_int() }
+  let mut iy = if source.nj <= 1 { 1 } else { @math.floor(yij).to_int() }
+  if source.ni > 1 && ix.to_double() == xij && ix == source.ni {
+    ix -= 1
+  }
+  if source.nj > 1 && iy.to_double() == yij && iy == source.nj {
+    iy -= 1
+  }
+  let ix1 = if source.ni <= 1 { ix } else { ix + 1 }
+  let iy1 = if source.nj <= 1 { iy } else { iy + 1 }
+  let x_frac = if source.ni <= 1 {
+    0.0
+  } else {
+    to_wgrib2_float32(xij - ix.to_double())
+  }
+  let y_frac = if source.nj <= 1 { 0.0 } else { yij - iy.to_double() }
+  let one_minus_x = 1.0 - x_frac
+  let one_minus_y = 1.0 - y_frac
+  let corners = [
+    (ix, iy, one_minus_x * one_minus_y),
+    (ix1, iy, x_frac * one_minus_y),
+    (ix, iy1, one_minus_x * y_frac),
+    (ix1, iy1, x_frac * y_frac),
+  ]
+  let mut weighted_sum = 0.0
+  let mut valid_weight_sum = 0.0
+  for index in 0..<corners.length() {
+    let (corner_i, corner_j, weight) = corners[index]
+    let value = match
+      new_grid_raw_source_value_at(source, values, corner_i, corner_j) {
+      Some(v) => v
+      None => continue
+    }
+    if value == value && weight > 0.0 {
+      weighted_sum += value * weight
+      valid_weight_sum += weight
+    }
+  }
+  if valid_weight_sum < 0.5 || valid_weight_sum <= 0.0 {
+    return None
+  }
+  Some(to_wgrib2_float32(weighted_sum / valid_weight_sum))
+}
+
+///|
 fn new_grid_polfixv(
   target : NewGridRegularLatLonGrid,
   remapped_u : Array[Double],
@@ -804,7 +898,7 @@ fn build_new_grid_submessage_bytes(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  let source = match build_new_grid_source_grid(meta) {
+  let source = match build_new_grid_raw_source_grid(meta) {
     Ok(v) => v
     Err(e) => return Err(e)
   }
@@ -829,11 +923,7 @@ fn build_new_grid_submessage_bytes(
         " for -new_grid",
       )
   }
-  let source_values = match
-    build_new_grid_canonical_source_values(meta, unpacked) {
-    Ok(v) => v
-    Err(e) => return Err(e)
-  }
+  let source_values = build_new_grid_raw_source_values(unpacked)
   let total_points = target.nx * target.ny
   let remapped : Array[Double] = []
   let bitmap_out : Array[Byte] = Array::make((total_points + 7) / 8, b'\x00')
@@ -844,7 +934,7 @@ fn build_new_grid_submessage_bytes(
     for i in 0..<target.nx {
       let lon = target.lon_start + i.to_double() * target.dlon
       match
-        new_grid_bilinear_interpolate_regular_latlon_value(
+        new_grid_bilinear_interpolate_raw_regular_latlon_value(
           source, source_values, lon, lat,
         ) {
         Some(v) => {

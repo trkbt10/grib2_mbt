@@ -181,7 +181,9 @@ fn build_cress_lola_source_field(
   unpacked : Array[Double],
   target : CressLolaTargetGrid,
 ) -> Result[CressLolaSourceField, String] {
-  let total_points = meta.section3_ni * meta.section3_nj
+  let ni = meta.section3_ni
+  let nj = meta.section3_nj
+  let total_points = ni * nj
   if unpacked.length() != total_points {
     return Err(
       "-cress_lola requires ni*nj points, got " +
@@ -189,6 +191,29 @@ fn build_cress_lola_source_field(
       " expected " +
       total_points.to_string(),
     )
+  }
+  let scan = @lib.parse_scanning_mode(meta.section3_scanning_mode)
+  let lon1 = meta.section3_lon1_microdeg.to_double() / 1000000.0
+  let lon2 = meta.section3_lon2_microdeg.to_double() / 1000000.0
+  let lat1 = meta.section3_lat1_microdeg.to_double() / 1000000.0
+  let lat2 = meta.section3_lat2_microdeg.to_double() / 1000000.0
+  let west_lon = if scan.i_negative { lon2 } else { lon1 }
+  let east_lon = if scan.i_negative { lon1 } else { lon2 }
+  let south_lat = if scan.j_positive { lat1 } else { lat2 }
+  let north_lat = if scan.j_positive { lat2 } else { lat1 }
+  let dlon = if ni <= 1 {
+    0.0
+  } else {
+    let mut east_lon = east_lon
+    if east_lon < west_lon {
+      east_lon += 360.0
+    }
+    (east_lon - west_lon) / (ni - 1).to_double()
+  }
+  let dlat = if nj <= 1 {
+    0.0
+  } else {
+    (north_lat - south_lat).abs() / (nj - 1).to_double()
   }
   let raw_values = Array::make(total_points, 0.0 / 0.0)
   let raw_lons : Array[Double] = Array::make(total_points, 0.0)
@@ -198,19 +223,20 @@ fn build_cress_lola_source_field(
   let raw_z : Array[Double] = Array::make(total_points, 0.0)
   let mut valid_count = 0
   let mut sum = 0.0
-  for j = 1; j <= meta.section3_nj; j = j + 1 {
-    for i = 1; i <= meta.section3_ni; i = i + 1 {
-      let raw_index = match value_index_for_ij(meta, i, j) {
-        Some(v) => v
-        None => return Err("-cress_lola: failed to resolve source ij index")
+  for j_out in 0..<nj {
+    let lat = south_lat + j_out.to_double() * dlat
+    for i_out in 0..<ni {
+      let canonical_index = i_out + j_out * ni
+      let mut lon = west_lon + i_out.to_double() * dlon
+      while lon < 0.0 {
+        lon += 360.0
       }
-      let (lon, lat) = match grid_ij_to_latlon_from_meta(meta, i, j) {
-        Some(v) => v
-        None => return Err("-cress_lola: failed to derive source lon/lat")
+      while lon >= 360.0 {
+        lon -= 360.0
       }
-      raw_lons[raw_index] = lon
-      raw_lats[raw_index] = lat
-      let value = cress_lola_to_wgrib2_float(unpacked[raw_index])
+      raw_lons[canonical_index] = lon
+      raw_lats[canonical_index] = lat
+      let value = cress_lola_to_wgrib2_float(unpacked[canonical_index])
       let adjusted_lon = cress_lola_adjust_input_lon(lon, target.lon_start)
       if value != value ||
         lat < target.lat_start ||
@@ -222,10 +248,10 @@ fn build_cress_lola_source_field(
       let s = @math.sin(lat_rad)
       let c = (1.0 - s * s).sqrt()
       let lon_rad = cress_lola_deg_to_rad(lon)
-      raw_values[raw_index] = value
-      raw_z[raw_index] = s
-      raw_x[raw_index] = c * @math.cos(lon_rad)
-      raw_y[raw_index] = c * @math.sin(lon_rad)
+      raw_values[canonical_index] = value
+      raw_z[canonical_index] = s
+      raw_x[canonical_index] = c * @math.cos(lon_rad)
+      raw_y[canonical_index] = c * @math.sin(lon_rad)
       valid_count += 1
       sum += value
     }

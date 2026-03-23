@@ -86,6 +86,8 @@ forecast_realworld_source_fh36_39="fixtures/grib2_jma/Z__C_RJTD_20241206000000_M
 
 scan32_out="${OUT_DIR}/noaa_gfs_pgrb2_scan32_record1.grib2"
 scan48_out="${OUT_DIR}/noaa_gfs_pgrb2_scan48_record1.grib2"
+scan32_uv_out="${OUT_DIR}/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+scan48_uv_out="${OUT_DIR}/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
 bitmap254_out="${OUT_DIR}/noaa_gfswave_global_bitmap254_records5_6.grib2"
 ncep_norm_out="${OUT_DIR}/noaa_gfswave_atlocn_0p16_ncep_norm_input.grib2"
 merge_fcst_out="${OUT_DIR}/noaa_gfswave_atlocn_0p16_merge_fcst_input.grib2"
@@ -150,6 +152,24 @@ if derived_group_enabled inventory; then
     -set_flag_table_3.4 48 \
     -rpn 2raw \
     -grib_out "${scan48_out}" \
+    >/dev/null
+
+  echo "generating derived fixture: ${scan32_uv_out}"
+  "${WGRIB2_BIN}" "${scan_source}" \
+    -for_n 11:12 \
+    -set_grib_type simple \
+    -set_flag_table_3.4 32 \
+    -rpn 2raw \
+    -grib_out "${scan32_uv_out}" \
+    >/dev/null
+
+  echo "generating derived fixture: ${scan48_uv_out}"
+  "${WGRIB2_BIN}" "${scan_source}" \
+    -for_n 11:12 \
+    -set_grib_type simple \
+    -set_flag_table_3.4 48 \
+    -rpn 2raw \
+    -grib_out "${scan48_uv_out}" \
     >/dev/null
 
   echo "generating derived fixture: ${bitmap254_out}"
@@ -429,6 +449,8 @@ fi
 
 scan32_sha="$(shasum -a 256 "${scan32_out}" | awk '{print $1}')"
 scan48_sha="$(shasum -a 256 "${scan48_out}" | awk '{print $1}')"
+scan32_uv_sha="$(shasum -a 256 "${scan32_uv_out}" | awk '{print $1}')"
+scan48_uv_sha="$(shasum -a 256 "${scan48_uv_out}" | awk '{print $1}')"
 bitmap254_sha="$(shasum -a 256 "${bitmap254_out}" | awk '{print $1}')"
 ncep_norm_sha="$(shasum -a 256 "${ncep_norm_out}" | awk '{print $1}')"
 merge_fcst_sha="$(shasum -a 256 "${merge_fcst_out}" | awk '{print $1}')"
@@ -478,6 +500,8 @@ realworld_fh18_33_long_vgrd_unmerge_fcst_sha="$(shasum -a 256 "${realworld_fh18_
 
 scan32_size="$(wc -c < "${scan32_out}" | tr -d ' ')"
 scan48_size="$(wc -c < "${scan48_out}" | tr -d ' ')"
+scan32_uv_size="$(wc -c < "${scan32_uv_out}" | tr -d ' ')"
+scan48_uv_size="$(wc -c < "${scan48_uv_out}" | tr -d ' ')"
 ncep_norm_size="$(wc -c < "${ncep_norm_out}" | tr -d ' ')"
 merge_fcst_size="$(wc -c < "${merge_fcst_out}" | tr -d ' ')"
 unmerge_fcst_size="$(wc -c < "${unmerge_fcst_out}" | tr -d ' ')"
@@ -528,6 +552,8 @@ cat > "${OUT_DIR}/manifest.tsv" <<EOF
 file	size_bytes	sha256	source_fixture	source_command	notes
 noaa_gfs_pgrb2_scan32_record1.grib2	${scan32_size}	${scan32_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 1:1 -set_grib_type simple -set_flag_table_3.4 32 -rpn 2raw -grib_out ${scan32_out}	record 1 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j)
 noaa_gfs_pgrb2_scan48_record1.grib2	${scan48_size}	${scan48_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 1:1 -set_grib_type simple -set_flag_table_3.4 48 -rpn 2raw -grib_out ${scan48_out}	record 1 re-encoded with flag_table_3.4=48 (NS(W|E), consecutive_j + alternating_rows)
+noaa_gfs_pgrb2_scan32_uv_records11_12.grib2	${scan32_uv_size}	${scan32_uv_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 11:12 -set_grib_type simple -set_flag_table_3.4 32 -rpn 2raw -grib_out ${scan32_uv_out}	records 11:12 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j) for exact -new_grid U/V compare
+noaa_gfs_pgrb2_scan48_uv_records11_12.grib2	${scan48_uv_size}	${scan48_uv_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 11:12 -set_grib_type simple -set_flag_table_3.4 48 -rpn 2raw -grib_out ${scan48_uv_out}	records 11:12 re-encoded with flag_table_3.4=48 (NS(W|E), consecutive_j + alternating_rows) for exact -new_grid U/V notice compare
 noaa_gfswave_global_bitmap254_records5_6.grib2	${bitmap254_size}	${bitmap254_sha}	${bitmap_source}	${WGRIB2_BIN} ${bitmap_source} -for_n 5:6 -tosubmsg ${bitmap254_out}	records 5:6 merged into one message; raw file contains Sec6 repeat marker 0000000606fe and wgrib2 resolves it to the previous bitmap in inventory output
 noaa_gfswave_atlocn_0p16_ncep_norm_input.grib2	${ncep_norm_size}	${ncep_norm_sha}	${forecast_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on synthetic PDT4.8 ave series*'	synthetic PDT 4.8 ave series derived from gfswave record 1 by write_synthetic_forecast_input; used for exact -ncep_norm compare
 noaa_gfswave_atlocn_0p16_merge_fcst_input.grib2	${merge_fcst_size}	${merge_fcst_sha}	${forecast_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on synthetic PDT4.8 ave series*'	synthetic PDT 4.8 ave series derived from gfswave record 1 by write_synthetic_forecast_input; used for exact -merge_fcst compare

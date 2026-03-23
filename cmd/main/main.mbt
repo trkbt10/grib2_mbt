@@ -404,6 +404,77 @@ fn unavailable_out_action_lines(action : CliAction) -> Array[String]? {
 }
 
 ///|
+fn netcdf_wgrib2_fatal_lines(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+) -> Array[String]? {
+  let first_record_index = match selected {
+    Some(records) => if records.length() == 0 { None } else { Some(records[0]) }
+    None => Some(1)
+  }
+  let record_index = match first_record_index {
+    Some(v) => v
+    None => return None
+  }
+  let meta = match find_record_meta(context, record_index) {
+    Some(v) => v
+    None => return None
+  }
+  match meta.section3_template.id() {
+    40 =>
+      Some([
+        meta.record_id + ":" + meta.message_offset.to_string(),
+        "*** FATAL ERROR: netcdf: only works in we:sn order ***",
+        "",
+      ])
+    _ => None
+  }
+}
+
+///|
+fn netcdf_wgrib2_default_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
+  meta.record_id +
+  ":" +
+  meta.message_offset.to_string() +
+  ":d=" +
+  meta.reference_time +
+  ":" +
+  meta.parameter_name.display() +
+  ":" +
+  meta.level_name.display() +
+  ":" +
+  meta.tail +
+  ":"
+}
+
+///|
+fn netcdf_wgrib2_notice_lines(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+) -> Array[String]? {
+  let first_record_index = match selected {
+    Some(records) => if records.length() == 0 { None } else { Some(records[0]) }
+    None => Some(1)
+  }
+  let record_index = match first_record_index {
+    Some(v) => v
+    None => return None
+  }
+  let meta = match find_record_meta(context, record_index) {
+    Some(v) => v
+    None => return None
+  }
+  match meta.section3_template.id() {
+    1 =>
+      Some([
+        "netcdf: doesn't support yet grid_template 1",
+        netcdf_wgrib2_default_inventory_line(meta),
+      ])
+    _ => None
+  }
+}
+
+///|
 enum ErrorFinalOperator {
   ErrorFinalEq
   ErrorFinalNe
@@ -3929,6 +4000,62 @@ fn write_new_grid_output(
     }
     let meta = metas[meta_index]
     let is_identity = lola_matches_meta(meta, lon_spec, lat_spec)
+    let scan = @lib.parse_scanning_mode(meta.section3_scanning_mode)
+    if !is_identity &&
+      scan.alternating_rows &&
+      (is_wind_u_component(meta) || is_wind_v_component(meta)) {
+      let pair_key = build_wind_pair_key(message, submessage)
+      if pair_key.length() == 0 {
+        consumed[record_index] = true
+        continue
+      }
+      let u_ref = match u_candidates.get(pair_key) {
+        Some(v) => v
+        None => {
+          consumed[record_index] = true
+          continue
+        }
+      }
+      let v_ref = match v_candidates.get(pair_key) {
+        Some(v) => v
+        None => {
+          consumed[record_index] = true
+          continue
+        }
+      }
+      let first_index = if u_ref.record_index < v_ref.record_index {
+        u_ref.record_index
+      } else {
+        v_ref.record_index
+      }
+      if record_index != first_index {
+        continue
+      }
+      let u_meta = metas[u_ref.record_index - 1]
+      let v_meta = metas[v_ref.record_index - 1]
+      let (first_meta, second_meta) = if u_ref.record_index <=
+        v_ref.record_index {
+        (u_meta, v_meta)
+      } else {
+        (v_meta, u_meta)
+      }
+      for
+        line in new_grid_wgrib2_alternating_rows_pair_notice_lines(
+          first_meta, second_meta,
+        ) {
+        println(line)
+      }
+      consumed[u_ref.record_index] = true
+      consumed[v_ref.record_index] = true
+      continue
+    }
+    if !is_identity && scan.alternating_rows {
+      for line in new_grid_wgrib2_alternating_rows_notice_lines(meta) {
+        println(line)
+      }
+      consumed[record_index] = true
+      continue
+    }
     if !is_identity && (is_wind_u_component(meta) || is_wind_v_component(meta)) {
       let pair_key = build_wind_pair_key(message, submessage)
       if pair_key.length() == 0 {
@@ -11067,6 +11194,17 @@ fn run_cli(args : Array[String]) -> Int {
           println("error: " + error)
           return 8
         }
+        None => ()
+      }
+      match netcdf_wgrib2_fatal_lines(context, selected) {
+        Some(lines) => {
+          print_lines(lines)
+          return 8
+        }
+        None => ()
+      }
+      match netcdf_wgrib2_notice_lines(context, selected) {
+        Some(lines) => print_lines(lines)
         None => ()
       }
       match
