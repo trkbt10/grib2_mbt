@@ -416,7 +416,9 @@ fi
   echo -e "pgrb2_lola_grib_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -lola 0:360:1 -90:181:1 {out} grib\t{MBT} {fixture} -for_n 1:1:1 -lola 0:360:1 -90:181:1 {out} grib\tbinary_cmp\t"
   echo -e "pgrb2_new_grid_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid latlon 0:360:1 -90:181:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid latlon 0:360:1 -90:181:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2_new_grid_bilinear_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\tbinary_cmp\t"
+  echo -e "pgrb2_new_grid_neighbor_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid_interpolation neighbor -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid_interpolation neighbor -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2_new_grid_bilinear_uv_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 11:12:1 -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\t{MBT} {fixture} -for_n 11:12:1 -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\tbinary_cmp\t"
+  echo -e "pgrb2_new_grid_neighbor_uv_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 11:12:1 -new_grid_interpolation neighbor -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\t{MBT} {fixture} -for_n 11:12:1 -new_grid_interpolation neighbor -new_grid latlon 0.5:8:1 -89.5:8:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2_new_grid_bilinear_uv_eq_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 11:12:1 -new_grid latlon 100.5:8:1 0.5:8:1 {out}\t{MBT} {fixture} -for_n 11:12:1 -new_grid latlon 100.5:8:1 0.5:8:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2_cress_lola_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} 1:2\t{MBT} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} 1:2\tbinary_cmp\t"
   echo -e "pgrb2_cress_lola_neg_bin\tnoaa_gfs_pgrb2_1p00_f000\t${src}\t\t{WGRIB2} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} -50\t{MBT} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} -50\tbinary_cmp\t"
@@ -459,6 +461,8 @@ fi
   echo -e "gfswave_new_grid_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 5:5:1 -new_grid latlon 260:301:0.166667 0:331:0.166667 {out}\t{MBT} {fixture} -for_n 5:5:1 -new_grid latlon 260:301:0.166667 0:331:0.166667 {out}\tbinary_cmp\t"
   echo -e "gfswave_new_grid_wind_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid latlon 260.5:8:1 0.5:8:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid latlon 260.5:8:1 0.5:8:1 {out}\tbinary_cmp\t"
   echo -e "gfswave_new_grid_wdir_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 2:2:1 -new_grid latlon 260.5:8:1 0.5:8:1 {out}\t{MBT} {fixture} -for_n 2:2:1 -new_grid latlon 260.5:8:1 0.5:8:1 {out}\tbinary_cmp\t"
+  echo -e "gfswave_new_grid_neighbor_wind_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid_interpolation neighbor -new_grid latlon 260.5:8:1 0.5:8:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid_interpolation neighbor -new_grid latlon 260.5:8:1 0.5:8:1 {out}\tbinary_cmp\t"
+  echo -e "gfswave_new_grid_neighbor_wdir_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 2:2:1 -new_grid_interpolation neighbor -new_grid latlon 260.5:8:1 0.5:8:1 {out}\t{MBT} {fixture} -for_n 2:2:1 -new_grid_interpolation neighbor -new_grid latlon 260.5:8:1 0.5:8:1 {out}\tbinary_cmp\t"
   echo -e "gfswave_cress_lola_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} 1:2\t{MBT} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} 1:2\tbinary_cmp\t"
   echo -e "gfswave_cress_lola_neg_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} -20\t{MBT} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} -20\tbinary_cmp\t"
   echo -e "gfswave_cress_lola_negpos_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} -1:2\t{MBT} {fixture} -for_n 5:5:1 -cress_lola 260:301:0.166667 0:331:0.166667 {out} -1:2\tbinary_cmp\t"
@@ -505,6 +509,7 @@ fi
   echo -e "pgrb2b_lola_grib_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -lola 0:360:1 -90:181:1 {out} grib\t{MBT} {fixture} -for_n 1:1:1 -lola 0:360:1 -90:181:1 {out} grib\tbinary_cmp\t"
   echo -e "pgrb2b_new_grid_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid latlon 0:360:1 -90:181:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -new_grid latlon 0:360:1 -90:181:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2b_new_grid_bilinear_bitmap_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 266:266:1 -new_grid latlon 130.5:8:1 30.5:8:1 {out}\t{MBT} {fixture} -for_n 266:266:1 -new_grid latlon 130.5:8:1 30.5:8:1 {out}\tbinary_cmp\t"
+  echo -e "pgrb2b_new_grid_neighbor_bitmap_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 266:266:1 -new_grid_interpolation neighbor -new_grid latlon 130.5:8:1 30.5:8:1 {out}\t{MBT} {fixture} -for_n 266:266:1 -new_grid_interpolation neighbor -new_grid latlon 130.5:8:1 30.5:8:1 {out}\tbinary_cmp\t"
   echo -e "pgrb2b_cress_lola_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} 1:2\t{MBT} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} 1:2\tbinary_cmp\t"
   echo -e "pgrb2b_cress_lola_neg_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} -50\t{MBT} {fixture} -for_n 1:1:1 -cress_lola 0:360:1 -90:181:1 {out} -50\tbinary_cmp\t"
   echo -e "pgrb2b_ijsmall_grib_bin\tnoaa_gfs_pgrb2b_1p00_f000\tfixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -ijsmall_grib 1:360:1 1:181:1 {out}\t{MBT} {fixture} -for_n 1:1:1 -ijsmall_grib 1:360:1 1:181:1 {out}\tbinary_cmp\t"
@@ -611,11 +616,11 @@ classify_compare_case() {
     *_aaig_out|*_aaiglong_out|*_grib_bin|*_grib_out_bin|*_grib_ieee_multi|*_bin_bin|*_ieee_bin|*_tosubmsg_bin|*_write_sec0_bin|*_write_sec8_bin)
       printf 'encode\n'
       ;;
-    *_submsg_uv_bin|*_ncep_uv_bin|*wind_*|*_ave_bin|*_ave0_bin|*_ave_var_bin|*_fcst_ave_bin|*_fcst_ave0_bin|*_time_processing_bin|*_ens_processing_bin|*_ens_qc_*|*ncep_norm_bin|*merge_fcst_bin|*unmerge_fcst_bin)
-      printf 'process\n'
-      ;;
     *grib_out_irr*|*lola*|*new_grid*|*cress_lola*|*ijbox*|*ijsmall_grib*|*small_grib*|*irr_grid*|*reduced_gaussian_grid*)
       printf 'grid\n'
+      ;;
+    *_submsg_uv_bin|*_ncep_uv_bin|*wind_*|*_ave_bin|*_ave0_bin|*_ave_var_bin|*_fcst_ave_bin|*_fcst_ave0_bin|*_time_processing_bin|*_ens_processing_bin|*_ens_qc_*|*ncep_norm_bin|*merge_fcst_bin|*unmerge_fcst_bin)
+      printf 'process\n'
       ;;
     *)
       case "${mode}" in

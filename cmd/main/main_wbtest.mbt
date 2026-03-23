@@ -3984,6 +3984,105 @@ test "run_cli supports -new_grid_interpolation neighbor on scan32 UGRD/VGRD fixt
 }
 
 ///|
+test "run_cli supports -new_grid_interpolation neighbor scalar output" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.5:8:1", "-89.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse neighbor new_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="0")
+  inspect(meta.section3_ni, content="8")
+  inspect(meta.section3_nj, content="8")
+  inspect(meta.section6_bitmap_indicator, content="255")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor UGRD/VGRD output" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_uv_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "11:12:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.5:8:1", "-89.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read neighbor uv new_grid output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse neighbor uv new_grid output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor bitmap output" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_bitmap_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "266:266:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "130.5:8:1", "30.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse neighbor bitmap new_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="0")
+  inspect(meta.section3_ni, content="8")
+  inspect(meta.section3_nj, content="8")
+  inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor WIND output" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_wind_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "260.5:8:1", "0.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to read neighbor new_grid WIND output: " + e.to_string())
+  }
+  inspect(bytes.sub(start=0, end=4).to_bytes().to_string(), content="b\"GRIB\"")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor WDIR output" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_wdir_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "2:2:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "260.5:8:1", "0.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to read neighbor new_grid WDIR output: " + e.to_string())
+  }
+  inspect(bytes.sub(start=0, end=4).to_bytes().to_string(), content="b\"GRIB\"")
+}
+
+///|
 test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output on scan32 fixture" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
   let out = "target/cmd_main_new_grid_bilinear_uv_scan32_out.grib2"
