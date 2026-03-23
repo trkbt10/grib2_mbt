@@ -3185,6 +3185,52 @@ test "run_cli supports -cress_lola off-grid output on pgrb2" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid UGRD/VGRD output on pgrb2" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_pgrb2_uv_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "11:12:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read pgrb2 uv cress_lola output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse pgrb2 uv cress_lola output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="6")
+  inspect(metas[0].section3_nj, content="5")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid bitmap output on pgrb2b" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_pgrb2b_bitmap_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "266:266:1", "-cress_lola", "130.25:6:0.5", "30.5:5:0.5",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse pgrb2b bitmap cress_lola output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="6")
+  inspect(meta.section3_nj, content="5")
+  inspect(meta.section6_bitmap_indicator, content="255")
+}
+
+///|
 test "run_cli supports -cress_lola off-grid output on scan32 fixture" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
   let out = "target/cmd_main_cress_lola_scan32_offgrid_test.grib2"
