@@ -4769,6 +4769,42 @@ test "run_cli supports JPEG2000 regular lat/lon -netcdf output" {
 }
 
 ///|
+test "run_cli supports bitmap254 regular lat/lon -netcdf output" {
+  let fixture = "fixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2"
+  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse bitmap254 netcdf input: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  let message = context.messages[0]
+  let submessage = message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(e) => fail("failed to build bitmap254 netcdf grid info: " + e)
+  }
+  let out = "target/cmd_main_netcdf_bitmap254.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read bitmap254 netcdf output: " + e.to_string())
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse bitmap254 netcdf output: " + e)
+  }
+  inspect(parsed.fields.length(), content="1")
+  inspect(parsed.time_values.length(), content="1")
+  inspect(parsed.latitude_bytes == grid_info.latitude_bytes, content="true")
+  inspect(parsed.longitude_bytes == grid_info.longitude_bytes, content="true")
+}
+
+///|
 test "run_cli reports reduced Gaussian netcdf unavailable like wgrib2" {
   let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
   let out = "target/cmd_main_reduced_gaussian_netcdf.nc"

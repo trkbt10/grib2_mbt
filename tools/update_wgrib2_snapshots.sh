@@ -403,6 +403,7 @@ fi
   echo -e "gfswave_gribtable_used_out\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -gribtable_used {out}\t{MBT} {fixture} -gribtable_used {out}\tbinary_cmp\t"
   echo -e "gfswave_netcdf_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -netcdf {out}\t{MBT} {fixture} -for_n 1:1:1 -netcdf {out}\tbinary_cmp\t"
   echo -e "gfswave_netcdf_multi_bin\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:4:1 -netcdf {out}\t{MBT} {fixture} -for_n 1:4:1 -netcdf {out}\tbinary_cmp\t"
+  echo -e "derived_gfswave_bitmap254_netcdf_bin\tderived_gfswave_bitmap254\tfixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -netcdf {out}\t{MBT} {fixture} -for_n 1:1:1 -netcdf {out}\tbinary_cmp\t"
   echo -e "gfswave_new_grid_order_multi\tnoaa_gfswave_atlocn_0p16_f000\tfixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2\t\t{WGRIB2} {fixture} -for_n 1:1:1 -new_grid_order {out}.grb2 {out}.out2\t{MBT} {fixture} -for_n 1:1:1 -new_grid_order {out}.grb2 {out}.out2\tmulti_file\tgrb2,out2"
 
   # Value-validation focused derived-wind cases on known U/V source fixture.
