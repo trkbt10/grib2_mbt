@@ -4805,6 +4805,43 @@ test "run_cli supports bitmap254 regular lat/lon -netcdf output" {
 }
 
 ///|
+test "run_cli supports bitmap254 regular lat/lon multi-record and append -netcdf output" {
+  let fixture = "fixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2"
+  let multi_out = "target/cmd_main_netcdf_bitmap254_multi.nc"
+  let append_out = "target/cmd_main_netcdf_bitmap254_append.nc"
+  let append_ref = "target/cmd_main_netcdf_bitmap254_append_ref.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", multi_out]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", append_ref]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e => fail("failed to read bitmap254 append output: " + e.to_string())
+  }
+  let ref_bytes = @fs.read_file_to_bytes(append_ref) catch {
+    e => fail("failed to read bitmap254 append reference: " + e.to_string())
+  }
+  let multi_bytes = @fs.read_file_to_bytes(multi_out) catch {
+    e => fail("failed to read bitmap254 multi output: " + e.to_string())
+  }
+  inspect(append_bytes == ref_bytes, content="true")
+  inspect(multi_bytes == ref_bytes, content="true")
+}
+
+///|
 test "run_cli reports reduced Gaussian netcdf unavailable like wgrib2" {
   let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
   let out = "target/cmd_main_reduced_gaussian_netcdf.nc"
@@ -5207,6 +5244,33 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read variable reference netcdf: " + e.to_string())
   }
   inspect(var_append_bytes == var_ref_bytes, content="true")
+
+  let wave_fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let wave_append = "target/cmd_main_netcdf_append_wave_var.nc"
+  let wave_ref = "target/cmd_main_netcdf_append_wave_var_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:1:1", "-netcdf", wave_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-append", "-for_n", "2:2:1", "-netcdf", wave_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", wave_fixture, "-for_n", "1:2:1", "-netcdf", wave_ref]),
+    content="0",
+  )
+  let wave_append_bytes = @fs.read_file_to_bytes(wave_append) catch {
+    e => fail("failed to read appended wave variable netcdf: " + e.to_string())
+  }
+  let wave_ref_bytes = @fs.read_file_to_bytes(wave_ref) catch {
+    e => fail("failed to read wave variable reference netcdf: " + e.to_string())
+  }
+  inspect(wave_append_bytes == wave_ref_bytes, content="true")
 
   let time_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
   let time_append = "target/cmd_main_netcdf_append_time.nc"
