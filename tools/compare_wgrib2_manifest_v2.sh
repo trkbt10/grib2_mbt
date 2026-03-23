@@ -99,6 +99,26 @@ if [[ ! -f "${COMPARE_MANIFEST}" ]]; then
   exit 1
 fi
 
+ensure_mbt_cmd_ready() {
+  if [[ "${MBT_CMD}" == "${DEFAULT_MBT_CMD}" ]]; then
+    return
+  fi
+  if [[ "${MBT_CMD}" == *[[:space:]]* ]]; then
+    return
+  fi
+  if [[ ! -x "${MBT_CMD}" ]]; then
+    echo "error: MBT_CMD is not executable: ${MBT_CMD}" >&2
+    exit 1
+  fi
+  case "${MBT_CMD}" in
+    _build/*|./_build/*|"${ROOT_DIR}"/_build/*)
+      moon build cmd/main --target native >/dev/null
+      ;;
+  esac
+}
+
+ensure_mbt_cmd_ready
+
 render_cmd() {
   local tmpl="$1"
   local fixture="$2"

@@ -239,6 +239,7 @@ fn print_usage() -> Unit {
   println(
     "  -new_grid projection xspec yspec out  limited latlon bilinear remap",
   )
+  println("  -new_grid_interpolation X  remap method: bilinear|neighbor")
   println("  -new_grid_order out out2  vector ordering compat (limited)")
   println("  -submsg_uv file  vector submessage combine (UGRD/VGRD pairs)")
   println("  -ncep_uv file  NCEP-style UV combine (UGRD/VGRD pairs)")
@@ -501,6 +502,7 @@ struct CliInitOptions {
   crlf : Bool
   one_line : Bool
   append_mode : Bool
+  new_grid_interpolation : String?
   output_big_endian : Bool?
   no_header : Bool
   text_col : Int?
@@ -533,6 +535,7 @@ fn default_init_options() -> CliInitOptions {
     crlf: false,
     one_line: false,
     append_mode: false,
+    new_grid_interpolation: None,
     output_big_endian: None,
     no_header: false,
     text_col: None,
@@ -592,6 +595,14 @@ fn parse_cli_invocation(
     if tok == "-no_append" {
       init = { ..init, append_mode: false }
       index += 1
+      continue
+    }
+    if tok == "-new_grid_interpolation" {
+      if index + 1 >= tokens.length() {
+        return Err("-new_grid_interpolation requires an argument")
+      }
+      init = { ..init, new_grid_interpolation: Some(tokens[index + 1]) }
+      index += 2
       continue
     }
     if tok == "-big_endian" {
@@ -3952,6 +3963,7 @@ fn write_new_grid_output(
   lon_spec : String,
   lat_spec : String,
   destination : String,
+  interpolation : String?,
   context : @lib.Grib2FileContext,
   selected : Array[Int]?,
   append_mode : Bool,
@@ -4092,8 +4104,8 @@ fn write_new_grid_output(
       let v_submessage = v_message.submessages[v_ref.submessage_index]
       let (u_bytes, v_bytes) = match
         build_new_grid_wind_pair_submessage_bytes(
-          lon_spec, lat_spec, u_message, u_submessage, u_meta, v_message, v_submessage,
-          v_meta,
+          lon_spec, lat_spec, interpolation, u_message, u_submessage, u_meta, v_message,
+          v_submessage, v_meta,
         ) {
         Ok(v) => v
         Err(error) => return Err(error)
@@ -4115,7 +4127,7 @@ fn write_new_grid_output(
     } else {
       match
         build_new_grid_submessage_bytes(
-          lon_spec, lat_spec, message, submessage, meta,
+          lon_spec, lat_spec, interpolation, message, submessage, meta,
         ) {
         Ok(v) => v
         Err(error) => return Err(error)
@@ -10173,6 +10185,7 @@ fn run_cli(args : Array[String]) -> Int {
           lon_spec,
           lat_spec,
           destination,
+          init.new_grid_interpolation,
           context,
           selected,
           init.append_mode,

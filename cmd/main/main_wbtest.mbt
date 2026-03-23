@@ -2305,6 +2305,7 @@ test "apply_init_filters applies for_n + match + not" {
     nl_out_path: None,
     print_out_text: None,
     print_out_path: None,
+    new_grid_interpolation: None,
     for_n: Some("1:5:2"),
     match_patterns: ["UGRD"],
     not_patterns: ["TMP"],
@@ -3877,6 +3878,23 @@ test "run_cli matches wgrib2 empty output for -new_grid on alternating scan rows
 }
 
 ///|
+test "run_cli matches wgrib2 empty output for -new_grid_interpolation neighbor on alternating scan rows" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_scan48_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to read scan48 neighbor new_grid output: " + e.to_string())
+  }
+  inspect(bytes.length(), content="0")
+}
+
+///|
 test "new_grid alternating-row wind pair notice lines match wgrib2 order" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
   let context = match @lib.parse_with_io(native_read_bytes, fixture) {
@@ -3900,6 +3918,69 @@ test "new_grid alternating-row wind pair notice lines match wgrib2 order" {
     content="2:97919:d=2026022100:VGRD:planetary boundary layer:anl:",
   )
   inspect(lines[4], content="new_grid: rows must scan in same direction")
+}
+
+///|
+test "parse_cli_invocation accepts -new_grid_interpolation neighbor" {
+  let args = [
+    "-new_grid_interpolation", "neighbor", "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5",
+    "out.grb2",
+  ]
+  match parse_cli_invocation(args) {
+    Ok((init, WriteNewGrid("latlon", "0.25:6:0.5", "-89:5:0.5", "out.grb2"))) =>
+      inspect(init.new_grid_interpolation, content="Some(\"neighbor\")")
+    Ok(_) => fail("unexpected action for -new_grid_interpolation neighbor")
+    Err(e) => fail("failed to parse -new_grid_interpolation neighbor: " + e)
+  }
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor on scan32 fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_scan32_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan32 neighbor new_grid output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="1")
+  inspect(metas[0].section3_ni, content="6")
+  inspect(metas[0].section3_nj, content="5")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor on scan32 UGRD/VGRD fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_uv_scan32_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read scan32 uv neighbor new_grid output: " + e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 uv neighbor new_grid output: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
 }
 
 ///|
@@ -3940,6 +4021,25 @@ test "run_cli matches wgrib2 empty output for -new_grid UV on alternating scan r
   let bytes = match native_read_bytes(out) {
     Ok(v) => v
     Err(e) => fail("failed to read scan48 uv new_grid output: " + e.to_string())
+  }
+  inspect(bytes.length(), content="0")
+}
+
+///|
+test "run_cli matches wgrib2 empty output for -new_grid_interpolation neighbor UV on alternating scan rows" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_uv_scan48_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:2:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read scan48 uv neighbor new_grid output: " + e.to_string(),
+      )
   }
   inspect(bytes.length(), content="0")
 }

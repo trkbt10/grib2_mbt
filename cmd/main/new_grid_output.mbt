@@ -25,6 +25,28 @@ priv struct NewGridRawSourceGrid {
 }
 
 ///|
+priv enum NewGridInterpolationMethod {
+  NewGridInterpolationBilinear
+  NewGridInterpolationNeighbor
+}
+
+///|
+fn parse_new_grid_interpolation_method(
+  spec : String?,
+) -> Result[NewGridInterpolationMethod, String] {
+  match spec {
+    None => Ok(NewGridInterpolationBilinear)
+    Some("bilinear") => Ok(NewGridInterpolationBilinear)
+    Some("neighbor") => Ok(NewGridInterpolationNeighbor)
+    Some(value) =>
+      Err(
+        "-new_grid_interpolation currently supports bilinear|neighbor, got " +
+        value,
+      )
+  }
+}
+
+///|
 fn new_grid_wgrib2_notice_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
   meta.record_id +
   ":" +
@@ -637,6 +659,70 @@ fn new_grid_bilinear_interpolate_raw_regular_latlon_value(
 }
 
 ///|
+fn new_grid_neighbor_interpolate_raw_regular_latlon_value(
+  source : NewGridRawSourceGrid,
+  values : Array[Double],
+  lon : Double,
+  lat : Double,
+) -> Double? {
+  if source.ni <= 0 ||
+    source.nj <= 0 ||
+    values.length() != source.ni * source.nj {
+    return None
+  }
+  let (xij, yij) = match new_grid_raw_source_xij_yij(source, lon, lat) {
+    Some(v) => v
+    None => return None
+  }
+  let i = @math.floor(xij + 0.5).to_int()
+  let j = @math.floor(yij + 0.5).to_int()
+  match new_grid_raw_source_value_at(source, values, i, j) {
+    Some(v) => if v == v { Some(v) } else { None }
+    None => None
+  }
+}
+
+///|
+fn new_grid_neighbor_interpolate_regular_latlon_uv(
+  source : NewGridRawSourceGrid,
+  u_values : Array[Double],
+  v_values : Array[Double],
+  lon : Double,
+  lat : Double,
+) -> (Double, Double)? {
+  if source.ni <= 0 ||
+    source.nj <= 0 ||
+    u_values.length() != source.ni * source.nj ||
+    v_values.length() != source.ni * source.nj {
+    return None
+  }
+  let (xij, yij) = match new_grid_raw_source_xij_yij(source, lon, lat) {
+    Some(v) => v
+    None => return None
+  }
+  let i = @math.floor(xij + 0.5).to_int()
+  let j = @math.floor(yij + 0.5).to_int()
+  let u = match new_grid_raw_source_value_at(source, u_values, i, j) {
+    Some(v) => v
+    None => return None
+  }
+  let v = match new_grid_raw_source_value_at(source, v_values, i, j) {
+    Some(v) => v
+    None => return None
+  }
+  if !(u == u && v == v) {
+    return None
+  }
+  let (corner_lon, corner_lat) = match
+    new_grid_raw_source_lon_lat(source, i, j) {
+    Some(v) => v
+    None => return None
+  }
+  let (cm, sm) = new_grid_movect(corner_lat, corner_lon, lat, lon)
+  Some((to_wgrib2_float32(cm * u - sm * v), to_wgrib2_float32(sm * u + cm * v)))
+}
+
+///|
 fn new_grid_polfixv(
   target : NewGridRegularLatLonGrid,
   remapped_u : Array[Double],
@@ -765,6 +851,7 @@ fn build_new_grid_wind_submessage_bytes(
 fn build_new_grid_wind_pair_submessage_bytes(
   lon_spec : String,
   lat_spec : String,
+  interpolation : String?,
   u_message : @lib.Grib2MessageContext,
   u_submessage : @lib.Grib2SubmessageFrame,
   u_meta : @lib.Grib2RecordMeta,
@@ -772,6 +859,11 @@ fn build_new_grid_wind_pair_submessage_bytes(
   v_submessage : @lib.Grib2SubmessageFrame,
   v_meta : @lib.Grib2RecordMeta,
 ) -> Result[(Bytes, Bytes), String] {
+  let interpolation_method = match
+    parse_new_grid_interpolation_method(interpolation) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
   let u_template_id = u_meta.section5_template.id()
   let v_template_id = v_meta.section5_template.id()
   if !wind_input_packing_supported(u_template_id) {
@@ -836,10 +928,17 @@ fn build_new_grid_wind_pair_submessage_bytes(
     let lat = target.lat_start + j.to_double() * target.dlat
     for i in 0..<target.nx {
       let lon = target.lon_start + i.to_double() * target.dlon
-      match
-        new_grid_bilinear_interpolate_regular_latlon_uv(
-          source, u_source_values, v_source_values, lon, lat,
-        ) {
+      let remapped = match interpolation_method {
+        NewGridInterpolationBilinear =>
+          new_grid_bilinear_interpolate_regular_latlon_uv(
+            source, u_source_values, v_source_values, lon, lat,
+          )
+        NewGridInterpolationNeighbor =>
+          new_grid_neighbor_interpolate_regular_latlon_uv(
+            source, u_source_values, v_source_values, lon, lat,
+          )
+      }
+      match remapped {
         Some((u, v)) => {
           remapped_u.push(u)
           remapped_v.push(v)
@@ -879,10 +978,16 @@ fn build_new_grid_wind_pair_submessage_bytes(
 fn build_new_grid_submessage_bytes(
   lon_spec : String,
   lat_spec : String,
+  interpolation : String?,
   message : @lib.Grib2MessageContext,
   submessage : @lib.Grib2SubmessageFrame,
   meta : @lib.Grib2RecordMeta,
 ) -> Result[Bytes, String] {
+  let interpolation_method = match
+    parse_new_grid_interpolation_method(interpolation) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
   let template_id = meta.section5_template.id()
   if template_id != 0 &&
     template_id != 2 &&
@@ -933,10 +1038,17 @@ fn build_new_grid_submessage_bytes(
     let lat = target.lat_start + j.to_double() * target.dlat
     for i in 0..<target.nx {
       let lon = target.lon_start + i.to_double() * target.dlon
-      match
-        new_grid_bilinear_interpolate_raw_regular_latlon_value(
-          source, source_values, lon, lat,
-        ) {
+      let value = match interpolation_method {
+        NewGridInterpolationBilinear =>
+          new_grid_bilinear_interpolate_raw_regular_latlon_value(
+            source, source_values, lon, lat,
+          )
+        NewGridInterpolationNeighbor =>
+          new_grid_neighbor_interpolate_raw_regular_latlon_value(
+            source, source_values, lon, lat,
+          )
+      }
+      match value {
         Some(v) => {
           remapped.push(v)
           bitmap_mark_defined(bitmap_out, point_index)
