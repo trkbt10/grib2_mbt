@@ -5,24 +5,98 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT_DIR}"
 
 WGRIB2_BIN="${WGRIB2_BIN:-/opt/homebrew/bin/wgrib2}"
-MBT_CMD="${MBT_CMD:-moon run cmd/main --target native --}"
+DEFAULT_MBT_CMD="moon run cmd/main --target native --"
+MBT_CMD="${MBT_CMD:-${DEFAULT_MBT_CMD}}"
 DEFAULT_COMPARE_MANIFEST="fixtures/wgrib2_snapshots/manifest_v2.tsv"
-COMPARE_MANIFEST="${MANIFEST:-${DEFAULT_COMPARE_MANIFEST}}"
 TMP_DIR="${TMP_DIR:-$(mktemp -d)}"
 KEEP_TMP="${KEEP_TMP:-0}"
+CATEGORY="${CATEGORY:-}"
+CATEGORIES="${CATEGORIES:-}"
+ALL_CATEGORIES=(inventory encode format grid process netcdf compat)
+COMPARE_MANIFEST=""
 
 if [[ ! -x "${WGRIB2_BIN}" ]]; then
   echo "error: wgrib2 not found or not executable: ${WGRIB2_BIN}" >&2
   exit 1
 fi
+
+if [[ "${KEEP_TMP}" != "1" ]]; then
+  trap 'rm -rf "${TMP_DIR}"' EXIT
+fi
+
+resolve_compare_manifest() {
+  local raw
+  local item
+  local found
+  local category
+  local path
+
+  if [[ -n "${MANIFEST:-}" ]]; then
+    COMPARE_MANIFEST="${MANIFEST}"
+    return
+  fi
+
+  if [[ -z "${CATEGORY}" && -z "${CATEGORIES}" ]]; then
+    COMPARE_MANIFEST="${DEFAULT_COMPARE_MANIFEST}"
+    return
+  fi
+
+  raw="${CATEGORY}"
+  if [[ -n "${CATEGORIES}" ]]; then
+    if [[ -n "${raw}" ]]; then
+      raw="${raw},${CATEGORIES}"
+    else
+      raw="${CATEGORIES}"
+    fi
+  fi
+
+  IFS=',' read -r -a requested <<< "${raw}"
+  if [[ "${#requested[@]}" == "1" ]]; then
+    category="${requested[0]//[[:space:]]/}"
+    if [[ "${category}" == "all" ]]; then
+      COMPARE_MANIFEST="${DEFAULT_COMPARE_MANIFEST}"
+      return
+    fi
+    COMPARE_MANIFEST="fixtures/wgrib2_snapshots/${category}/manifest_v2.tsv"
+    return
+  fi
+
+  COMPARE_MANIFEST="${TMP_DIR}/category-manifest_v2.tsv"
+  printf 'case_id\tfixture_id\tfixture_path\tprep\twgrib2_cmd\tmbt_cmd\tcompare_mode\texpected_ref\n' > "${COMPARE_MANIFEST}"
+  for item in "${requested[@]}"; do
+    item="${item//[[:space:]]/}"
+    [[ -z "${item}" ]] && continue
+    if [[ "${item}" == "all" ]]; then
+      COMPARE_MANIFEST="${DEFAULT_COMPARE_MANIFEST}"
+      return
+    fi
+    found=0
+    for category in "${ALL_CATEGORIES[@]}"; do
+      if [[ "${category}" == "${item}" ]]; then
+        found=1
+        break
+      fi
+    done
+    if [[ "${found}" == "0" ]]; then
+      echo "error: unknown compare category: ${item}" >&2
+      echo "known categories: ${ALL_CATEGORIES[*]}" >&2
+      exit 1
+    fi
+    path="fixtures/wgrib2_snapshots/${item}/manifest_v2.tsv"
+    if [[ ! -f "${path}" ]]; then
+      echo "error: compare manifest not found: ${path}" >&2
+      exit 1
+    fi
+    tail -n +2 "${path}" >> "${COMPARE_MANIFEST}"
+  done
+}
+
+resolve_compare_manifest
+
 if [[ ! -f "${COMPARE_MANIFEST}" ]]; then
   echo "error: compare manifest not found: ${COMPARE_MANIFEST}" >&2
   echo "hint: compare_wgrib2_manifest_v2.sh defaults to ${DEFAULT_COMPARE_MANIFEST}; fixtures/wgrib2_snapshots/manifest.tsv is the legacy snapshot mapping." >&2
   exit 1
-fi
-
-if [[ "${KEEP_TMP}" != "1" ]]; then
-  trap 'rm -rf "${TMP_DIR}"' EXIT
 fi
 
 render_cmd() {

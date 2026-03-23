@@ -1,0 +1,4 @@
+1:0:grid_template=0:winds(N/S):
+	lat-lon grid:(360 x 181) units 1e-06 input NS:WE output WE:SN res 48
+	lat 90.000000 to -90.000000 by 1.000000
+	lon 0.000000 to 359.000000 by 1.000000 #points=65160

@@ -1,0 +1,2 @@
+1.1:0:Sec6 length 129786 bitmap indicator 0
+1.2:0:Sec6 length 129786 bitmap indicator 0

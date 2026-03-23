@@ -1,0 +1,26 @@
+case_id	fixture_id	fixture_path	prep	wgrib2_cmd	mbt_cmd	compare_mode	expected_ref
+jma_gsm_text_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -for_n 1:1:1 -text {out}	{MBT} {fixture} -for_n 1:1:1 -text {out}	binary_cmp	
+jma_gsm_csv_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}	{MBT} {fixture} -for_n 1:1:1 -csv {out}	binary_cmp	
+jma_gsm_csv_long_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}	{MBT} {fixture} -for_n 1:1:1 -csv_long {out}	binary_cmp	
+jma_gsm_spread_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}	{MBT} {fixture} -for_n 1:1:1 -spread {out}	binary_cmp	
+jma_gsm_gridout_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}	{MBT} {fixture} -for_n 1:1:1 -gridout {out}	binary_cmp	
+noaa_gfs_pgrb2b_1p00_f000_text_out	noaa_gfs_pgrb2b_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -text {out}	{MBT} {fixture} -for_n 1:1:1 -text {out}	binary_cmp	
+noaa_gfs_pgrb2b_1p00_f000_csv_out	noaa_gfs_pgrb2b_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}	{MBT} {fixture} -for_n 1:1:1 -csv {out}	binary_cmp	
+noaa_gfs_pgrb2b_1p00_f000_csv_long_out	noaa_gfs_pgrb2b_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}	{MBT} {fixture} -for_n 1:1:1 -csv_long {out}	binary_cmp	
+noaa_gfs_pgrb2b_1p00_f000_spread_out	noaa_gfs_pgrb2b_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}	{MBT} {fixture} -for_n 1:1:1 -spread {out}	binary_cmp	
+noaa_gfs_pgrb2b_1p00_f000_gridout_out	noaa_gfs_pgrb2b_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}	{MBT} {fixture} -for_n 1:1:1 -gridout {out}	binary_cmp	
+noaa_gfswave_atlocn_0p16_f000_text_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -text {out}	{MBT} {fixture} -for_n 1:1:1 -text {out}	binary_cmp	
+noaa_gfswave_atlocn_0p16_f000_csv_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}	{MBT} {fixture} -for_n 1:1:1 -csv {out}	binary_cmp	
+noaa_gfswave_atlocn_0p16_f000_csv_long_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}	{MBT} {fixture} -for_n 1:1:1 -csv_long {out}	binary_cmp	
+noaa_gfswave_atlocn_0p16_f000_spread_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}	{MBT} {fixture} -for_n 1:1:1 -spread {out}	binary_cmp	
+noaa_gfswave_atlocn_0p16_f000_gridout_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}	{MBT} {fixture} -for_n 1:1:1 -gridout {out}	binary_cmp	
+jma_gsm_gribtable_used_out	jma_gsm	fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin		{WGRIB2} {fixture} -gribtable_used {out}	{MBT} {fixture} -gribtable_used {out}	binary_cmp	
+gfswave_gribtable_used_out	noaa_gfswave_atlocn_0p16_f000	fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2		{WGRIB2} {fixture} -gribtable_used {out}	{MBT} {fixture} -gribtable_used {out}	binary_cmp	
+pgrb2_ijbox_text_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -ijbox 1:2:1 1:2:1 {out} text	{MBT} {fixture} -for_n 1:1:1 -ijbox 1:2:1 1:2:1 {out} text	binary_cmp	
+pgrb2_ijbox_spread_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -ijbox 1:3:1 1:2:1 {out} spread	{MBT} {fixture} -for_n 1:1:1 -ijbox 1:3:1 1:2:1 {out} spread	binary_cmp	
+pgrb2_gribtable_used_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -gribtable_used {out}	{MBT} {fixture} -gribtable_used {out}	binary_cmp	
+pgrb2_text_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -text {out}	{MBT} {fixture} -for_n 1:1:1 -text {out}	binary_cmp	
+pgrb2_csv_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv {out}	{MBT} {fixture} -for_n 1:1:1 -csv {out}	binary_cmp	
+pgrb2_csv_long_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -csv_long {out}	{MBT} {fixture} -for_n 1:1:1 -csv_long {out}	binary_cmp	
+pgrb2_spread_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -spread {out}	{MBT} {fixture} -for_n 1:1:1 -spread {out}	binary_cmp	
+pgrb2_gridout_out	noaa_gfs_pgrb2_1p00_f000	fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2		{WGRIB2} {fixture} -for_n 1:1:1 -gridout {out}	{MBT} {fixture} -for_n 1:1:1 -gridout {out}	binary_cmp	
