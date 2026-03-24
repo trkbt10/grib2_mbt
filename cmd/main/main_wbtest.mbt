@@ -4609,6 +4609,18 @@ test "netcdf unit mapping follows wgrib2 conventions" {
   let (long_name, units) = netcdf_long_name_units(meta)
   inspect(long_name, content="Relative Humidity")
   inspect(units, content="percent")
+  inspect(
+    netcdf_variable_name(@lib.decode_records(context)[265]),
+    content="SOILL_0M0D1mbelowground",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(context)[266]),
+    content="SOILL_0D1M0D4mbelowground",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(context)[286]),
+    content="TMP_60M30mbaboveground",
+  )
 }
 
 ///|
@@ -4931,6 +4943,40 @@ test "run_cli supports single and multi-record -netcdf output" {
   }
   inspect(bytes_be_u32(time_bytes, 4).to_string(), content="3")
   inspect(time_bytes.to_string().contains("HGT_1000mb"), content="true")
+
+  let bitmap_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let bitmap_out = "target/cmd_main_netcdf_bitmap.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", bitmap_fixture, "-for_n", "266:266:1", "-netcdf", bitmap_out,
+    ]),
+    content="0",
+  )
+  let bitmap_bytes = @fs.read_file_to_bytes(bitmap_out) catch {
+    e => fail("failed to read bitmap netcdf output: " + e.to_string())
+  }
+  inspect(
+    bitmap_bytes.to_string().contains("SOILL_0M0D1mbelowground"),
+    content="true",
+  )
+  let bitmap_multi_out = "target/cmd_main_netcdf_bitmap_multi.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", bitmap_fixture, "-for_n", "266:269:1", "-netcdf", bitmap_multi_out,
+    ]),
+    content="0",
+  )
+  let bitmap_multi_bytes = @fs.read_file_to_bytes(bitmap_multi_out) catch {
+    e => fail("failed to read bitmap multi netcdf output: " + e.to_string())
+  }
+  inspect(
+    bitmap_multi_bytes.to_string().contains("SOILL_0D1M0D4mbelowground"),
+    content="true",
+  )
+  inspect(
+    bitmap_multi_bytes.to_string().contains("SOILL_0D4M1mbelowground"),
+    content="true",
+  )
 }
 
 ///|
@@ -5728,6 +5774,45 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read variable reference netcdf: " + e.to_string())
   }
   inspect(var_append_bytes == var_ref_bytes, content="true")
+
+  let bitmap_append = "target/cmd_main_netcdf_append_bitmap_layers.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "266:266:1", "-netcdf", bitmap_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "267:267:1", "-netcdf", bitmap_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "268:268:1", "-netcdf", bitmap_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "269:269:1", "-netcdf", bitmap_append,
+    ]),
+    content="0",
+  )
+  let bitmap_append_bytes = @fs.read_file_to_bytes(bitmap_append) catch {
+    e => fail("failed to read appended bitmap-layer netcdf: " + e.to_string())
+  }
+  let bitmap_parsed = match parse_existing_netcdf_file(bitmap_append_bytes) {
+    Ok(v) => v
+    Err(e) => fail("failed to parse appended bitmap-layer netcdf: " + e)
+  }
+  inspect(bitmap_parsed.fields.length(), content="4")
+  inspect(bitmap_parsed.time_values.length(), content="1")
+  inspect(bitmap_parsed.fields[0].name, content="SOILL_0M0D1mbelowground")
+  inspect(bitmap_parsed.fields[1].name, content="SOILL_0D1M0D4mbelowground")
+  inspect(bitmap_parsed.fields[2].name, content="SOILL_0D4M1mbelowground")
+  inspect(bitmap_parsed.fields[3].name, content="SOILL_1M2mbelowground")
 
   let pgrb2_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let pgrb2_append = "target/cmd_main_netcdf_append_pgrb2_var.nc"

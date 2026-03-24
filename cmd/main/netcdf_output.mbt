@@ -1068,6 +1068,10 @@ fn sanitize_netcdf_name_part(text : String) -> String {
     let code = c.to_int()
     if is_netcdf_name_char(code) {
       parts.push(c.to_string())
+    } else if code == 45 {
+      parts.push("M")
+    } else if code == 46 {
+      parts.push("D")
     }
   }
   if parts.length() == 0 {
