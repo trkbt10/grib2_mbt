@@ -3719,6 +3719,156 @@ test "run_cli keeps off-grid negative-pass mask after later positive passes on g
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid WIND/WDIR output on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let wind_out = "target/cmd_main_cress_lola_gfswave_wind_offgrid_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wind_out, "1:2",
+    ]),
+    content="0",
+  )
+  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid cress_lola gfswave WIND output: " +
+        e.to_string(),
+      )
+  }
+  let wind_meta = @lib.decode_records(wind_context)[0]
+  inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
+  inspect(wind_meta.section3_ni, content="8")
+  inspect(wind_meta.section3_nj, content="8")
+  inspect(wind_meta.section3_scanning_mode, content="64")
+  inspect(wind_meta.section6_bitmap_indicator, content="0")
+
+  let wdir_out = "target/cmd_main_cress_lola_gfswave_wdir_offgrid_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "2:2:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wdir_out, "1:2",
+    ]),
+    content="0",
+  )
+  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid cress_lola gfswave WDIR output: " +
+        e.to_string(),
+      )
+  }
+  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
+  inspect(wdir_meta.section3_ni, content="8")
+  inspect(wdir_meta.section3_nj, content="8")
+  inspect(wdir_meta.section3_scanning_mode, content="64")
+  inspect(wdir_meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave WIND/WDIR" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let wind_out = "target/cmd_main_cress_lola_gfswave_wind_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wind_out, "-20",
+    ]),
+    content="0",
+  )
+  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid negative cress_lola gfswave WIND output: " +
+        e.to_string(),
+      )
+  }
+  let wind_meta = @lib.decode_records(wind_context)[0]
+  inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
+  inspect(wind_meta.section3_ni, content="8")
+  inspect(wind_meta.section3_nj, content="8")
+  inspect(wind_meta.section3_scanning_mode, content="64")
+  inspect(wind_meta.section6_bitmap_indicator, content="0")
+
+  let wdir_out = "target/cmd_main_cress_lola_gfswave_wdir_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "2:2:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wdir_out, "-20",
+    ]),
+    content="0",
+  )
+  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid negative cress_lola gfswave WDIR output: " +
+        e.to_string(),
+      )
+  }
+  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
+  inspect(wdir_meta.section3_ni, content="8")
+  inspect(wdir_meta.section3_nj, content="8")
+  inspect(wdir_meta.section3_scanning_mode, content="64")
+  inspect(wdir_meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli keeps off-grid negative-pass mask on gfswave WIND/WDIR" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let wind_out = "target/cmd_main_cress_lola_gfswave_wind_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wind_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid mixed-sign cress_lola gfswave WIND output: " +
+        e.to_string(),
+      )
+  }
+  let wind_meta = @lib.decode_records(wind_context)[0]
+  inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
+  inspect(wind_meta.section3_ni, content="8")
+  inspect(wind_meta.section3_nj, content="8")
+  inspect(wind_meta.section3_scanning_mode, content="64")
+  inspect(wind_meta.section6_bitmap_indicator, content="0")
+
+  let wdir_out = "target/cmd_main_cress_lola_gfswave_wdir_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "2:2:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+      wdir_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid mixed-sign cress_lola gfswave WDIR output: " +
+        e.to_string(),
+      )
+  }
+  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
+  inspect(wdir_meta.section3_ni, content="8")
+  inspect(wdir_meta.section3_nj, content="8")
+  inspect(wdir_meta.section3_scanning_mode, content="64")
+  inspect(wdir_meta.section6_bitmap_indicator, content="0")
+}
+
+///|
 test "run_cli -cress_lola supports negative-radius mask on gfswave" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_cress_lola_gfswave_neg_test.grib2"
