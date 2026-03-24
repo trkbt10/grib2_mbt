@@ -96,8 +96,11 @@ netcdf_mixed_reference_out="${OUT_DIR}/noaa_gfs_pgrb2_mixed_reference_netcdf_inp
 netcdf_mercator_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_mercator_netcdf_input.grib2"
 netcdf_mercator_mixed_reference_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_mercator_mixed_reference_netcdf_input.grib2"
 netcdf_rotated_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_rotated_latlon_netcdf_input.grib2"
+netcdf_rotated_mixed_reference_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_rotated_latlon_mixed_reference_netcdf_input.grib2"
 netcdf_polar_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_polar_stereographic_netcdf_input.grib2"
+netcdf_polar_mixed_reference_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_polar_stereographic_mixed_reference_netcdf_input.grib2"
 netcdf_lambert_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_lambert_conformal_netcdf_input.grib2"
+netcdf_lambert_mixed_reference_out="${OUT_DIR}/noaa_gfs_pgrb2_synthetic_lambert_conformal_mixed_reference_netcdf_input.grib2"
 realworld_ncep_norm_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_ncep_norm_input.grib2"
 realworld_merge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_merge_fcst_input.grib2"
 realworld_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_unmerge_fcst_input.grib2"
@@ -235,14 +238,29 @@ if derived_group_enabled netcdf; then
     "${netcdf_rotated_out}"
 
   generate_forecast_fixture_from_wbtest \
+    "*writes synthetic rotated lat-lon mixed-reference netcdf fixture*" \
+    "target/cmd_main_netcdf_rotated_mixed_reference_input.grib2" \
+    "${netcdf_rotated_mixed_reference_out}"
+
+  generate_forecast_fixture_from_wbtest \
     "*writes synthetic polar stereographic netcdf fixture*" \
     "target/cmd_main_netcdf_polar_input.grib2" \
     "${netcdf_polar_out}"
 
   generate_forecast_fixture_from_wbtest \
+    "*writes synthetic polar stereographic mixed-reference netcdf fixture*" \
+    "target/cmd_main_netcdf_polar_mixed_reference_input.grib2" \
+    "${netcdf_polar_mixed_reference_out}"
+
+  generate_forecast_fixture_from_wbtest \
     "*writes synthetic Lambert conformal netcdf fixture*" \
     "target/cmd_main_netcdf_lambert_input.grib2" \
     "${netcdf_lambert_out}"
+
+  generate_forecast_fixture_from_wbtest \
+    "*writes synthetic Lambert conformal mixed-reference netcdf fixture*" \
+    "target/cmd_main_netcdf_lambert_mixed_reference_input.grib2" \
+    "${netcdf_lambert_mixed_reference_out}"
 fi
 
 if derived_group_enabled process; then
@@ -459,8 +477,11 @@ netcdf_mixed_reference_sha="$(shasum -a 256 "${netcdf_mixed_reference_out}" | aw
 netcdf_mercator_sha="$(shasum -a 256 "${netcdf_mercator_out}" | awk '{print $1}')"
 netcdf_mercator_mixed_reference_sha="$(shasum -a 256 "${netcdf_mercator_mixed_reference_out}" | awk '{print $1}')"
 netcdf_rotated_sha="$(shasum -a 256 "${netcdf_rotated_out}" | awk '{print $1}')"
+netcdf_rotated_mixed_reference_sha="$(shasum -a 256 "${netcdf_rotated_mixed_reference_out}" | awk '{print $1}')"
 netcdf_polar_sha="$(shasum -a 256 "${netcdf_polar_out}" | awk '{print $1}')"
+netcdf_polar_mixed_reference_sha="$(shasum -a 256 "${netcdf_polar_mixed_reference_out}" | awk '{print $1}')"
 netcdf_lambert_sha="$(shasum -a 256 "${netcdf_lambert_out}" | awk '{print $1}')"
+netcdf_lambert_mixed_reference_sha="$(shasum -a 256 "${netcdf_lambert_mixed_reference_out}" | awk '{print $1}')"
 realworld_ncep_norm_sha="$(shasum -a 256 "${realworld_ncep_norm_out}" | awk '{print $1}')"
 realworld_merge_fcst_sha="$(shasum -a 256 "${realworld_merge_fcst_out}" | awk '{print $1}')"
 realworld_unmerge_fcst_sha="$(shasum -a 256 "${realworld_unmerge_fcst_out}" | awk '{print $1}')"
@@ -509,8 +530,11 @@ netcdf_mixed_reference_size="$(wc -c < "${netcdf_mixed_reference_out}" | tr -d '
 netcdf_mercator_size="$(wc -c < "${netcdf_mercator_out}" | tr -d ' ')"
 netcdf_mercator_mixed_reference_size="$(wc -c < "${netcdf_mercator_mixed_reference_out}" | tr -d ' ')"
 netcdf_rotated_size="$(wc -c < "${netcdf_rotated_out}" | tr -d ' ')"
+netcdf_rotated_mixed_reference_size="$(wc -c < "${netcdf_rotated_mixed_reference_out}" | tr -d ' ')"
 netcdf_polar_size="$(wc -c < "${netcdf_polar_out}" | tr -d ' ')"
+netcdf_polar_mixed_reference_size="$(wc -c < "${netcdf_polar_mixed_reference_out}" | tr -d ' ')"
 netcdf_lambert_size="$(wc -c < "${netcdf_lambert_out}" | tr -d ' ')"
+netcdf_lambert_mixed_reference_size="$(wc -c < "${netcdf_lambert_mixed_reference_out}" | tr -d ' ')"
 realworld_ncep_norm_size="$(wc -c < "${realworld_ncep_norm_out}" | tr -d ' ')"
 realworld_merge_fcst_size="$(wc -c < "${realworld_merge_fcst_out}" | tr -d ' ')"
 realworld_unmerge_fcst_size="$(wc -c < "${realworld_unmerge_fcst_out}" | tr -d ' ')"
@@ -562,8 +586,11 @@ noaa_gfs_pgrb2_mixed_reference_netcdf_input.grib2	${netcdf_mixed_reference_size}
 noaa_gfs_pgrb2_synthetic_mercator_netcdf_input.grib2	${netcdf_mercator_size}	${netcdf_mercator_sha}	${forecast_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic Mercator netcdf fixture*'	single-record spherical Mercator GRIB2 built from NOAA GFS waveatlocn record 1; used for exact -netcdf Mercator compare
 noaa_gfs_pgrb2_synthetic_mercator_mixed_reference_netcdf_input.grib2	${netcdf_mercator_mixed_reference_size}	${netcdf_mercator_mixed_reference_sha}	${forecast_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic Mercator mixed-reference netcdf fixture*'	two-record spherical Mercator GRIB2 built from NOAA GFS waveatlocn record 1 with second record reference time shifted by +6h; used for exact -netcdf Mercator mixed-reference compare
 noaa_gfs_pgrb2_synthetic_rotated_latlon_netcdf_input.grib2	${netcdf_rotated_size}	${netcdf_rotated_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic rotated lat-lon netcdf fixture*'	single-record rotated lat-lon GRIB2 built from NOAA GFS pgrb2 record 1; used for exact -netcdf combined compare of notice lines and output file
+noaa_gfs_pgrb2_synthetic_rotated_latlon_mixed_reference_netcdf_input.grib2	${netcdf_rotated_mixed_reference_size}	${netcdf_rotated_mixed_reference_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic rotated lat-lon mixed-reference netcdf fixture*'	two-record rotated lat-lon GRIB2 built from NOAA GFS pgrb2 record 1 with second record reference time shifted by +6h; used for exact -netcdf rotated lat-lon mixed-reference compare
 noaa_gfs_pgrb2_synthetic_polar_stereographic_netcdf_input.grib2	${netcdf_polar_size}	${netcdf_polar_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic polar stereographic netcdf fixture*'	single-record polar stereographic GRIB2 built from NOAA GFS pgrb2 record 1; used for exact -netcdf polar stereographic compare
+noaa_gfs_pgrb2_synthetic_polar_stereographic_mixed_reference_netcdf_input.grib2	${netcdf_polar_mixed_reference_size}	${netcdf_polar_mixed_reference_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic polar stereographic mixed-reference netcdf fixture*'	two-record polar stereographic GRIB2 built from NOAA GFS pgrb2 record 1 with second record reference time shifted by +6h; used for exact -netcdf polar stereographic mixed-reference compare
 noaa_gfs_pgrb2_synthetic_lambert_conformal_netcdf_input.grib2	${netcdf_lambert_size}	${netcdf_lambert_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic Lambert conformal netcdf fixture*'	single-record Lambert conformal GRIB2 built from NOAA GFS pgrb2 record 1; used for exact -netcdf Lambert conformal compare
+noaa_gfs_pgrb2_synthetic_lambert_conformal_mixed_reference_netcdf_input.grib2	${netcdf_lambert_mixed_reference_size}	${netcdf_lambert_mixed_reference_sha}	${scan_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*writes synthetic Lambert conformal mixed-reference netcdf fixture*'	two-record Lambert conformal GRIB2 built from NOAA GFS pgrb2 record 1 with second record reference time shifted by +6h; used for exact -netcdf Lambert conformal mixed-reference compare
 jma_msm_fh00_15_tmp1000_ncep_norm_input.grib2	${realworld_ncep_norm_size}	${realworld_ncep_norm_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 TMP:1000 mb records 96/188/280/372; used for exact -ncep_norm compare
 jma_msm_fh00_15_tmp1000_merge_fcst_input.grib2	${realworld_merge_fcst_size}	${realworld_merge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 TMP:1000 mb records 96/188/280/372; used for exact -merge_fcst compare
 jma_msm_fh00_15_tmp1000_unmerge_fcst_input.grib2	${realworld_unmerge_fcst_size}	${realworld_unmerge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH00-15 TMP:1000 mb records 96/188/280/372; used for exact -unmerge_fcst compare

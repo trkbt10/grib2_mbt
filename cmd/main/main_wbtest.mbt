@@ -960,6 +960,70 @@ fn write_synthetic_rotated_latlon_netcdf_input(
 }
 
 ///|
+fn write_synthetic_rotated_latlon_mixed_reference_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let single_path = "target/cmd_main_netcdf_rotated_single_base_input.grib2"
+  match write_synthetic_rotated_latlon_netcdf_input(single_path) {
+    Ok(_) => ()
+    Err(e) =>
+      return Err(
+        "failed to write synthetic rotated lat-lon mixed-reference base: " + e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic rotated lat-lon mixed-reference base: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err(
+      "failed to select synthetic rotated lat-lon mixed-reference source",
+    )
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 1 {
+    return Err(
+      "synthetic rotated lat-lon mixed-reference source must be template 3.1",
+    )
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let original_bytes = build_submessage_grib_bytes_with_overrides(
+    message,
+    submessage,
+    None,
+    None,
+    None,
+    None,
+  )
+  let shifted_section1 = match
+    shift_section1_reference_time_for_test(
+      section_frame_bytes(message, message.section1),
+      meta.unix_rt,
+      6,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let shifted_bytes = build_submessage_grib_bytes_with_section1_override_for_test(
+    message,
+    submessage,
+    Some(shifted_section1),
+  )
+  let out : Array[Byte] = []
+  append_bytes(out, original_bytes)
+  append_bytes(out, shifted_bytes)
+  native_write_bytes(path, Bytes::from_array(out))
+}
+
+///|
 fn write_synthetic_polar_stereographic_netcdf_input(
   path : String,
 ) -> Result[Unit, String] {
@@ -1097,6 +1161,135 @@ fn write_synthetic_lambert_conformal_netcdf_input(
     Some(@lib.encode_section3_bytes(section3)),
   )
   native_write_bytes(path, bytes)
+}
+
+///|
+fn write_synthetic_polar_stereographic_mixed_reference_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let single_path = "target/cmd_main_netcdf_polar_single_base_input.grib2"
+  match write_synthetic_polar_stereographic_netcdf_input(single_path) {
+    Ok(_) => ()
+    Err(e) =>
+      return Err(
+        "failed to write synthetic polar stereographic mixed-reference base: " +
+        e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic polar stereographic mixed-reference base: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err(
+      "failed to select synthetic polar stereographic mixed-reference source",
+    )
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 20 {
+    return Err(
+      "synthetic polar stereographic mixed-reference source must be template 3.20",
+    )
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let original_bytes = build_submessage_grib_bytes_with_overrides(
+    message,
+    submessage,
+    None,
+    None,
+    None,
+    None,
+  )
+  let shifted_section1 = match
+    shift_section1_reference_time_for_test(
+      section_frame_bytes(message, message.section1),
+      meta.unix_rt,
+      6,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let shifted_bytes = build_submessage_grib_bytes_with_section1_override_for_test(
+    message,
+    submessage,
+    Some(shifted_section1),
+  )
+  let out : Array[Byte] = []
+  append_bytes(out, original_bytes)
+  append_bytes(out, shifted_bytes)
+  native_write_bytes(path, Bytes::from_array(out))
+}
+
+///|
+fn write_synthetic_lambert_conformal_mixed_reference_netcdf_input(
+  path : String,
+) -> Result[Unit, String] {
+  let single_path = "target/cmd_main_netcdf_lambert_single_base_input.grib2"
+  match write_synthetic_lambert_conformal_netcdf_input(single_path) {
+    Ok(_) => ()
+    Err(e) =>
+      return Err(
+        "failed to write synthetic Lambert conformal mixed-reference base: " + e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+    Ok(v) => v
+    Err(e) =>
+      return Err(
+        "failed to parse synthetic Lambert conformal mixed-reference base: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  let refs = collect_selected_record_refs(context, Some([1]))
+  if refs.length() != 1 {
+    return Err(
+      "failed to select synthetic Lambert conformal mixed-reference source",
+    )
+  }
+  let record_ref = refs[0]
+  let meta = metas[record_ref.record_index - 1]
+  if meta.section3_template.id() != 30 {
+    return Err(
+      "synthetic Lambert conformal mixed-reference source must be template 3.30",
+    )
+  }
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  let original_bytes = build_submessage_grib_bytes_with_overrides(
+    message,
+    submessage,
+    None,
+    None,
+    None,
+    None,
+  )
+  let shifted_section1 = match
+    shift_section1_reference_time_for_test(
+      section_frame_bytes(message, message.section1),
+      meta.unix_rt,
+      6,
+    ) {
+    Ok(v) => v
+    Err(e) => return Err(e)
+  }
+  let shifted_bytes = build_submessage_grib_bytes_with_section1_override_for_test(
+    message,
+    submessage,
+    Some(shifted_section1),
+  )
+  let out : Array[Byte] = []
+  append_bytes(out, original_bytes)
+  append_bytes(out, shifted_bytes)
+  native_write_bytes(path, Bytes::from_array(out))
 }
 
 ///|
@@ -4547,6 +4740,39 @@ test "writes synthetic rotated lat-lon netcdf fixture" {
 }
 
 ///|
+test "writes synthetic rotated lat-lon mixed-reference netcdf fixture" {
+  let out = "target/cmd_main_netcdf_rotated_mixed_reference_input.grib2"
+  match write_synthetic_rotated_latlon_mixed_reference_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic rotated lat-lon mixed-reference fixture: " +
+        e,
+      )
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read synthetic rotated lat-lon mixed-reference fixture: " + e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic rotated lat-lon mixed-reference fixture: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(count_grib_magic(bytes).to_string(), content="2")
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section3_template.id(), content="1")
+  inspect(metas[1].section3_template.id(), content="1")
+}
+
+///|
 test "writes synthetic polar stereographic netcdf fixture" {
   let out = "target/cmd_main_netcdf_polar_input.grib2"
   match write_synthetic_polar_stereographic_netcdf_input(out) {
@@ -4573,6 +4799,40 @@ test "writes synthetic polar stereographic netcdf fixture" {
 }
 
 ///|
+test "writes synthetic polar stereographic mixed-reference netcdf fixture" {
+  let out = "target/cmd_main_netcdf_polar_mixed_reference_input.grib2"
+  match write_synthetic_polar_stereographic_mixed_reference_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic polar stereographic mixed-reference fixture: " +
+        e,
+      )
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read synthetic polar stereographic mixed-reference fixture: " +
+        e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic mixed-reference fixture: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(count_grib_magic(bytes).to_string(), content="2")
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section3_template.id(), content="20")
+  inspect(metas[1].section3_template.id(), content="20")
+}
+
+///|
 test "writes synthetic Lambert conformal netcdf fixture" {
   let out = "target/cmd_main_netcdf_lambert_input.grib2"
   match write_synthetic_lambert_conformal_netcdf_input(out) {
@@ -4595,6 +4855,40 @@ test "writes synthetic Lambert conformal netcdf fixture" {
   inspect(bytes.length() > 0, content="true")
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="30")
+}
+
+///|
+test "writes synthetic Lambert conformal mixed-reference netcdf fixture" {
+  let out = "target/cmd_main_netcdf_lambert_mixed_reference_input.grib2"
+  match write_synthetic_lambert_conformal_mixed_reference_netcdf_input(out) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic Lambert conformal mixed-reference fixture: " +
+        e,
+      )
+  }
+  let bytes = match native_read_bytes(out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read synthetic Lambert conformal mixed-reference fixture: " +
+        e,
+      )
+  }
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal mixed-reference fixture: " +
+        e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(count_grib_magic(bytes).to_string(), content="2")
+  inspect(metas.length(), content="2")
+  inspect(metas[0].section3_template.id(), content="30")
+  inspect(metas[1].section3_template.id(), content="30")
 }
 
 ///|
@@ -4910,6 +5204,59 @@ test "run_cli supports rotated lat-lon -netcdf output with wgrib2 notice lines" 
 }
 
 ///|
+test "run_cli supports rotated lat-lon mixed-reference -netcdf and append" {
+  let fixture = "target/cmd_main_netcdf_rotated_mixed_reference_input.grib2"
+  match write_synthetic_rotated_latlon_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic rotated lat-lon mixed-reference input: " + e,
+      )
+  }
+  let out = "target/cmd_main_rotated_latlon_mixed_reference_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic rotated lat-lon mixed-reference output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic rotated lat-lon mixed-reference output: " + e,
+      )
+  }
+  inspect(parsed.time_values.length().to_string(), content="2")
+  inspect(parsed.reference_time_type.to_string(), content="2")
+
+  let append_out = "target/cmd_main_rotated_latlon_mixed_reference_append.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e =>
+      fail(
+        "failed to read synthetic rotated lat-lon mixed-reference append output: " +
+        e.to_string(),
+      )
+  }
+  inspect(append_bytes == bytes, content="true")
+}
+
+///|
 test "build_netcdf rotated lat-lon axis values match wgrib2 at corrected points" {
   let fixture = "target/cmd_main_netcdf_rotated_input.grib2"
   match write_synthetic_rotated_latlon_netcdf_input(fixture) {
@@ -5026,6 +5373,62 @@ test "run_cli supports synthetic polar stereographic -netcdf output" {
 }
 
 ///|
+test "run_cli supports synthetic polar stereographic mixed-reference -netcdf and append" {
+  let fixture = "target/cmd_main_netcdf_polar_mixed_reference_input.grib2"
+  match
+    write_synthetic_polar_stereographic_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic polar stereographic mixed-reference input: " +
+        e,
+      )
+  }
+  let out = "target/cmd_main_polar_mixed_reference_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic polar stereographic mixed-reference output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic polar stereographic mixed-reference output: " +
+        e,
+      )
+  }
+  inspect(parsed.time_values.length().to_string(), content="2")
+  inspect(parsed.reference_time_type.to_string(), content="2")
+
+  let append_out = "target/cmd_main_polar_mixed_reference_append.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e =>
+      fail(
+        "failed to read synthetic polar stereographic mixed-reference append output: " +
+        e.to_string(),
+      )
+  }
+  inspect(append_bytes == bytes, content="true")
+}
+
+///|
 test "build_netcdf polar stereographic longitude values match wgrib2 at corrected points" {
   let fixture = "target/cmd_main_netcdf_polar_input.grib2"
   match write_synthetic_polar_stereographic_netcdf_input(fixture) {
@@ -5129,6 +5532,62 @@ test "run_cli supports synthetic Lambert conformal -netcdf output" {
 }
 
 ///|
+test "run_cli supports synthetic Lambert conformal mixed-reference -netcdf and append" {
+  let fixture = "target/cmd_main_netcdf_lambert_mixed_reference_input.grib2"
+  match
+    write_synthetic_lambert_conformal_mixed_reference_netcdf_input(fixture) {
+    Ok(_) => ()
+    Err(e) =>
+      fail(
+        "failed to write synthetic Lambert conformal mixed-reference input: " +
+        e,
+      )
+  }
+  let out = "target/cmd_main_lambert_mixed_reference_netcdf.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
+    content="0",
+  )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Lambert conformal mixed-reference output: " +
+        e.to_string(),
+      )
+  }
+  let parsed = match parse_existing_netcdf_file(bytes) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse synthetic Lambert conformal mixed-reference output: " +
+        e,
+      )
+  }
+  inspect(parsed.time_values.length().to_string(), content="2")
+  inspect(parsed.reference_time_type.to_string(), content="2")
+
+  let append_out = "target/cmd_main_lambert_mixed_reference_append.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", append_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:2:1", "-netcdf", append_out,
+    ]),
+    content="0",
+  )
+  let append_bytes = @fs.read_file_to_bytes(append_out) catch {
+    e =>
+      fail(
+        "failed to read synthetic Lambert conformal mixed-reference append output: " +
+        e.to_string(),
+      )
+  }
+  inspect(append_bytes == bytes, content="true")
+}
+
+///|
 test "build_netcdf Lambert conformal longitude values match wgrib2 at corrected points" {
   let fixture = "target/cmd_main_netcdf_lambert_input.grib2"
   match write_synthetic_lambert_conformal_netcdf_input(fixture) {
@@ -5220,6 +5679,31 @@ test "run_cli supports mixed-reference analysis -netcdf output" {
 
 ///|
 test "run_cli supports -append for netcdf variable and time growth" {
+  let gsm_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let gsm_append = "target/cmd_main_netcdf_append_gsm_var.nc"
+  let gsm_ref = "target/cmd_main_netcdf_append_gsm_var_ref.nc"
+  inspect(
+    run_cli(["grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:2:1", "-netcdf", gsm_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", gsm_fixture, "-for_n", "1:2:1", "-netcdf", gsm_ref]),
+    content="0",
+  )
+  let gsm_append_bytes = @fs.read_file_to_bytes(gsm_append) catch {
+    e => fail("failed to read appended gsm variable netcdf: " + e.to_string())
+  }
+  let gsm_ref_bytes = @fs.read_file_to_bytes(gsm_ref) catch {
+    e => fail("failed to read gsm variable reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_bytes == gsm_ref_bytes, content="true")
+
   let var_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
   let var_append = "target/cmd_main_netcdf_append_var.nc"
   let var_ref = "target/cmd_main_netcdf_append_var_ref.nc"
@@ -5244,6 +5728,36 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read variable reference netcdf: " + e.to_string())
   }
   inspect(var_append_bytes == var_ref_bytes, content="true")
+
+  let pgrb2_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+  let pgrb2_append = "target/cmd_main_netcdf_append_pgrb2_var.nc"
+  let pgrb2_ref = "target/cmd_main_netcdf_append_pgrb2_var_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:1:1", "-netcdf", pgrb2_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-append", "-for_n", "2:2:1", "-netcdf", pgrb2_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:2:1", "-netcdf", pgrb2_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_append_bytes = @fs.read_file_to_bytes(pgrb2_append) catch {
+    e => fail("failed to read appended pgrb2 variable netcdf: " + e.to_string())
+  }
+  let pgrb2_ref_bytes = @fs.read_file_to_bytes(pgrb2_ref) catch {
+    e =>
+      fail("failed to read pgrb2 variable reference netcdf: " + e.to_string())
+  }
+  inspect(pgrb2_append_bytes == pgrb2_ref_bytes, content="true")
 
   let wave_fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let wave_append = "target/cmd_main_netcdf_append_wave_var.nc"
@@ -5271,6 +5785,42 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read wave variable reference netcdf: " + e.to_string())
   }
   inspect(wave_append_bytes == wave_ref_bytes, content="true")
+
+  let wave_global_fixture = "fixtures/grib2_noaa/gfswave.t00z.global.0p25.f000.grib2"
+  let wave_global_append = "target/cmd_main_netcdf_append_wave_global_var.nc"
+  let wave_global_ref = "target/cmd_main_netcdf_append_wave_global_var_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:1:1", "-netcdf", wave_global_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-append", "-for_n", "2:2:1", "-netcdf",
+      wave_global_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:2:1", "-netcdf", wave_global_ref,
+    ]),
+    content="0",
+  )
+  let wave_global_append_bytes = @fs.read_file_to_bytes(wave_global_append) catch {
+    e =>
+      fail(
+        "failed to read appended global wave variable netcdf: " + e.to_string(),
+      )
+  }
+  let wave_global_ref_bytes = @fs.read_file_to_bytes(wave_global_ref) catch {
+    e =>
+      fail(
+        "failed to read global wave variable reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(wave_global_append_bytes == wave_global_ref_bytes, content="true")
 
   let time_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
   let time_append = "target/cmd_main_netcdf_append_time.nc"
@@ -5300,6 +5850,73 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read time reference netcdf: " + e.to_string())
   }
   inspect(time_append_bytes == time_ref_bytes, content="true")
+
+  let time_fh00_15_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let time_fh00_15_append = "target/cmd_main_netcdf_append_time_fh00_15.nc"
+  let time_fh00_15_ref = "target/cmd_main_netcdf_append_time_fh00_15_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:1:1", "-netcdf", time_fh00_15_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-append", "-for_n", "93:93:1", "-netcdf",
+      time_fh00_15_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-append", "-for_n", "185:185:1", "-netcdf",
+      time_fh00_15_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:185:92", "-netcdf", time_fh00_15_ref,
+    ]),
+    content="0",
+  )
+  let time_fh00_15_append_bytes = @fs.read_file_to_bytes(time_fh00_15_append) catch {
+    e => fail("failed to read appended FH00-15 time netcdf: " + e.to_string())
+  }
+  let time_fh00_15_ref_bytes = @fs.read_file_to_bytes(time_fh00_15_ref) catch {
+    e => fail("failed to read FH00-15 time reference netcdf: " + e.to_string())
+  }
+  inspect(time_fh00_15_append_bytes == time_fh00_15_ref_bytes, content="true")
+
+  let time_fh36_39_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
+  let time_fh36_39_append = "target/cmd_main_netcdf_append_time_fh36_39.nc"
+  let time_fh36_39_ref = "target/cmd_main_netcdf_append_time_fh36_39_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:1:1", "-netcdf", time_fh36_39_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-append", "-for_n", "93:93:1", "-netcdf",
+      time_fh36_39_append,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:93:92", "-netcdf", time_fh36_39_ref,
+    ]),
+    content="0",
+  )
+  let time_fh36_39_append_bytes = @fs.read_file_to_bytes(time_fh36_39_append) catch {
+    e => fail("failed to read appended FH36-39 time netcdf: " + e.to_string())
+  }
+  let time_fh36_39_ref_bytes = @fs.read_file_to_bytes(time_fh36_39_ref) catch {
+    e => fail("failed to read FH36-39 time reference netcdf: " + e.to_string())
+  }
+  inspect(time_fh36_39_append_bytes == time_fh36_39_ref_bytes, content="true")
 }
 
 ///|
