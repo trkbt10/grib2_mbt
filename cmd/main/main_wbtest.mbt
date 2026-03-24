@@ -4305,6 +4305,30 @@ test "run_cli supports -new_grid_interpolation neighbor WIND output" {
 }
 
 ///|
+test "run_cli supports -new_grid_interpolation neighbor scalar gfswave output" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_scalar_gfswave_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "260:301:0.166667", "0:331:0.166667", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse neighbor scalar gfswave new_grid output: " +
+        e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="0")
+  inspect(meta.section3_ni, content="301")
+  inspect(meta.section3_nj, content="331")
+  inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
 test "run_cli supports -new_grid_interpolation neighbor WDIR output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_new_grid_neighbor_wdir_out.grib2"
