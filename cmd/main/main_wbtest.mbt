@@ -3580,6 +3580,54 @@ test "run_cli supports -cress_lola off-grid output on gfswave" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_offgrid_neg_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+    out, "-20",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid negative cress_lola gfswave output: " +
+        e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="8")
+  inspect(meta.section3_nj, content="8")
+  inspect(meta.section3_scanning_mode, content="64")
+  inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli keeps off-grid negative-pass mask after later positive passes on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_offgrid_neg_pos_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "5:5:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+    out, "-1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid mixed-sign cress_lola gfswave output: " +
+        e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="8")
+  inspect(meta.section3_nj, content="8")
+  inspect(meta.section3_scanning_mode, content="64")
+  inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
 test "run_cli -cress_lola supports negative-radius mask on gfswave" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_cress_lola_gfswave_neg_test.grib2"
