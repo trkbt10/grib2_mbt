@@ -3404,6 +3404,32 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on pgrb2" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid UGRD/VGRD output on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_cress_lola_gfswave_uv_offgrid_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "3:4:1", "-cress_lola", "260.5:8:1", "0.5:8:1",
+    out, "1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read gfswave uv cress_lola output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse gfswave uv cress_lola output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="8")
+  inspect(metas[0].section3_nj, content="8")
+}
+
+///|
 test "run_cli supports -cress_lola off-grid bitmap output on pgrb2b" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
   let out = "target/cmd_main_cress_lola_pgrb2b_bitmap_offgrid_test.grib2"
@@ -4376,6 +4402,32 @@ test "run_cli supports -new_grid_interpolation neighbor WIND output" {
 }
 
 ///|
+test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_bilinear_uv_gfswave_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "3:4:1", "-new_grid", "latlon", "260.5:8:1",
+    "0.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read gfswave uv new_grid output: " + e.to_string())
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse gfswave uv new_grid output: " + e.to_string())
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="8")
+  inspect(metas[0].section3_nj, content="8")
+}
+
+///|
 test "run_cli supports -new_grid_interpolation neighbor scalar gfswave output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_new_grid_neighbor_scalar_gfswave_out.grib2"
@@ -4397,6 +4449,37 @@ test "run_cli supports -new_grid_interpolation neighbor scalar gfswave output" {
   inspect(meta.section3_ni, content="301")
   inspect(meta.section3_nj, content="331")
   inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli supports -new_grid_interpolation neighbor UGRD/VGRD output on gfswave" {
+  let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
+  let out = "target/cmd_main_new_grid_neighbor_uv_gfswave_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "3:4:1", "-new_grid_interpolation", "neighbor",
+    "-new_grid", "latlon", "260.5:8:1", "0.5:8:1", out,
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read gfswave uv neighbor new_grid output: " + e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(bytes), content="2")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse gfswave uv neighbor new_grid output: " + e.to_string(),
+      )
+  }
+  let metas = @lib.decode_records(context)
+  inspect(metas.length(), content="2")
+  inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
+  inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
+  inspect(metas[0].section3_ni, content="8")
+  inspect(metas[0].section3_nj, content="8")
 }
 
 ///|
