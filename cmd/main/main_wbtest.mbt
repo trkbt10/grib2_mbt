@@ -6834,6 +6834,110 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(wave_append_bytes == wave_ref_bytes, content="true")
 
+  let wave_multi_8 = "target/cmd_main_netcdf_wave_multi_8.nc"
+  let wave_multi_8_ref = "target/cmd_main_netcdf_wave_multi_8_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:8:1", "-netcdf", wave_multi_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:8:1", "-netcdf", wave_multi_8_ref,
+    ]),
+    content="0",
+  )
+  let wave_multi_8_bytes = @fs.read_file_to_bytes(wave_multi_8) catch {
+    e => fail("failed to read wave multi-8 netcdf: " + e.to_string())
+  }
+  let wave_multi_8_ref_bytes = @fs.read_file_to_bytes(wave_multi_8_ref) catch {
+    e => fail("failed to read wave multi-8 reference netcdf: " + e.to_string())
+  }
+  inspect(wave_multi_8_bytes == wave_multi_8_ref_bytes, content="true")
+
+  let wave_multi_12 = "target/cmd_main_netcdf_wave_multi_12.nc"
+  let wave_multi_12_ref = "target/cmd_main_netcdf_wave_multi_12_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:12:1", "-netcdf", wave_multi_12,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:12:1", "-netcdf", wave_multi_12_ref,
+    ]),
+    content="0",
+  )
+  let wave_multi_12_bytes = @fs.read_file_to_bytes(wave_multi_12) catch {
+    e => fail("failed to read wave multi-12 netcdf: " + e.to_string())
+  }
+  let wave_multi_12_ref_bytes = @fs.read_file_to_bytes(wave_multi_12_ref) catch {
+    e => fail("failed to read wave multi-12 reference netcdf: " + e.to_string())
+  }
+  inspect(wave_multi_12_bytes == wave_multi_12_ref_bytes, content="true")
+
+  let wave_append_4 = "target/cmd_main_netcdf_append_wave_var4.nc"
+  let wave_append_4_ref = "target/cmd_main_netcdf_append_wave_var4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:1:1", "-netcdf", wave_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-append", "-for_n", "2:4:1", "-netcdf", wave_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:4:1", "-netcdf", wave_append_4_ref,
+    ]),
+    content="0",
+  )
+  let wave_append_4_bytes = @fs.read_file_to_bytes(wave_append_4) catch {
+    e =>
+      fail("failed to read appended wave variable-4 netcdf: " + e.to_string())
+  }
+  let wave_append_4_ref_bytes = @fs.read_file_to_bytes(wave_append_4_ref) catch {
+    e =>
+      fail("failed to read wave variable-4 reference netcdf: " + e.to_string())
+  }
+  inspect(wave_append_4_bytes == wave_append_4_ref_bytes, content="true")
+
+  let wave_append_8 = "target/cmd_main_netcdf_append_wave_var8.nc"
+  let wave_append_8_ref = "target/cmd_main_netcdf_append_wave_var8_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:1:1", "-netcdf", wave_append_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-append", "-for_n", "2:8:1", "-netcdf", wave_append_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_fixture, "-for_n", "1:8:1", "-netcdf", wave_append_8_ref,
+    ]),
+    content="0",
+  )
+  let wave_append_8_bytes = @fs.read_file_to_bytes(wave_append_8) catch {
+    e =>
+      fail("failed to read appended wave variable-8 netcdf: " + e.to_string())
+  }
+  let wave_append_8_ref_bytes = @fs.read_file_to_bytes(wave_append_8_ref) catch {
+    e =>
+      fail("failed to read wave variable-8 reference netcdf: " + e.to_string())
+  }
+  inspect(wave_append_8_bytes == wave_append_8_ref_bytes, content="true")
+
   let wave_global_fixture = "fixtures/grib2_noaa/gfswave.t00z.global.0p25.f000.grib2"
   let wave_global_append = "target/cmd_main_netcdf_append_wave_global_var.nc"
   let wave_global_ref = "target/cmd_main_netcdf_append_wave_global_var_ref.nc"
@@ -6869,6 +6973,78 @@ test "run_cli supports -append for netcdf variable and time growth" {
       )
   }
   inspect(wave_global_append_bytes == wave_global_ref_bytes, content="true")
+
+  let wave_global_multi_4 = "target/cmd_main_netcdf_wave_global_multi_4.nc"
+  let wave_global_multi_4_ref = "target/cmd_main_netcdf_wave_global_multi_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:4:1", "-netcdf", wave_global_multi_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:4:1", "-netcdf", wave_global_multi_4_ref,
+    ]),
+    content="0",
+  )
+  let wave_global_multi_4_bytes = @fs.read_file_to_bytes(wave_global_multi_4) catch {
+    e => fail("failed to read global wave multi-4 netcdf: " + e.to_string())
+  }
+  let wave_global_multi_4_ref_bytes = @fs.read_file_to_bytes(
+    wave_global_multi_4_ref,
+  ) catch {
+    e =>
+      fail(
+        "failed to read global wave multi-4 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(
+    wave_global_multi_4_bytes == wave_global_multi_4_ref_bytes,
+    content="true",
+  )
+
+  let wave_global_append_4 = "target/cmd_main_netcdf_append_wave_global_var4.nc"
+  let wave_global_append_4_ref = "target/cmd_main_netcdf_append_wave_global_var4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:1:1", "-netcdf", wave_global_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-append", "-for_n", "2:4:1", "-netcdf",
+      wave_global_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:4:1", "-netcdf", wave_global_append_4_ref,
+    ]),
+    content="0",
+  )
+  let wave_global_append_4_bytes = @fs.read_file_to_bytes(wave_global_append_4) catch {
+    e =>
+      fail(
+        "failed to read appended global wave variable-4 netcdf: " +
+        e.to_string(),
+      )
+  }
+  let wave_global_append_4_ref_bytes = @fs.read_file_to_bytes(
+    wave_global_append_4_ref,
+  ) catch {
+    e =>
+      fail(
+        "failed to read global wave variable-4 reference netcdf: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    wave_global_append_4_bytes == wave_global_append_4_ref_bytes,
+    content="true",
+  )
 
   let time_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
   let time_append = "target/cmd_main_netcdf_append_time.nc"
