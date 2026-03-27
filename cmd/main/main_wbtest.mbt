@@ -7420,6 +7420,71 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(time_fh00_15_append_bytes == time_fh00_15_ref_bytes, content="true")
 
+  let time_fh00_15_multi_4 = "target/cmd_main_netcdf_time_fh00_15_multi_4.nc"
+  let time_fh00_15_multi_4_ref = "target/cmd_main_netcdf_time_fh00_15_multi_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:4:1", "-netcdf", time_fh00_15_multi_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:4:1", "-netcdf", time_fh00_15_multi_4_ref,
+    ]),
+    content="0",
+  )
+  let time_fh00_15_multi_4_bytes = @fs.read_file_to_bytes(time_fh00_15_multi_4) catch {
+    e => fail("failed to read FH00-15 multi-4 netcdf: " + e.to_string())
+  }
+  let time_fh00_15_multi_4_ref_bytes = @fs.read_file_to_bytes(
+    time_fh00_15_multi_4_ref,
+  ) catch {
+    e =>
+      fail("failed to read FH00-15 multi-4 reference netcdf: " + e.to_string())
+  }
+  inspect(
+    time_fh00_15_multi_4_bytes == time_fh00_15_multi_4_ref_bytes,
+    content="true",
+  )
+
+  let time_fh00_15_append_4 = "target/cmd_main_netcdf_append_time_fh00_15_4.nc"
+  let time_fh00_15_append_4_ref = "target/cmd_main_netcdf_append_time_fh00_15_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:1:1", "-netcdf", time_fh00_15_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-append", "-for_n", "2:4:1", "-netcdf",
+      time_fh00_15_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh00_15_fixture, "-for_n", "1:4:1", "-netcdf", time_fh00_15_append_4_ref,
+    ]),
+    content="0",
+  )
+  let time_fh00_15_append_4_bytes = @fs.read_file_to_bytes(
+    time_fh00_15_append_4,
+  ) catch {
+    e => fail("failed to read appended FH00-15 time-4 netcdf: " + e.to_string())
+  }
+  let time_fh00_15_append_4_ref_bytes = @fs.read_file_to_bytes(
+    time_fh00_15_append_4_ref,
+  ) catch {
+    e =>
+      fail("failed to read FH00-15 time-4 reference netcdf: " + e.to_string())
+  }
+  inspect(
+    time_fh00_15_append_4_bytes == time_fh00_15_append_4_ref_bytes,
+    content="true",
+  )
+
   let time_fh36_39_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
   let time_fh36_39_append = "target/cmd_main_netcdf_append_time_fh36_39.nc"
   let time_fh36_39_ref = "target/cmd_main_netcdf_append_time_fh36_39_ref.nc"
@@ -7449,6 +7514,71 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read FH36-39 time reference netcdf: " + e.to_string())
   }
   inspect(time_fh36_39_append_bytes == time_fh36_39_ref_bytes, content="true")
+
+  let time_fh36_39_multi_4 = "target/cmd_main_netcdf_time_fh36_39_multi_4.nc"
+  let time_fh36_39_multi_4_ref = "target/cmd_main_netcdf_time_fh36_39_multi_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:4:1", "-netcdf", time_fh36_39_multi_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:4:1", "-netcdf", time_fh36_39_multi_4_ref,
+    ]),
+    content="0",
+  )
+  let time_fh36_39_multi_4_bytes = @fs.read_file_to_bytes(time_fh36_39_multi_4) catch {
+    e => fail("failed to read FH36-39 multi-4 netcdf: " + e.to_string())
+  }
+  let time_fh36_39_multi_4_ref_bytes = @fs.read_file_to_bytes(
+    time_fh36_39_multi_4_ref,
+  ) catch {
+    e =>
+      fail("failed to read FH36-39 multi-4 reference netcdf: " + e.to_string())
+  }
+  inspect(
+    time_fh36_39_multi_4_bytes == time_fh36_39_multi_4_ref_bytes,
+    content="true",
+  )
+
+  let time_fh36_39_append_4 = "target/cmd_main_netcdf_append_time_fh36_39_4.nc"
+  let time_fh36_39_append_4_ref = "target/cmd_main_netcdf_append_time_fh36_39_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:1:1", "-netcdf", time_fh36_39_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-append", "-for_n", "2:4:1", "-netcdf",
+      time_fh36_39_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", time_fh36_39_fixture, "-for_n", "1:4:1", "-netcdf", time_fh36_39_append_4_ref,
+    ]),
+    content="0",
+  )
+  let time_fh36_39_append_4_bytes = @fs.read_file_to_bytes(
+    time_fh36_39_append_4,
+  ) catch {
+    e => fail("failed to read appended FH36-39 time-4 netcdf: " + e.to_string())
+  }
+  let time_fh36_39_append_4_ref_bytes = @fs.read_file_to_bytes(
+    time_fh36_39_append_4_ref,
+  ) catch {
+    e =>
+      fail("failed to read FH36-39 time-4 reference netcdf: " + e.to_string())
+  }
+  inspect(
+    time_fh36_39_append_4_bytes == time_fh36_39_append_4_ref_bytes,
+    content="true",
+  )
 }
 
 ///|
