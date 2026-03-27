@@ -3665,6 +3665,138 @@ test "run_cli keeps off-grid negative-pass bitmap mask on pgrb2b" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid bitmap output on scan32/scan48 bitmap fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan32_bitmap_record266.grib2"
+  let scan32_out = "target/cmd_main_cress_lola_scan32_bitmap_offgrid_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan32_out, "1:2",
+    ]),
+    content="0",
+  )
+  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan32 bitmap cress_lola output: " + e.to_string())
+  }
+  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  inspect(scan32_meta.section3_ni, content="6")
+  inspect(scan32_meta.section3_nj, content="5")
+  inspect(scan32_meta.section6_bitmap_indicator, content="0")
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan48_bitmap_record266.grib2"
+  let scan48_out = "target/cmd_main_cress_lola_scan48_bitmap_offgrid_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan48_out, "1:2",
+    ]),
+    content="0",
+  )
+  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse scan48 bitmap cress_lola output: " + e.to_string())
+  }
+  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  inspect(scan48_meta.section3_ni, content="6")
+  inspect(scan48_meta.section3_nj, content="5")
+  inspect(scan48_meta.section6_bitmap_indicator, content="255")
+}
+
+///|
+test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan32_bitmap_record266.grib2"
+  let scan32_neg_out = "target/cmd_main_cress_lola_scan32_bitmap_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan32_neg_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan32_neg_context = match
+    @lib.parse_with_io(native_read_bytes, scan32_neg_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 bitmap negative cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    @lib.decode_records(scan32_neg_context)[0].section6_bitmap_indicator,
+    content="0",
+  )
+  let scan32_negpos_out = "target/cmd_main_cress_lola_scan32_bitmap_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan32_negpos_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan32_negpos_context = match
+    @lib.parse_with_io(native_read_bytes, scan32_negpos_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 bitmap mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    @lib.decode_records(scan32_negpos_context)[0].section6_bitmap_indicator,
+    content="0",
+  )
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan48_bitmap_record266.grib2"
+  let scan48_neg_out = "target/cmd_main_cress_lola_scan48_bitmap_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan48_neg_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan48_neg_context = match
+    @lib.parse_with_io(native_read_bytes, scan48_neg_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 bitmap negative cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    @lib.decode_records(scan48_neg_context)[0].section6_bitmap_indicator,
+    content="0",
+  )
+  let scan48_negpos_out = "target/cmd_main_cress_lola_scan48_bitmap_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:1:1", "-cress_lola", "130.25:6:0.5",
+      "30.5:5:0.5", scan48_negpos_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan48_negpos_context = match
+    @lib.parse_with_io(native_read_bytes, scan48_negpos_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 bitmap mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    @lib.decode_records(scan48_negpos_context)[0].section6_bitmap_indicator,
+    content="0",
+  )
+}
+
+///|
 test "run_cli supports -cress_lola off-grid output on scan32 fixture" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
   let out = "target/cmd_main_cress_lola_scan32_offgrid_test.grib2"
@@ -5194,6 +5326,94 @@ test "run_cli supports -new_grid latlon bilinear bitmap output" {
   }
   inspect(nan_count, content="43")
   inspect((unpacked[16] - 0.275).abs() < 0.00001, content="true")
+}
+
+///|
+test "run_cli supports -new_grid bitmap output on scan32 bitmap fixture" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan32_bitmap_record266.grib2"
+  let bilinear_out = "target/cmd_main_new_grid_bilinear_scan32_bitmap_out.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "130.25:6:0.5",
+      "30.5:5:0.5", bilinear_out,
+    ]),
+    content="0",
+  )
+  let bilinear_context = match
+    @lib.parse_with_io(native_read_bytes, bilinear_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 bitmap bilinear new_grid output: " +
+        e.to_string(),
+      )
+  }
+  let bilinear_meta = @lib.decode_records(bilinear_context)[0]
+  inspect(bilinear_meta.section3_ni, content="6")
+  inspect(bilinear_meta.section3_nj, content="5")
+  inspect(bilinear_meta.section6_bitmap_indicator, content="0")
+
+  let neighbor_out = "target/cmd_main_new_grid_neighbor_scan32_bitmap_out.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+      "-new_grid", "latlon", "130.25:6:0.5", "30.5:5:0.5", neighbor_out,
+    ]),
+    content="0",
+  )
+  let neighbor_context = match
+    @lib.parse_with_io(native_read_bytes, neighbor_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 bitmap neighbor new_grid output: " +
+        e.to_string(),
+      )
+  }
+  let neighbor_meta = @lib.decode_records(neighbor_context)[0]
+  inspect(neighbor_meta.section3_ni, content="6")
+  inspect(neighbor_meta.section3_nj, content="5")
+  inspect(neighbor_meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli matches wgrib2 empty output for -new_grid bitmap on alternating scan rows" {
+  let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2b_scan48_bitmap_record266.grib2"
+  let bilinear_out = "target/cmd_main_new_grid_bilinear_scan48_bitmap_out.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "130.25:6:0.5",
+      "30.5:5:0.5", bilinear_out,
+    ]),
+    content="0",
+  )
+  let bilinear_bytes = match native_read_bytes(bilinear_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read scan48 bitmap bilinear new_grid output: " +
+        e.to_string(),
+      )
+  }
+  inspect(bilinear_bytes.length(), content="0")
+
+  let neighbor_out = "target/cmd_main_new_grid_neighbor_scan48_bitmap_out.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+      "-new_grid", "latlon", "130.25:6:0.5", "30.5:5:0.5", neighbor_out,
+    ]),
+    content="0",
+  )
+  let neighbor_bytes = match native_read_bytes(neighbor_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to read scan48 bitmap neighbor new_grid output: " +
+        e.to_string(),
+      )
+  }
+  inspect(neighbor_bytes.length(), content="0")
 }
 
 ///|
