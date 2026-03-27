@@ -3515,6 +3515,52 @@ test "run_cli supports -cress_lola off-grid bitmap output on pgrb2b" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid negative-radius bitmap output on pgrb2b" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_pgrb2b_bitmap_offgrid_neg_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "266:266:1", "-cress_lola", "130.25:6:0.5", "30.5:5:0.5",
+    out, "-50",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse pgrb2b bitmap negative cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="6")
+  inspect(meta.section3_nj, content="5")
+  inspect(meta.section6_bitmap_indicator, content="0")
+}
+
+///|
+test "run_cli keeps off-grid negative-pass bitmap mask on pgrb2b" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
+  let out = "target/cmd_main_cress_lola_pgrb2b_bitmap_offgrid_neg_pos_test.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "266:266:1", "-cress_lola", "130.25:6:0.5", "30.5:5:0.5",
+    out, "-1:2",
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse pgrb2b bitmap mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="6")
+  inspect(meta.section3_nj, content="5")
+  inspect(meta.section6_bitmap_indicator, content="255")
+}
+
+///|
 test "run_cli supports -cress_lola off-grid output on scan32 fixture" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
   let out = "target/cmd_main_cress_lola_scan32_offgrid_test.grib2"
