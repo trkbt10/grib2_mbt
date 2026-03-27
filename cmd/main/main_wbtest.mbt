@@ -3673,6 +3673,206 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on scan48 fixture" 
 }
 
 ///|
+test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
+  let scan32_out = "target/cmd_main_cress_lola_scan32_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan32_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 negative cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  inspect(scan32_meta.section3_ni, content="6")
+  inspect(scan32_meta.section3_nj, content="5")
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2"
+  let scan48_out = "target/cmd_main_cress_lola_scan48_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan48_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 negative cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  inspect(scan48_meta.section3_ni, content="6")
+  inspect(scan48_meta.section3_nj, content="5")
+}
+
+///|
+test "run_cli keeps negative-pass mask on scan32/scan48 fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_record1.grib2"
+  let scan32_out = "target/cmd_main_cress_lola_scan32_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan32_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 mixed-sign cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  inspect(scan32_meta.section3_ni, content="6")
+  inspect(scan32_meta.section3_nj, content="5")
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_record1.grib2"
+  let scan48_out = "target/cmd_main_cress_lola_scan48_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan48_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 mixed-sign cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  inspect(scan48_meta.section3_ni, content="6")
+  inspect(scan48_meta.section3_nj, content="5")
+}
+
+///|
+test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 UGRD/VGRD fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+  let scan32_out = "target/cmd_main_cress_lola_scan32_uv_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan32_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan32_bytes = @fs.read_file_to_bytes(scan32_out) catch {
+    e =>
+      fail(
+        "failed to read scan32 uv negative cress_lola output: " + e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(scan32_bytes), content="2")
+  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 uv negative cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan32_metas = @lib.decode_records(scan32_context)
+  inspect(scan32_metas.length(), content="2")
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let scan48_out = "target/cmd_main_cress_lola_scan48_uv_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan48_out, "-50",
+    ]),
+    content="0",
+  )
+  let scan48_bytes = @fs.read_file_to_bytes(scan48_out) catch {
+    e =>
+      fail(
+        "failed to read scan48 uv negative cress_lola output: " + e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(scan48_bytes), content="2")
+  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 uv negative cress_lola output: " + e.to_string(),
+      )
+  }
+  let scan48_metas = @lib.decode_records(scan48_context)
+  inspect(scan48_metas.length(), content="2")
+}
+
+///|
+test "run_cli keeps negative-pass mask on scan32/scan48 UGRD/VGRD fixtures" {
+  let scan32_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
+  let scan32_out = "target/cmd_main_cress_lola_scan32_uv_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan32_fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan32_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan32_bytes = @fs.read_file_to_bytes(scan32_out) catch {
+    e =>
+      fail(
+        "failed to read scan32 uv mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(scan32_bytes), content="2")
+  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan32 uv mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let scan32_metas = @lib.decode_records(scan32_context)
+  inspect(scan32_metas.length(), content="2")
+
+  let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
+  let scan48_out = "target/cmd_main_cress_lola_scan48_uv_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", scan48_fixture, "-for_n", "1:2:1", "-cress_lola", "0.25:6:0.5",
+      "-89:5:0.5", scan48_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let scan48_bytes = @fs.read_file_to_bytes(scan48_out) catch {
+    e =>
+      fail(
+        "failed to read scan48 uv mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(scan48_bytes), content="2")
+  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse scan48 uv mixed-sign cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let scan48_metas = @lib.decode_records(scan48_context)
+  inspect(scan48_metas.length(), content="2")
+}
+
+///|
 test "run_cli -cress_lola fills bitmap gaps for gfswave same-grid output" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_cress_lola_gfswave_test.grib2"
