@@ -6713,6 +6713,57 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(gsm_append_bytes == gsm_ref_bytes, content="true")
 
+  let gsm_multi_4 = "target/cmd_main_netcdf_gsm_multi_4.nc"
+  let gsm_multi_4_ref = "target/cmd_main_netcdf_gsm_multi_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:4:1", "-netcdf", gsm_multi_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:4:1", "-netcdf", gsm_multi_4_ref,
+    ]),
+    content="0",
+  )
+  let gsm_multi_4_bytes = @fs.read_file_to_bytes(gsm_multi_4) catch {
+    e => fail("failed to read gsm multi-4 netcdf: " + e.to_string())
+  }
+  let gsm_multi_4_ref_bytes = @fs.read_file_to_bytes(gsm_multi_4_ref) catch {
+    e => fail("failed to read gsm multi-4 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_multi_4_bytes == gsm_multi_4_ref_bytes, content="true")
+
+  let gsm_append_4 = "target/cmd_main_netcdf_append_gsm_var4.nc"
+  let gsm_append_4_ref = "target/cmd_main_netcdf_append_gsm_var4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:4:1", "-netcdf", gsm_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:4:1", "-netcdf", gsm_append_4_ref,
+    ]),
+    content="0",
+  )
+  let gsm_append_4_bytes = @fs.read_file_to_bytes(gsm_append_4) catch {
+    e => fail("failed to read appended gsm variable-4 netcdf: " + e.to_string())
+  }
+  let gsm_append_4_ref_bytes = @fs.read_file_to_bytes(gsm_append_4_ref) catch {
+    e =>
+      fail("failed to read gsm variable-4 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_4_bytes == gsm_append_4_ref_bytes, content="true")
+
   let var_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
   let var_append = "target/cmd_main_netcdf_append_var.nc"
   let var_ref = "target/cmd_main_netcdf_append_var_ref.nc"
