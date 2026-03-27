@@ -3404,6 +3404,110 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on pgrb2" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid negative and mixed-sign output on pgrb2" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+
+  let neg_out = "target/cmd_main_cress_lola_pgrb2_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      neg_out, "-50",
+    ]),
+    content="0",
+  )
+  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse negative off-grid pgrb2 cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let neg_meta = @lib.decode_records(neg_context)[0]
+  inspect(neg_meta.section3_ni, content="6")
+  inspect(neg_meta.section3_nj, content="5")
+
+  let negpos_out = "target/cmd_main_cress_lola_pgrb2_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      negpos_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse mixed-sign off-grid pgrb2 cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let negpos_meta = @lib.decode_records(negpos_context)[0]
+  inspect(negpos_meta.section3_ni, content="6")
+  inspect(negpos_meta.section3_nj, content="5")
+}
+
+///|
+test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD output on pgrb2" {
+  let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
+
+  let neg_out = "target/cmd_main_cress_lola_pgrb2_uv_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "11:12:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      neg_out, "-50",
+    ]),
+    content="0",
+  )
+  let neg_bytes = @fs.read_file_to_bytes(neg_out) catch {
+    e =>
+      fail(
+        "failed to read negative off-grid pgrb2 uv cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(neg_bytes), content="2")
+  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse negative off-grid pgrb2 uv cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let neg_metas = @lib.decode_records(neg_context)
+  inspect(neg_metas.length(), content="2")
+
+  let negpos_out = "target/cmd_main_cress_lola_pgrb2_uv_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "11:12:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      negpos_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let negpos_bytes = @fs.read_file_to_bytes(negpos_out) catch {
+    e =>
+      fail(
+        "failed to read mixed-sign off-grid pgrb2 uv cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  inspect(count_grib_magic(negpos_bytes), content="2")
+  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse mixed-sign off-grid pgrb2 uv cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let negpos_metas = @lib.decode_records(negpos_context)
+  inspect(negpos_metas.length(), content="2")
+}
+
+///|
 test "run_cli supports -cress_lola off-grid UGRD/VGRD output on gfswave" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_cress_lola_gfswave_uv_offgrid_test.grib2"
