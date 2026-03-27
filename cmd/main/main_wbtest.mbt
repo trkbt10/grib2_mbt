@@ -6789,6 +6789,57 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(var_append_bytes == var_ref_bytes, content="true")
 
+  let var_multi_4 = "target/cmd_main_netcdf_var_multi_4.nc"
+  let var_multi_4_ref = "target/cmd_main_netcdf_var_multi_4_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:4:1", "-netcdf", var_multi_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:4:1", "-netcdf", var_multi_4_ref,
+    ]),
+    content="0",
+  )
+  let var_multi_4_bytes = @fs.read_file_to_bytes(var_multi_4) catch {
+    e => fail("failed to read variable multi-4 netcdf: " + e.to_string())
+  }
+  let var_multi_4_ref_bytes = @fs.read_file_to_bytes(var_multi_4_ref) catch {
+    e =>
+      fail("failed to read variable multi-4 reference netcdf: " + e.to_string())
+  }
+  inspect(var_multi_4_bytes == var_multi_4_ref_bytes, content="true")
+
+  let var_append_4 = "target/cmd_main_netcdf_append_var4_same_time.nc"
+  let var_append_4_ref = "target/cmd_main_netcdf_append_var4_same_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:4:1", "-netcdf", var_append_4,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:4:1", "-netcdf", var_append_4_ref,
+    ]),
+    content="0",
+  )
+  let var_append_4_bytes = @fs.read_file_to_bytes(var_append_4) catch {
+    e => fail("failed to read appended variable-4 netcdf: " + e.to_string())
+  }
+  let var_append_4_ref_bytes = @fs.read_file_to_bytes(var_append_4_ref) catch {
+    e => fail("failed to read variable-4 reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_4_bytes == var_append_4_ref_bytes, content="true")
+
   let bitmap_append = "target/cmd_main_netcdf_append_bitmap_layers.nc"
   inspect(
     run_cli([
