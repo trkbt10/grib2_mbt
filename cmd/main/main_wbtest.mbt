@@ -7966,6 +7966,52 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(pgrb2_multi_32_bytes == pgrb2_multi_32_ref_bytes, content="true")
 
+  let pgrb2_multi_64 = "target/cmd_main_netcdf_pgrb2_multi_64.nc"
+  let pgrb2_multi_64_ref = "target/cmd_main_netcdf_pgrb2_multi_64_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:64:1", "-netcdf", pgrb2_multi_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:64:1", "-netcdf", pgrb2_multi_64_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_multi_64_bytes = @fs.read_file_to_bytes(pgrb2_multi_64) catch {
+    e => fail("failed to read pgrb2 multi-64 netcdf: " + e.to_string())
+  }
+  let pgrb2_multi_64_ref_bytes = @fs.read_file_to_bytes(pgrb2_multi_64_ref) catch {
+    e =>
+      fail("failed to read pgrb2 multi-64 reference netcdf: " + e.to_string())
+  }
+  inspect(pgrb2_multi_64_bytes == pgrb2_multi_64_ref_bytes, content="true")
+
+  let pgrb2_multi_96 = "target/cmd_main_netcdf_pgrb2_multi_96.nc"
+  let pgrb2_multi_96_ref = "target/cmd_main_netcdf_pgrb2_multi_96_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:96:1", "-netcdf", pgrb2_multi_96,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:96:1", "-netcdf", pgrb2_multi_96_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_multi_96_bytes = @fs.read_file_to_bytes(pgrb2_multi_96) catch {
+    e => fail("failed to read pgrb2 multi-96 netcdf: " + e.to_string())
+  }
+  let pgrb2_multi_96_ref_bytes = @fs.read_file_to_bytes(pgrb2_multi_96_ref) catch {
+    e =>
+      fail("failed to read pgrb2 multi-96 reference netcdf: " + e.to_string())
+  }
+  inspect(pgrb2_multi_96_bytes == pgrb2_multi_96_ref_bytes, content="true")
+
   let pgrb2_append_4 = "target/cmd_main_netcdf_append_pgrb2_var4.nc"
   let pgrb2_append_4_ref = "target/cmd_main_netcdf_append_pgrb2_var4_ref.nc"
   inspect(
@@ -8089,6 +8135,70 @@ test "run_cli supports -append for netcdf variable and time growth" {
       )
   }
   inspect(pgrb2_append_32_bytes == pgrb2_append_32_ref_bytes, content="true")
+
+  let pgrb2_append_64 = "target/cmd_main_netcdf_append_pgrb2_var64.nc"
+  let pgrb2_append_64_ref = "target/cmd_main_netcdf_append_pgrb2_var64_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:1:1", "-netcdf", pgrb2_append_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-append", "-for_n", "2:64:1", "-netcdf", pgrb2_append_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:64:1", "-netcdf", pgrb2_append_64_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_append_64_bytes = @fs.read_file_to_bytes(pgrb2_append_64) catch {
+    e =>
+      fail("failed to read appended pgrb2 variable-64 netcdf: " + e.to_string())
+  }
+  let pgrb2_append_64_ref_bytes = @fs.read_file_to_bytes(pgrb2_append_64_ref) catch {
+    e =>
+      fail(
+        "failed to read pgrb2 variable-64 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(pgrb2_append_64_bytes == pgrb2_append_64_ref_bytes, content="true")
+
+  let pgrb2_append_96 = "target/cmd_main_netcdf_append_pgrb2_var96.nc"
+  let pgrb2_append_96_ref = "target/cmd_main_netcdf_append_pgrb2_var96_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:1:1", "-netcdf", pgrb2_append_96,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-append", "-for_n", "2:96:1", "-netcdf", pgrb2_append_96,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:96:1", "-netcdf", pgrb2_append_96_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_append_96_bytes = @fs.read_file_to_bytes(pgrb2_append_96) catch {
+    e =>
+      fail("failed to read appended pgrb2 variable-96 netcdf: " + e.to_string())
+  }
+  let pgrb2_append_96_ref_bytes = @fs.read_file_to_bytes(pgrb2_append_96_ref) catch {
+    e =>
+      fail(
+        "failed to read pgrb2 variable-96 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(pgrb2_append_96_bytes == pgrb2_append_96_ref_bytes, content="true")
 
   let wave_fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let wave_append = "target/cmd_main_netcdf_append_wave_var.nc"
