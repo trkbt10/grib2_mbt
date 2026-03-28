@@ -7506,6 +7506,57 @@ fn format_decimal_tenths(value_x10 : Int) -> String {
 }
 
 ///|
+fn trim_trailing_zeroes(text : String) -> String {
+  let mut end = text.length()
+  while end > 0 && text[end - 1].to_int() == '0'.to_int() {
+    end -= 1
+  }
+  text[:end].to_string()
+}
+
+///|
+fn format_scaled_decimal(value : Int, scale : Int) -> String {
+  let negative = value < 0
+  let magnitude = if negative { -value } else { value }
+  if scale <= 0 {
+    let mut out = magnitude.to_string()
+    for _ in 0..<-scale {
+      out += "0"
+    }
+    if negative {
+      "-" + out
+    } else {
+      out
+    }
+  } else {
+    let digits = magnitude.to_string()
+    let out = if digits.length() > scale {
+      let split_at = digits.length() - scale
+      let whole = digits[:split_at].to_string()
+      let fraction = trim_trailing_zeroes(digits[split_at:].to_string())
+      if fraction == "" {
+        whole
+      } else {
+        whole + "." + fraction
+      }
+    } else {
+      let zeros = "0".repeat(scale - digits.length())
+      let fraction = trim_trailing_zeroes(zeros + digits)
+      if fraction == "" {
+        "0"
+      } else {
+        "0." + fraction
+      }
+    }
+    if negative {
+      "-" + out
+    } else {
+      out
+    }
+  }
+}
+
+///|
 pub fn decode_level_name(
   l1t : Int,
   l1sf : Int,
@@ -7524,8 +7575,13 @@ pub fn decode_level_name(
     return NameKnown(l1v.to_string() + " in sequence")
   }
   if l1t == 100 && l2t == 255 {
-    let mb = if l1sf == 0 { l1v / 100 } else if l1sf == 130 { l1v } else { l1v }
-    return NameKnown(mb.to_string() + " mb")
+    let scale_magnitude = l1sf & 0x7F
+    let scale = if (l1sf & 0x80) != 0 {
+      -scale_magnitude
+    } else {
+      scale_magnitude
+    }
+    return NameKnown(format_scaled_decimal(l1v, scale + 2) + " mb")
   }
   if l1t == 103 && l2t == 255 {
     return NameKnown(l1v.to_string() + " m above ground")

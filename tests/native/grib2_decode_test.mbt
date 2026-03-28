@@ -178,6 +178,22 @@ test "decode records exposes context fields" {
 }
 
 ///|
+test "decode records preserves sub-mb pressure level names" {
+  let context = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2_1p00_f000(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let records = @lib.decode_records(context)
+  inspect(records[14].parameter_name.display(), content="HGT")
+  inspect(records[14].level_name.display(), content="0.01 mb")
+  inspect(records[15].parameter_name.display(), content="TMP")
+  inspect(records[15].level_name.display(), content="0.01 mb")
+}
+
+///|
 test "template dispatch foundation: fixture templates" {
   let context = match
     decode_fixture_context(
