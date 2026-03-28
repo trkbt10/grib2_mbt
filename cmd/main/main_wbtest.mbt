@@ -7210,6 +7210,56 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(var_multi_112_bytes == var_multi_112_ref_bytes, content="true")
 
+  let var_multi_120 = "target/cmd_main_netcdf_var_multi_120.nc"
+  let var_multi_120_ref = "target/cmd_main_netcdf_var_multi_120_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:120:1", "-netcdf", var_multi_120,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:120:1", "-netcdf", var_multi_120_ref,
+    ]),
+    content="0",
+  )
+  let var_multi_120_bytes = @fs.read_file_to_bytes(var_multi_120) catch {
+    e => fail("failed to read variable multi-120 netcdf: " + e.to_string())
+  }
+  let var_multi_120_ref_bytes = @fs.read_file_to_bytes(var_multi_120_ref) catch {
+    e =>
+      fail(
+        "failed to read variable multi-120 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(var_multi_120_bytes == var_multi_120_ref_bytes, content="true")
+
+  let var_multi_128 = "target/cmd_main_netcdf_var_multi_128.nc"
+  let var_multi_128_ref = "target/cmd_main_netcdf_var_multi_128_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:128:1", "-netcdf", var_multi_128,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:128:1", "-netcdf", var_multi_128_ref,
+    ]),
+    content="0",
+  )
+  let var_multi_128_bytes = @fs.read_file_to_bytes(var_multi_128) catch {
+    e => fail("failed to read variable multi-128 netcdf: " + e.to_string())
+  }
+  let var_multi_128_ref_bytes = @fs.read_file_to_bytes(var_multi_128_ref) catch {
+    e =>
+      fail(
+        "failed to read variable multi-128 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(var_multi_128_bytes == var_multi_128_ref_bytes, content="true")
+
   let var_append_4 = "target/cmd_main_netcdf_append_var4_same_time.nc"
   let var_append_4_ref = "target/cmd_main_netcdf_append_var4_same_time_ref.nc"
   inspect(
@@ -7685,6 +7735,62 @@ test "run_cli supports -append for netcdf variable and time growth" {
     e => fail("failed to read variable-112 reference netcdf: " + e.to_string())
   }
   inspect(var_append_112_bytes == var_append_112_ref_bytes, content="true")
+
+  let var_append_120 = "target/cmd_main_netcdf_append_var120_same_time.nc"
+  let var_append_120_ref = "target/cmd_main_netcdf_append_var120_same_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append_120,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:120:1", "-netcdf", var_append_120,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:120:1", "-netcdf", var_append_120_ref,
+    ]),
+    content="0",
+  )
+  let var_append_120_bytes = @fs.read_file_to_bytes(var_append_120) catch {
+    e => fail("failed to read appended variable-120 netcdf: " + e.to_string())
+  }
+  let var_append_120_ref_bytes = @fs.read_file_to_bytes(var_append_120_ref) catch {
+    e => fail("failed to read variable-120 reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_120_bytes == var_append_120_ref_bytes, content="true")
+
+  let var_append_128 = "target/cmd_main_netcdf_append_var128_same_time.nc"
+  let var_append_128_ref = "target/cmd_main_netcdf_append_var128_same_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append_128,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:128:1", "-netcdf", var_append_128,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:128:1", "-netcdf", var_append_128_ref,
+    ]),
+    content="0",
+  )
+  let var_append_128_bytes = @fs.read_file_to_bytes(var_append_128) catch {
+    e => fail("failed to read appended variable-128 netcdf: " + e.to_string())
+  }
+  let var_append_128_ref_bytes = @fs.read_file_to_bytes(var_append_128_ref) catch {
+    e => fail("failed to read variable-128 reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_128_bytes == var_append_128_ref_bytes, content="true")
 
   let bitmap_append = "target/cmd_main_netcdf_append_bitmap_layers.nc"
   inspect(
