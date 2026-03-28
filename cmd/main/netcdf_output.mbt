@@ -2556,7 +2556,12 @@ fn build_single_record_netcdf_plan(
       values.length().to_string(),
     )
   }
-  let grid_bytes = match build_netcdf_float_grid_bytes(grid_info, values) {
+  let normalized_values : Array[Double] = []
+  for value in values {
+    normalized_values.push(normalize_packed_scalar_output_value(meta, value))
+  }
+  let grid_bytes = match
+    build_netcdf_float_grid_bytes(grid_info, normalized_values) {
     Ok(v) => v
     Err(error) => return Err(error)
   }
@@ -2686,8 +2691,12 @@ fn build_selected_records_netcdf_plan(
     }
     let variable_name = netcdf_variable_name(meta)
     let (long_name, units) = netcdf_long_name_units(meta)
+    let normalized_values : Array[Double] = []
+    for value in unpacked.values {
+      normalized_values.push(normalize_packed_scalar_output_value(meta, value))
+    }
     let grid_bytes = match
-      build_netcdf_float_grid_bytes(grid_info, unpacked.values) {
+      build_netcdf_float_grid_bytes(grid_info, normalized_values) {
       Ok(v) => v
       Err(error) => return Err(error)
     }

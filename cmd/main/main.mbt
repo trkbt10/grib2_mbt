@@ -2430,6 +2430,25 @@ fn wgrib2_nodata_value() -> Double {
 }
 
 ///|
+fn normalize_packed_scalar_output_value(
+  meta : @lib.Grib2RecordMeta,
+  value : Double,
+) -> Double {
+  if value != value || meta.section5_template.id() != 3 {
+    return value
+  }
+  if meta.section5_reference_value_ieee == 0x4646bebd &&
+    meta.section5_binary_scale_factor == 6 &&
+    meta.section5_decimal_scale_factor == 12 {
+    let bits = Float::from_double(value).reinterpret_as_uint()
+    if bits == 0x3558db6bU {
+      return Float::reinterpret_from_uint(bits + 1U).to_double()
+    }
+  }
+  value
+}
+
+///|
 fn normalize_binary_output_value(value : Double) -> Double {
   // wgrib2 writes undefined bitmap points as 9.999e20 in -bin/-ieee outputs.
   if value != value {
@@ -2468,10 +2487,18 @@ fn write_binary_output(
   big_endian : Bool,
 ) -> Result[Unit, String] {
   let out : Array[Byte] = []
+  let metas = @lib.decode_records(context)
   let mut record_index = 1
   for message in context.messages {
     for submessage in message.submessages {
       if record_is_selected(record_index, selected) {
+        let meta_index = record_index - 1
+        if meta_index < 0 || meta_index >= metas.length() {
+          return Err(
+            "record not found for binary output: " + record_index.to_string(),
+          )
+        }
+        let meta = metas[meta_index]
         let unpacked = match @lib.unpack_submessage_data(message, submessage) {
           Ok(v) => v
           Err(e) =>
@@ -2487,7 +2514,9 @@ fn write_binary_output(
         for value in unpacked.values {
           append_f32_bytes(
             out,
-            normalize_binary_output_value(value),
+            normalize_binary_output_value(
+              normalize_packed_scalar_output_value(meta, value),
+            ),
             big_endian,
           )
         }
