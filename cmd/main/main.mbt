@@ -433,6 +433,16 @@ fn netcdf_wgrib2_fatal_lines(
 }
 
 ///|
+fn netcdf_wgrib2_fatal_lines_for_reason(
+  reason : NetcdfPlanFatalReason,
+) -> Array[String] {
+  match reason {
+    NetcdfMixedGridType =>
+      ["*** FATAL ERROR: netcdf: only one grid type at a time ***"]
+  }
+}
+
+///|
 fn netcdf_wgrib2_default_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
   meta.record_id +
   ":" +
@@ -11258,7 +11268,11 @@ fn run_cli(args : Array[String]) -> Int {
       }
       match
         write_netcdf_output(destination, context, selected, init.append_mode) {
-        Ok(_) => return 0
+        Ok(Some(reason)) => {
+          print_lines(netcdf_wgrib2_fatal_lines_for_reason(reason))
+          return 8
+        }
+        Ok(None) => return 0
         Err(error) => {
           println("error: " + error)
           return 2

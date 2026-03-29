@@ -101,6 +101,11 @@ priv struct NetcdfOutputPlan {
 }
 
 ///|
+priv enum NetcdfPlanFatalReason {
+  NetcdfMixedGridType
+}
+
+///|
 priv struct NetcdfParsedName {
   name : String
   next_offset : Int
@@ -2616,134 +2621,12 @@ fn build_single_record_netcdf_plan(
 }
 
 ///|
-fn build_single_record_netcdf_bytes(
-  meta : @lib.Grib2RecordMeta,
-  grid_info : NetcdfGridInfo,
-  values : Array[Double],
-) -> Result[Bytes, String] {
-  let plan = match build_single_record_netcdf_plan(meta, grid_info, values) {
-    Ok(v) => v
-    Err(error) => return Err(error)
-  }
-  build_netcdf_bytes(
-    plan.grid_info,
-    plan.reference_attrs,
-    plan.time_values,
-    plan.fields,
-  )
-}
-
-///|
-fn build_selected_records_netcdf_plan(
-  context : @lib.Grib2FileContext,
-  selected : Array[Int]?,
+fn finalize_prepared_netcdf_plan(
+  base_meta : @lib.Grib2RecordMeta,
+  base_grid_info : NetcdfGridInfo,
+  reference_observations : Array[NetcdfReferenceObservation],
+  prepared : Array[NetcdfPreparedRecord],
 ) -> Result[NetcdfOutputPlan, String] {
-  let refs = collect_selected_record_refs(context, selected)
-  if refs.length() == 0 {
-    return Err("-netcdf requires at least one selected record")
-  }
-  let metas = @lib.decode_records(context)
-  if refs.length() == 1 {
-    let record_index = refs[0].record_index
-    let meta = metas[record_index - 1]
-    let message = context.messages[refs[0].message_index]
-    let submessage = message.submessages[refs[0].submessage_index]
-    let grid_info = match
-      build_netcdf_grid_info(
-        meta,
-        section_frame_bytes(message, submessage.section3),
-      ) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
-      Ok(v) => v
-      Err(_) =>
-        return Err(
-          "failed to unpack record " + record_index.to_string() + " (-netcdf)",
-        )
-    }
-    return build_single_record_netcdf_plan(meta, grid_info, unpacked.values)
-  }
-  let prepared : Array[NetcdfPreparedRecord] = []
-  let reference_observations : Array[NetcdfReferenceObservation] = []
-  let mut first_meta : @lib.Grib2RecordMeta? = None
-  let mut first_grid_info : NetcdfGridInfo? = None
-  for record_ref in refs {
-    let meta_index = record_ref.record_index - 1
-    if meta_index < 0 || meta_index >= metas.length() {
-      return Err(
-        "record not found for -netcdf: " + record_ref.record_index.to_string(),
-      )
-    }
-    let meta = metas[meta_index]
-    let message = context.messages[record_ref.message_index]
-    let submessage = message.submessages[record_ref.submessage_index]
-    let grid_info = match
-      build_netcdf_grid_info(
-        meta,
-        section_frame_bytes(message, submessage.section3),
-      ) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    match first_grid_info {
-      Some(reference_grid_info) =>
-        if !netcdf_grid_infos_match(reference_grid_info, grid_info) {
-          return Err("-netcdf requires selected records to share one grid")
-        }
-      None => {
-        first_meta = Some(meta)
-        first_grid_info = Some(grid_info)
-      }
-    }
-    reference_observations.push(netcdf_reference_observation(meta))
-    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
-      Ok(v) => v
-      Err(_) =>
-        return Err(
-          "failed to unpack record " +
-          record_ref.record_index.to_string() +
-          " (-netcdf)",
-        )
-    }
-    let expected_points = grid_info.ni * grid_info.nj
-    if unpacked.values.length() != expected_points {
-      return Err(
-        "-netcdf requires regular-grid value count: expected=" +
-        expected_points.to_string() +
-        ", got=" +
-        unpacked.values.length().to_string(),
-      )
-    }
-    let variable_name = netcdf_variable_name(meta)
-    let (long_name, units) = netcdf_long_name_units(meta)
-    let normalized_values : Array[Double] = []
-    for value in unpacked.values {
-      normalized_values.push(normalize_packed_scalar_output_value(meta, value))
-    }
-    let grid_bytes = match
-      build_netcdf_float_grid_bytes(grid_info, normalized_values) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    prepared.push({
-      variable_name,
-      long_name,
-      level_name: name_lookup_text(meta.level_name),
-      units,
-      verification_time: netcdf_verification_time_unix(meta),
-      grid_bytes,
-    })
-  }
-  let base_meta = match first_meta {
-    Some(v) => v
-    None => return Err("-netcdf requires at least one selected record")
-  }
-  let base_grid_info = match first_grid_info {
-    Some(v) => v
-    None => return Err("-netcdf requires at least one selected record")
-  }
   let reference_attrs = match
     build_netcdf_reference_attrs(reference_observations) {
     Ok(v) => v
@@ -2825,11 +2708,12 @@ fn build_selected_records_netcdf_plan(
 }
 
 ///|
-fn build_selected_records_netcdf_bytes(
-  context : @lib.Grib2FileContext,
-  selected : Array[Int]?,
+fn build_single_record_netcdf_bytes(
+  meta : @lib.Grib2RecordMeta,
+  grid_info : NetcdfGridInfo,
+  values : Array[Double],
 ) -> Result[Bytes, String] {
-  let plan = match build_selected_records_netcdf_plan(context, selected) {
+  let plan = match build_single_record_netcdf_plan(meta, grid_info, values) {
     Ok(v) => v
     Err(error) => return Err(error)
   }
@@ -2839,6 +2723,157 @@ fn build_selected_records_netcdf_bytes(
     plan.time_values,
     plan.fields,
   )
+}
+
+///|
+fn build_selected_records_netcdf_plan(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+) -> Result[(NetcdfOutputPlan, NetcdfPlanFatalReason?), String] {
+  let refs = collect_selected_record_refs(context, selected)
+  if refs.length() == 0 {
+    return Err("-netcdf requires at least one selected record")
+  }
+  let metas = @lib.decode_records(context)
+  if refs.length() == 1 {
+    let record_index = refs[0].record_index
+    let meta = metas[record_index - 1]
+    let message = context.messages[refs[0].message_index]
+    let submessage = message.submessages[refs[0].submessage_index]
+    let grid_info = match
+      build_netcdf_grid_info(
+        meta,
+        section_frame_bytes(message, submessage.section3),
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+      Ok(v) => v
+      Err(_) =>
+        return Err(
+          "failed to unpack record " + record_index.to_string() + " (-netcdf)",
+        )
+    }
+    let plan = match
+      build_single_record_netcdf_plan(meta, grid_info, unpacked.values) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    return Ok((plan, None))
+  }
+  let prepared : Array[NetcdfPreparedRecord] = []
+  let reference_observations : Array[NetcdfReferenceObservation] = []
+  let mut first_meta : @lib.Grib2RecordMeta? = None
+  let mut first_grid_info : NetcdfGridInfo? = None
+  let mut fatal_reason : NetcdfPlanFatalReason? = None
+  for record_ref in refs {
+    let meta_index = record_ref.record_index - 1
+    if meta_index < 0 || meta_index >= metas.length() {
+      return Err(
+        "record not found for -netcdf: " + record_ref.record_index.to_string(),
+      )
+    }
+    let meta = metas[meta_index]
+    let message = context.messages[record_ref.message_index]
+    let submessage = message.submessages[record_ref.submessage_index]
+    let grid_info = match
+      build_netcdf_grid_info(
+        meta,
+        section_frame_bytes(message, submessage.section3),
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    match first_grid_info {
+      Some(reference_grid_info) =>
+        if !netcdf_grid_infos_match(reference_grid_info, grid_info) {
+          fatal_reason = Some(NetcdfMixedGridType)
+          break
+        }
+      None => {
+        first_meta = Some(meta)
+        first_grid_info = Some(grid_info)
+      }
+    }
+    reference_observations.push(netcdf_reference_observation(meta))
+    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+      Ok(v) => v
+      Err(_) =>
+        return Err(
+          "failed to unpack record " +
+          record_ref.record_index.to_string() +
+          " (-netcdf)",
+        )
+    }
+    let expected_points = grid_info.ni * grid_info.nj
+    if unpacked.values.length() != expected_points {
+      return Err(
+        "-netcdf requires regular-grid value count: expected=" +
+        expected_points.to_string() +
+        ", got=" +
+        unpacked.values.length().to_string(),
+      )
+    }
+    let variable_name = netcdf_variable_name(meta)
+    let (long_name, units) = netcdf_long_name_units(meta)
+    let normalized_values : Array[Double] = []
+    for value in unpacked.values {
+      normalized_values.push(normalize_packed_scalar_output_value(meta, value))
+    }
+    let grid_bytes = match
+      build_netcdf_float_grid_bytes(grid_info, normalized_values) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    prepared.push({
+      variable_name,
+      long_name,
+      level_name: name_lookup_text(meta.level_name),
+      units,
+      verification_time: netcdf_verification_time_unix(meta),
+      grid_bytes,
+    })
+  }
+  let base_meta = match first_meta {
+    Some(v) => v
+    None => return Err("-netcdf requires at least one selected record")
+  }
+  let base_grid_info = match first_grid_info {
+    Some(v) => v
+    None => return Err("-netcdf requires at least one selected record")
+  }
+  let plan = match
+    finalize_prepared_netcdf_plan(
+      base_meta, base_grid_info, reference_observations, prepared,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  Ok((plan, fatal_reason))
+}
+
+///|
+fn build_selected_records_netcdf_bytes(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+) -> Result[(Bytes, NetcdfPlanFatalReason?), String] {
+  let (plan, fatal_reason) = match
+    build_selected_records_netcdf_plan(context, selected) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let bytes = match
+    build_netcdf_bytes(
+      plan.grid_info,
+      plan.reference_attrs,
+      plan.time_values,
+      plan.fields,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  Ok((bytes, fatal_reason))
 }
 
 ///|
@@ -2959,28 +2994,40 @@ fn build_appended_netcdf_bytes(
   destination : String,
   context : @lib.Grib2FileContext,
   selected : Array[Int]?,
-) -> Result[Bytes, String] {
-  let plan = match build_selected_records_netcdf_plan(context, selected) {
+) -> Result[(Bytes, NetcdfPlanFatalReason?), String] {
+  let (plan, fatal_reason) = match
+    build_selected_records_netcdf_plan(context, selected) {
     Ok(v) => v
     Err(error) => return Err(error)
   }
   let existing_bytes = match native_read_bytes(destination) {
     Ok(v) => v
-    Err(_) =>
-      return build_netcdf_bytes(
+    Err(_) => {
+      let bytes = match
+        build_netcdf_bytes(
+          plan.grid_info,
+          plan.reference_attrs,
+          plan.time_values,
+          plan.fields,
+        ) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      return Ok((bytes, fatal_reason))
+    }
+  }
+  if existing_bytes.length() == 0 {
+    let bytes = match
+      build_netcdf_bytes(
         plan.grid_info,
         plan.reference_attrs,
         plan.time_values,
         plan.fields,
-      )
-  }
-  if existing_bytes.length() == 0 {
-    return build_netcdf_bytes(
-      plan.grid_info,
-      plan.reference_attrs,
-      plan.time_values,
-      plan.fields,
-    )
+      ) {
+      Ok(v) => v
+      Err(error) => return Err(error)
+    }
+    return Ok((bytes, fatal_reason))
   }
   let existing = match parse_existing_netcdf_file(existing_bytes) {
     Ok(v) => v
@@ -2990,12 +3037,17 @@ fn build_appended_netcdf_bytes(
     Ok(v) => v
     Err(error) => return Err(error)
   }
-  build_netcdf_bytes(
-    merged.grid_info,
-    merged.reference_attrs,
-    merged.time_values,
-    merged.fields,
-  )
+  let bytes = match
+    build_netcdf_bytes(
+      merged.grid_info,
+      merged.reference_attrs,
+      merged.time_values,
+      merged.fields,
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  Ok((bytes, fatal_reason))
 }
 
 ///|
@@ -3004,15 +3056,18 @@ fn write_netcdf_output(
   context : @lib.Grib2FileContext,
   selected : Array[Int]?,
   append_mode : Bool,
-) -> Result[Unit, String] {
+) -> Result[NetcdfPlanFatalReason?, String] {
   let result = if append_mode {
     build_appended_netcdf_bytes(destination, context, selected)
   } else {
     build_selected_records_netcdf_bytes(context, selected)
   }
-  let bytes = match result {
+  let (bytes, fatal_reason) = match result {
     Ok(v) => v
     Err(error) => return Err(error)
   }
-  native_write_bytes(destination, bytes)
+  match native_write_bytes(destination, bytes) {
+    Ok(_) => Ok(fatal_reason)
+    Err(error) => Err(error)
+  }
 }

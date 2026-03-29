@@ -9481,6 +9481,68 @@ test "run_cli supports -append for mixed-reference analysis netcdf" {
 }
 
 ///|
+test "run_cli preserves netcdf prefix before mixed-grid fatal" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let ref_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_prefix_ref.nc"
+  let fatal_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_prefix.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:78:1", "-netcdf", ref_out]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:79:1", "-netcdf", fatal_out]),
+    content="8",
+  )
+  let ref_bytes = @fs.read_file_to_bytes(ref_out) catch {
+    e =>
+      fail(
+        "failed to read mixed-grid prefix reference netcdf: " + e.to_string(),
+      )
+  }
+  let fatal_bytes = @fs.read_file_to_bytes(fatal_out) catch {
+    e => fail("failed to read mixed-grid prefix fatal netcdf: " + e.to_string())
+  }
+  inspect(fatal_bytes == ref_bytes, content="true")
+}
+
+///|
+test "run_cli preserves netcdf append prefix before mixed-grid fatal" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let ref_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_append_ref.nc"
+  let fatal_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_append.nc"
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", ref_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:78:1", "-netcdf", ref_out,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli(["grib2_mbt", fixture, "-for_n", "1:1:1", "-netcdf", fatal_out]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-append", "-for_n", "2:79:1", "-netcdf", fatal_out,
+    ]),
+    content="8",
+  )
+  let ref_bytes = @fs.read_file_to_bytes(ref_out) catch {
+    e =>
+      fail(
+        "failed to read mixed-grid append reference netcdf: " + e.to_string(),
+      )
+  }
+  let fatal_bytes = @fs.read_file_to_bytes(fatal_out) catch {
+    e => fail("failed to read mixed-grid append fatal netcdf: " + e.to_string())
+  }
+  inspect(fatal_bytes == ref_bytes, content="true")
+}
+
+///|
 test "write_netcdf_output fills missing variable-time slots" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
   let context = match @lib.parse_with_io(native_read_bytes, fixture) {
