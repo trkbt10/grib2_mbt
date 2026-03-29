@@ -102,7 +102,7 @@ priv struct NetcdfOutputPlan {
 
 ///|
 priv enum NetcdfPlanFatalReason {
-  NetcdfMixedGridType
+  NetcdfMixedGridType(Int, Int)
 }
 
 ///|
@@ -2788,7 +2788,9 @@ fn build_selected_records_netcdf_plan(
     match first_grid_info {
       Some(reference_grid_info) =>
         if !netcdf_grid_infos_match(reference_grid_info, grid_info) {
-          fatal_reason = Some(NetcdfMixedGridType)
+          fatal_reason = Some(
+            NetcdfMixedGridType(prepared.length(), record_ref.record_index),
+          )
           break
         }
       None => {

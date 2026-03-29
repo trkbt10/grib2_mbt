@@ -433,12 +433,39 @@ fn netcdf_wgrib2_fatal_lines(
 }
 
 ///|
+fn netcdf_selected_record_index(selected : Array[Int]?, position : Int) -> Int {
+  match selected {
+    Some(records) => records[position]
+    None => position + 1
+  }
+}
+
+///|
 fn netcdf_wgrib2_fatal_lines_for_reason(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
   reason : NetcdfPlanFatalReason,
 ) -> Array[String] {
   match reason {
-    NetcdfMixedGridType =>
-      ["*** FATAL ERROR: netcdf: only one grid type at a time ***"]
+    NetcdfMixedGridType(valid_prefix_count, failing_record_index) => {
+      let lines : Array[String] = []
+      for i in 0..<valid_prefix_count {
+        let record_index = netcdf_selected_record_index(selected, i)
+        match find_record_meta(context, record_index) {
+          Some(meta) => lines.push(netcdf_wgrib2_default_inventory_line(meta))
+          None => ()
+        }
+      }
+      lines.push("")
+      lines.push("*** FATAL ERROR: netcdf: only one grid type at a time ***")
+      lines.push("")
+      match find_record_meta(context, failing_record_index) {
+        Some(meta) =>
+          lines.push(meta.record_id + ":" + meta.message_offset.to_string())
+        None => ()
+      }
+      lines
+    }
   }
 }
 
@@ -11269,7 +11296,9 @@ fn run_cli(args : Array[String]) -> Int {
       match
         write_netcdf_output(destination, context, selected, init.append_mode) {
         Ok(Some(reason)) => {
-          print_lines(netcdf_wgrib2_fatal_lines_for_reason(reason))
+          print_lines(
+            netcdf_wgrib2_fatal_lines_for_reason(context, selected, reason),
+          )
           return 8
         }
         Ok(None) => return 0
