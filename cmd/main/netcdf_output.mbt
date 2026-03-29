@@ -1068,10 +1068,16 @@ fn sanitize_netcdf_name_part(text : String) -> String {
     let code = c.to_int()
     if is_netcdf_name_char(code) {
       parts.push(c.to_string())
+    } else if code == 32 {
+      continue
     } else if code == 45 {
       parts.push("M")
     } else if code == 46 {
       parts.push("D")
+    } else if code == 61 {
+      parts.push("_EQ_")
+    } else if code == 47 || code == 94 || code == 40 || code == 41 {
+      parts.push("_")
     }
   }
   if parts.length() == 0 {
@@ -1083,9 +1089,17 @@ fn sanitize_netcdf_name_part(text : String) -> String {
 
 ///|
 fn netcdf_variable_name(meta : @lib.Grib2RecordMeta) -> String {
-  let parameter = sanitize_netcdf_name_part(
+  let raw_parameter = sanitize_netcdf_name_part(
     name_lookup_text(meta.parameter_name),
   )
+  let parameter = {
+    let first = raw_parameter[0].to_int()
+    if first >= 48 && first <= 57 {
+      "N" + raw_parameter
+    } else {
+      raw_parameter
+    }
+  }
   let level = sanitize_netcdf_name_part(name_lookup_text(meta.level_name))
   if level.length() == 0 {
     parameter
@@ -2507,35 +2521,48 @@ fn build_netcdf_bytes(
       next_non_record_begin += netcdf_padded_size(value_size)
     }
   }
-  let out : Array[Byte] = []
-  append_ascii_string_bytes(out, "CDF")
-  out.push(b'\x01')
-  append_u32_bytes(out, record_count, true)
-  append_bytes(out, build_netcdf_dimension_list_bytes(dims))
-  append_bytes(out, build_netcdf_attr_list_bytes(global_attrs))
-  append_bytes(out, build_netcdf_variable_list_bytes(vars, placements))
+  let record_stride = next_record_begin - record_region_begin
+  let total_size = record_region_begin + record_count * record_stride
+  let header_out : Array[Byte] = []
+  append_ascii_string_bytes(header_out, "CDF")
+  header_out.push(b'\x01')
+  append_u32_bytes(header_out, record_count, true)
+  append_bytes(header_out, build_netcdf_dimension_list_bytes(dims))
+  append_bytes(header_out, build_netcdf_attr_list_bytes(global_attrs))
+  append_bytes(header_out, build_netcdf_variable_list_bytes(vars, placements))
+  if header_out.length() != header_size {
+    return Err("invalid -netcdf header size")
+  }
+  let out = Array::make(total_size, b'\x00')
+  let mut write_offset = 0
+  for b in header_out {
+    out[write_offset] = b
+    write_offset += 1
+  }
+  write_offset = header_size
   for nc_var in vars {
     if nc_var.is_record {
       continue
     }
-    append_bytes(out, nc_var.fixed_values)
-    append_zero_bytes(
-      out,
-      netcdf_padded_size(nc_var.fixed_values.length()) -
-      nc_var.fixed_values.length(),
-    )
+    for b in nc_var.fixed_values {
+      out[write_offset] = b
+      write_offset += 1
+    }
+    write_offset += netcdf_padded_size(nc_var.fixed_values.length()) -
+      nc_var.fixed_values.length()
   }
+  write_offset = record_region_begin
   for record_index in 0..<record_count {
     for nc_var in vars {
       if !nc_var.is_record {
         continue
       }
       let values = nc_var.record_values[record_index]
-      append_bytes(out, values)
-      append_zero_bytes(
-        out,
-        netcdf_padded_size(values.length()) - values.length(),
-      )
+      for b in values {
+        out[write_offset] = b
+        write_offset += 1
+      }
+      write_offset += netcdf_padded_size(values.length()) - values.length()
     }
   }
   Ok(Bytes::from_array(out))

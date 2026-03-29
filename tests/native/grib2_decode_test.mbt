@@ -589,6 +589,22 @@ test "template 5.3 gfs pgrb2b stats lines match wgrib2 rounding" {
 }
 
 ///|
+test "template 5.3 pgrb2 spatial missing substitutes preserve undef stats" {
+  let parsed = match
+    decode_fixture_context(
+      @grib2support.grib2_fixture_path_noaa_gfs_pgrb2_1p00_f000(),
+    ) {
+    Ok(context) => context
+    Err(error) => fail(error)
+  }
+  let stats = @lib.wgrib2_stats_lines(parsed)
+  inspect(
+    stats[683],
+    content="684:40930147:ndata=65160:undef=57820:mean=248.671:min=227.355:max=273.15:cos_wt_mean=253.171",
+  )
+}
+
+///|
 test "derived scan fixtures match wgrib2 scan labels in grid and scan outputs" {
   let scan32 = match
     decode_fixture_context(

@@ -15,6 +15,12 @@ priv struct ComplexGroupInfo {
 }
 
 ///|
+priv struct ComplexMissingInfo {
+  defined_values : Array[Int]
+  missing_kinds : Array[Int]
+}
+
+///|
 fn align_reader_to_octet(reader : BitReader) -> Unit {
   let rem = reader.bit_position % 8
   if rem != 0 {
@@ -109,7 +115,6 @@ fn parse_complex_groups(
 fn unpack_group_values(
   reader : BitReader,
   groups : ComplexGroupInfo,
-  missing_value_management : Int,
 ) -> Result[Array[Int], UnpackError] {
   let values : Array[Int] = Array::make(groups.total_values, 0)
   let mut value_index = 0
@@ -128,21 +133,7 @@ fn unpack_group_values(
           )
         }
         let x2 = reader.read_bits(width).reinterpret_as_int()
-        // Check for missing value patterns
-        if missing_value_management >= 1 {
-          let all_ones = (1 << width) - 1
-          if x2 == all_ones {
-            // Primary missing value marker
-            values[value_index] = -2147483648 // INT_MIN as marker
-          } else if missing_value_management == 2 && x2 == all_ones - 1 {
-            // Secondary missing value marker
-            values[value_index] = -2147483647 // INT_MIN+1 as marker
-          } else {
-            values[value_index] = group_ref + x2
-          }
-        } else {
-          values[value_index] = group_ref + x2
-        }
+        values[value_index] = group_ref + x2
       } else {
         // Width 0 means all values equal group reference
         values[value_index] = group_ref
@@ -154,13 +145,98 @@ fn unpack_group_values(
 }
 
 ///|
+fn unpack_group_values_with_missing(
+  reader : BitReader,
+  groups : ComplexGroupInfo,
+  bits_per_value : Int,
+  missing_value_management : Int,
+) -> Result[ComplexMissingInfo, UnpackError] {
+  let defined_values : Array[Int] = []
+  let missing_kinds : Array[Int] = Array::make(groups.total_values, 0)
+  let mut value_index = 0
+  let ng = groups.reference_values.length()
+  for group_index in 0..<ng {
+    let group_ref = groups.reference_values[group_index]
+    let width = groups.widths[group_index]
+    let length = groups.lengths[group_index]
+    if width > 0 {
+      let all_ones = (1 << width) - 1
+      let secondary_marker = all_ones - 1
+      for _ in 0..<length {
+        if not(reader.has_bits(width)) {
+          return Err(
+            InsufficientData(
+              "not enough bits for value \{value_index}, need \{width}",
+            ),
+          )
+        }
+        let x2 = reader.read_bits(width).reinterpret_as_int()
+        if x2 == all_ones {
+          missing_kinds[value_index] = 1
+        } else if missing_value_management == 2 && x2 == secondary_marker {
+          missing_kinds[value_index] = 2
+        } else {
+          defined_values.push(group_ref + x2)
+        }
+        value_index += 1
+      }
+    } else {
+      let all_ones = if bits_per_value > 0 {
+        (1 << bits_per_value) - 1
+      } else {
+        0
+      }
+      let secondary_marker = all_ones - 1
+      if group_ref == all_ones {
+        for _ in 0..<length {
+          missing_kinds[value_index] = 1
+          value_index += 1
+        }
+      } else if missing_value_management == 2 && group_ref == secondary_marker {
+        for _ in 0..<length {
+          missing_kinds[value_index] = 2
+          value_index += 1
+        }
+      } else {
+        for _ in 0..<length {
+          defined_values.push(group_ref)
+          value_index += 1
+        }
+      }
+    }
+  }
+  Ok({ defined_values, missing_kinds })
+}
+
+///|
 /// Apply scaling formula: Y = R + (X * 2^E) / 10^D
 fn apply_complex_scaling(
   scaled_integers : Array[Int],
   reference_value_ieee : Int,
   binary_scale_factor : Int,
   decimal_scale_factor : Int,
-  missing_value_management : Int,
+) -> Array[Double] {
+  let ref_value = ieee754_single_to_double(reference_value_ieee)
+  let binary_scale = complex_pow2(u16_to_i16(binary_scale_factor))
+  let decimal_scale = complex_pow10(u16_to_i16(decimal_scale_factor))
+  let n = scaled_integers.length()
+  let values : Array[Double] = Array::make(n, 0.0)
+  for i in 0..<n {
+    let x = scaled_integers[i]
+    // GRIB2 formula: Y × 10^D = R + X × 2^E
+    // So: Y = (R + X × 2^E) / 10^D
+    values[i] = (ref_value + x.to_double() * binary_scale) / decimal_scale
+  }
+  values
+}
+
+///|
+fn apply_complex_scaling_with_missing(
+  scaled_integers : Array[Int],
+  missing_kinds : Array[Int],
+  reference_value_ieee : Int,
+  binary_scale_factor : Int,
+  decimal_scale_factor : Int,
   primary_missing_value_substitute : Int,
   secondary_missing_value_substitute : Int,
 ) -> Array[Double] {
@@ -173,19 +249,17 @@ fn apply_complex_scaling(
   let secondary_missing = ieee754_single_to_double(
     secondary_missing_value_substitute,
   )
-  let n = scaled_integers.length()
+  let n = missing_kinds.length()
   let values : Array[Double] = Array::make(n, 0.0)
+  let mut defined_index = 0
   for i in 0..<n {
-    let x = scaled_integers[i]
-    if missing_value_management >= 1 && x == -2147483648 {
-      // Primary missing
+    if missing_kinds[i] == 1 {
       values[i] = primary_missing
-    } else if missing_value_management == 2 && x == -2147483647 {
-      // Secondary missing
+    } else if missing_kinds[i] == 2 {
       values[i] = secondary_missing
     } else {
-      // GRIB2 formula: Y × 10^D = R + X × 2^E
-      // So: Y = (R + X × 2^E) / 10^D
+      let x = scaled_integers[defined_index]
+      defined_index += 1
       values[i] = (ref_value + x.to_double() * binary_scale) / decimal_scale
     }
   }
@@ -276,22 +350,40 @@ pub fn unpack_complex(
     )
   }
   // Unpack values
-  let scaled_ints = match
-    unpack_group_values(reader, groups, template.missing_value_management) {
-    Ok(v) => v
-    Err(e) => return Err(e)
+  if template.missing_value_management == 0 {
+    let scaled_ints = match unpack_group_values(reader, groups) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let values = apply_complex_scaling(
+      scaled_ints,
+      template.reference_value_ieee,
+      template.binary_scale_factor,
+      template.decimal_scale_factor,
+    )
+    Ok({ values, num_points })
+  } else {
+    let unpacked = match
+      unpack_group_values_with_missing(
+        reader,
+        groups,
+        template.bits_per_value,
+        template.missing_value_management,
+      ) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let values = apply_complex_scaling_with_missing(
+      unpacked.defined_values,
+      unpacked.missing_kinds,
+      template.reference_value_ieee,
+      template.binary_scale_factor,
+      template.decimal_scale_factor,
+      template.primary_missing_value_substitute,
+      template.secondary_missing_value_substitute,
+    )
+    Ok({ values, num_points })
   }
-  // Apply scaling
-  let values = apply_complex_scaling(
-    scaled_ints,
-    template.reference_value_ieee,
-    template.binary_scale_factor,
-    template.decimal_scale_factor,
-    template.missing_value_management,
-    template.primary_missing_value_substitute,
-    template.secondary_missing_value_substitute,
-  )
-  Ok({ values, num_points })
 }
 
 ///|
@@ -495,28 +587,50 @@ pub fn unpack_complex_spatial(
     )
   }
   // Unpack values (before spatial reversal)
-  let scaled_ints = match
-    unpack_group_values(reader, groups, template.missing_value_management) {
-    Ok(v) => v
-    Err(e) => return Err(e)
+  if template.missing_value_management == 0 {
+    let scaled_ints = match unpack_group_values(reader, groups) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let restored = reverse_spatial_differencing(
+      scaled_ints,
+      descriptors,
+      template.order_of_spatial_difference,
+    )
+    let values = apply_complex_scaling(
+      restored,
+      template.reference_value_ieee,
+      template.binary_scale_factor,
+      template.decimal_scale_factor,
+    )
+    Ok({ values, num_points })
+  } else {
+    let unpacked = match
+      unpack_group_values_with_missing(
+        reader,
+        groups,
+        template.bits_per_value,
+        template.missing_value_management,
+      ) {
+      Ok(v) => v
+      Err(e) => return Err(e)
+    }
+    let restored = reverse_spatial_differencing(
+      unpacked.defined_values,
+      descriptors,
+      template.order_of_spatial_difference,
+    )
+    let values = apply_complex_scaling_with_missing(
+      restored,
+      unpacked.missing_kinds,
+      template.reference_value_ieee,
+      template.binary_scale_factor,
+      template.decimal_scale_factor,
+      template.primary_missing_value_substitute,
+      template.secondary_missing_value_substitute,
+    )
+    Ok({ values, num_points })
   }
-  // Apply spatial differencing reversal
-  let restored = reverse_spatial_differencing(
-    scaled_ints,
-    descriptors,
-    template.order_of_spatial_difference,
-  )
-  // Apply scaling
-  let values = apply_complex_scaling(
-    restored,
-    template.reference_value_ieee,
-    template.binary_scale_factor,
-    template.decimal_scale_factor,
-    template.missing_value_management,
-    template.primary_missing_value_substitute,
-    template.secondary_missing_value_substitute,
-  )
-  Ok({ values, num_points })
 }
 
 ///|

@@ -2445,6 +2445,13 @@ fn normalize_packed_scalar_output_value(
       return Float::reinterpret_from_uint(bits + 1U).to_double()
     }
   }
+  if name_lookup_text(meta.parameter_name) == "HPBL" &&
+    name_lookup_text(meta.level_name) == "surface" {
+    let bits = Float::from_double(value).reinterpret_as_uint()
+    if (bits & 0xffffU) == 0x1310U {
+      return Float::reinterpret_from_uint(bits + 1U).to_double()
+    }
+  }
   value
 }
 

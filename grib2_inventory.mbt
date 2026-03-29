@@ -3915,7 +3915,7 @@ fn cosine_weighted_mean_string(
   let mut weight_sum = 0.0
   for index in 0..<data.values.length() {
     let value = quantize_wgrib2_stats_value(data.values[index])
-    if not(is_nan(value)) {
+    if is_defined_wgrib2_stats_value(value) {
       let weight = weights[index]
       weighted_sum += value * weight
       weight_sum += weight
@@ -3942,7 +3942,7 @@ pub fn wgrib2_min_lines(context : Grib2FileContext) -> Array[String] {
           let mut min_val : Double? = None
           for raw in data.values {
             let v = quantize_wgrib2_stats_value(raw)
-            if not(is_nan(v)) {
+            if is_defined_wgrib2_stats_value(v) {
               match min_val {
                 None => min_val = Some(v)
                 Some(current) => if v < current { min_val = Some(v) }
@@ -3977,7 +3977,7 @@ pub fn wgrib2_max_lines(context : Grib2FileContext) -> Array[String] {
           let mut max_val : Double? = None
           for raw in data.values {
             let v = quantize_wgrib2_stats_value(raw)
-            if not(is_nan(v)) {
+            if is_defined_wgrib2_stats_value(v) {
               match max_val {
                 None => max_val = Some(v)
                 Some(current) => if v > current { max_val = Some(v) }
@@ -4016,7 +4016,7 @@ pub fn wgrib2_stats_lines(context : Grib2FileContext) -> Array[String] {
           let mut max_val : Double? = None
           for raw in data.values {
             let v = quantize_wgrib2_stats_value(raw)
-            if not(is_nan(v)) {
+            if is_defined_wgrib2_stats_value(v) {
               defined_count += 1
               sum += v
               match min_val {
@@ -4210,6 +4210,11 @@ fn quantize_wgrib2_stats_value(v : Double) -> Double {
   } else {
     Float::from_double(v).to_double()
   }
+}
+
+///|
+fn is_defined_wgrib2_stats_value(v : Double) -> Bool {
+  !is_nan(v) && v <= 9.99e19
 }
 
 ///|

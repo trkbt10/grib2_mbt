@@ -7607,6 +7607,17 @@ pub fn decode_level_name(
       " mb above ground",
     )
   }
+  if l1t == 104 && l2t == 104 {
+    return NameKnown(
+      format_scaled_decimal(l1v, l1sf) +
+      "-" +
+      format_scaled_decimal(l2v, l2sf) +
+      " sigma layer",
+    )
+  }
+  if l1t == 104 && l2t == 255 {
+    return NameKnown(format_scaled_decimal(l1v, l1sf) + " sigma level")
+  }
   if l1t == 109 && l1sf == 9 && l2t == 255 {
     let magnitude = l1v & 0x7fffffff
     let pv_scaled = if l1v < 0 { -magnitude } else { magnitude }
@@ -7614,9 +7625,11 @@ pub fn decode_level_name(
       500 => "5e-07"
       1000 => "1e-06"
       1500 => "1.5e-06"
+      2000 => "2e-06"
       -500 => "-5e-07"
       -1000 => "-1e-06"
       -1500 => "-1.5e-06"
+      -2000 => "-2e-06"
       _ => pv_scaled.to_string() + "e-09"
     }
     return NameKnown("PV=" + pv_label + " (Km^2/kg/s) surface")
@@ -7637,9 +7650,27 @@ pub fn decode_level_name(
   if l1t == 200 && l2t == 255 {
     return NameKnown("entire atmosphere (considered as a single layer)")
   }
+  // Type 214/224/234: cloud layer categories
+  if l1t == 214 && l2t == 255 {
+    return NameKnown("low cloud layer")
+  }
+  if l1t == 224 && l2t == 255 {
+    return NameKnown("middle cloud layer")
+  }
+  if l1t == 234 && l2t == 255 {
+    return NameKnown("high cloud layer")
+  }
+  // Type 215: cloud ceiling
+  if l1t == 215 && l2t == 255 {
+    return NameKnown("cloud ceiling")
+  }
   // Type 220: Planetary boundary layer
   if l1t == 220 && l2t == 255 {
     return NameKnown("planetary boundary layer")
+  }
+  // Type 204: Highest tropospheric freezing level
+  if l1t == 204 && l2t == 255 {
+    return NameKnown("highest tropospheric freezing level")
   }
   // Type 2: Cloud base level
   if l1t == 2 && l2t == 255 {
@@ -7660,6 +7691,11 @@ pub fn decode_level_name(
   // Type 4: Level of 0°C isotherm
   if l1t == 4 && l2t == 255 {
     return NameKnown("0C isotherm")
+  }
+  if l1t == 103 && l2t == 103 {
+    return NameKnown(
+      l1v.to_string() + "-" + l2v.to_string() + " m above ground",
+    )
   }
   if l2t == 255 {
     return NameUnknown("type" + l1t.to_string())

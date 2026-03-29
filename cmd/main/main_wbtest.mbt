@@ -5599,6 +5599,42 @@ test "netcdf unit mapping follows wgrib2 conventions" {
     netcdf_variable_name(@lib.decode_records(pgrb2_context)[15]),
     content="TMP_0D01mb",
   )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[603]),
+    content="PWAT_entireatmosphere_consideredasasinglelayer_",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[607]),
+    content="LCDC_lowcloudlayer",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[611]),
+    content="HGT_cloudceiling",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[612]),
+    content="HLCY_3000M0maboveground",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[655]),
+    content="HGT_highesttroposphericfreezinglevel",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[666]),
+    content="RH_0D33M1sigmalayer",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[670]),
+    content="TMP_0D995sigmalevel",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[662]),
+    content="N4LFTX_surface",
+  )
+  inspect(
+    netcdf_variable_name(@lib.decode_records(pgrb2_context)[684]),
+    content="UGRD_PV_EQ_2eM06_Km_2_kg_s_surface",
+  )
 }
 
 ///|
@@ -7275,6 +7311,56 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(var_multi_128_bytes == var_multi_128_ref_bytes, content="true")
 
+  let var_multi_256 = "target/cmd_main_netcdf_var_multi_256.nc"
+  let var_multi_256_ref = "target/cmd_main_netcdf_var_multi_256_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:256:1", "-netcdf", var_multi_256,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:256:1", "-netcdf", var_multi_256_ref,
+    ]),
+    content="0",
+  )
+  let var_multi_256_bytes = @fs.read_file_to_bytes(var_multi_256) catch {
+    e => fail("failed to read variable multi-256 netcdf: " + e.to_string())
+  }
+  let var_multi_256_ref_bytes = @fs.read_file_to_bytes(var_multi_256_ref) catch {
+    e =>
+      fail(
+        "failed to read variable multi-256 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(var_multi_256_bytes == var_multi_256_ref_bytes, content="true")
+
+  let var_multi_347 = "target/cmd_main_netcdf_var_multi_347.nc"
+  let var_multi_347_ref = "target/cmd_main_netcdf_var_multi_347_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:347:1", "-netcdf", var_multi_347,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:347:1", "-netcdf", var_multi_347_ref,
+    ]),
+    content="0",
+  )
+  let var_multi_347_bytes = @fs.read_file_to_bytes(var_multi_347) catch {
+    e => fail("failed to read variable multi-347 netcdf: " + e.to_string())
+  }
+  let var_multi_347_ref_bytes = @fs.read_file_to_bytes(var_multi_347_ref) catch {
+    e =>
+      fail(
+        "failed to read variable multi-347 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(var_multi_347_bytes == var_multi_347_ref_bytes, content="true")
+
   let var_append_4 = "target/cmd_main_netcdf_append_var4_same_time.nc"
   let var_append_4_ref = "target/cmd_main_netcdf_append_var4_same_time_ref.nc"
   inspect(
@@ -7807,6 +7893,62 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(var_append_128_bytes == var_append_128_ref_bytes, content="true")
 
+  let var_append_256 = "target/cmd_main_netcdf_append_var256_same_time.nc"
+  let var_append_256_ref = "target/cmd_main_netcdf_append_var256_same_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append_256,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:256:1", "-netcdf", var_append_256,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:256:1", "-netcdf", var_append_256_ref,
+    ]),
+    content="0",
+  )
+  let var_append_256_bytes = @fs.read_file_to_bytes(var_append_256) catch {
+    e => fail("failed to read appended variable-256 netcdf: " + e.to_string())
+  }
+  let var_append_256_ref_bytes = @fs.read_file_to_bytes(var_append_256_ref) catch {
+    e => fail("failed to read variable-256 reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_256_bytes == var_append_256_ref_bytes, content="true")
+
+  let var_append_347 = "target/cmd_main_netcdf_append_var347_same_time.nc"
+  let var_append_347_ref = "target/cmd_main_netcdf_append_var347_same_time_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:1:1", "-netcdf", var_append_347,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-append", "-for_n", "2:347:1", "-netcdf", var_append_347,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", var_fixture, "-for_n", "1:347:1", "-netcdf", var_append_347_ref,
+    ]),
+    content="0",
+  )
+  let var_append_347_bytes = @fs.read_file_to_bytes(var_append_347) catch {
+    e => fail("failed to read appended variable-347 netcdf: " + e.to_string())
+  }
+  let var_append_347_ref_bytes = @fs.read_file_to_bytes(var_append_347_ref) catch {
+    e => fail("failed to read variable-347 reference netcdf: " + e.to_string())
+  }
+  inspect(var_append_347_bytes == var_append_347_ref_bytes, content="true")
+
   let bitmap_append = "target/cmd_main_netcdf_append_bitmap_layers.nc"
   inspect(
     run_cli([
@@ -8080,6 +8222,29 @@ test "run_cli supports -append for netcdf variable and time growth" {
       fail("failed to read pgrb2 multi-512 reference netcdf: " + e.to_string())
   }
   inspect(pgrb2_multi_512_bytes == pgrb2_multi_512_ref_bytes, content="true")
+
+  let pgrb2_multi_696 = "target/cmd_main_netcdf_pgrb2_multi_696.nc"
+  let pgrb2_multi_696_ref = "target/cmd_main_netcdf_pgrb2_multi_696_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:696:1", "-netcdf", pgrb2_multi_696,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:696:1", "-netcdf", pgrb2_multi_696_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_multi_696_bytes = @fs.read_file_to_bytes(pgrb2_multi_696) catch {
+    e => fail("failed to read pgrb2 multi-696 netcdf: " + e.to_string())
+  }
+  let pgrb2_multi_696_ref_bytes = @fs.read_file_to_bytes(pgrb2_multi_696_ref) catch {
+    e =>
+      fail("failed to read pgrb2 multi-696 reference netcdf: " + e.to_string())
+  }
+  inspect(pgrb2_multi_696_bytes == pgrb2_multi_696_ref_bytes, content="true")
 
   let pgrb2_append_4 = "target/cmd_main_netcdf_append_pgrb2_var4.nc"
   let pgrb2_append_4_ref = "target/cmd_main_netcdf_append_pgrb2_var4_ref.nc"
@@ -8370,6 +8535,40 @@ test "run_cli supports -append for netcdf variable and time growth" {
       )
   }
   inspect(pgrb2_append_512_bytes == pgrb2_append_512_ref_bytes, content="true")
+
+  let pgrb2_append_696 = "target/cmd_main_netcdf_append_pgrb2_var696.nc"
+  let pgrb2_append_696_ref = "target/cmd_main_netcdf_append_pgrb2_var696_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:1:1", "-netcdf", pgrb2_append_696,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-append", "-for_n", "2:696:1", "-netcdf", pgrb2_append_696,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", pgrb2_fixture, "-for_n", "1:696:1", "-netcdf", pgrb2_append_696_ref,
+    ]),
+    content="0",
+  )
+  let pgrb2_append_696_bytes = @fs.read_file_to_bytes(pgrb2_append_696) catch {
+    e =>
+      fail(
+        "failed to read appended pgrb2 variable-696 netcdf: " + e.to_string(),
+      )
+  }
+  let pgrb2_append_696_ref_bytes = @fs.read_file_to_bytes(pgrb2_append_696_ref) catch {
+    e =>
+      fail(
+        "failed to read pgrb2 variable-696 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(pgrb2_append_696_bytes == pgrb2_append_696_ref_bytes, content="true")
 
   let wave_fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let wave_append = "target/cmd_main_netcdf_append_wave_var.nc"
