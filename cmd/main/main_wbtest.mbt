@@ -9136,6 +9136,36 @@ test "run_cli supports -append for netcdf variable and time growth" {
     content="true",
   )
 
+  let wave_global_multi_19 = "target/cmd_main_netcdf_wave_global_multi_19.nc"
+  let wave_global_multi_19_ref = "target/cmd_main_netcdf_wave_global_multi_19_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:19:1", "-netcdf", wave_global_multi_19,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:19:1", "-netcdf", wave_global_multi_19_ref,
+    ]),
+    content="0",
+  )
+  let wave_global_multi_19_bytes = @fs.read_file_to_bytes(wave_global_multi_19) catch {
+    e => fail("failed to read global wave multi-19 netcdf: " + e.to_string())
+  }
+  let wave_global_multi_19_ref_bytes = @fs.read_file_to_bytes(
+    wave_global_multi_19_ref,
+  ) catch {
+    e =>
+      fail(
+        "failed to read global wave multi-19 reference netcdf: " + e.to_string(),
+      )
+  }
+  inspect(
+    wave_global_multi_19_bytes == wave_global_multi_19_ref_bytes,
+    content="true",
+  )
+
   let wave_global_append_4 = "target/cmd_main_netcdf_append_wave_global_var4.nc"
   let wave_global_append_4_ref = "target/cmd_main_netcdf_append_wave_global_var4_ref.nc"
   inspect(
@@ -9217,6 +9247,50 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(
     wave_global_append_8_bytes == wave_global_append_8_ref_bytes,
+    content="true",
+  )
+
+  let wave_global_append_19 = "target/cmd_main_netcdf_append_wave_global_var19.nc"
+  let wave_global_append_19_ref = "target/cmd_main_netcdf_append_wave_global_var19_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:1:1", "-netcdf", wave_global_append_19,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-append", "-for_n", "2:19:1", "-netcdf",
+      wave_global_append_19,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", wave_global_fixture, "-for_n", "1:19:1", "-netcdf", wave_global_append_19_ref,
+    ]),
+    content="0",
+  )
+  let wave_global_append_19_bytes = @fs.read_file_to_bytes(
+    wave_global_append_19,
+  ) catch {
+    e =>
+      fail(
+        "failed to read appended global wave variable-19 netcdf: " +
+        e.to_string(),
+      )
+  }
+  let wave_global_append_19_ref_bytes = @fs.read_file_to_bytes(
+    wave_global_append_19_ref,
+  ) catch {
+    e =>
+      fail(
+        "failed to read global wave variable-19 reference netcdf: " +
+        e.to_string(),
+      )
+  }
+  inspect(
+    wave_global_append_19_bytes == wave_global_append_19_ref_bytes,
     content="true",
   )
 
