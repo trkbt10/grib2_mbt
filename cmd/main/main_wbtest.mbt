@@ -6815,6 +6815,213 @@ test "run_cli supports -append for netcdf variable and time growth" {
   }
   inspect(gsm_append_4_bytes == gsm_append_4_ref_bytes, content="true")
 
+  let gsm_multi_8 = "target/cmd_main_netcdf_gsm_multi_8.nc"
+  let gsm_multi_8_ref = "target/cmd_main_netcdf_gsm_multi_8_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:8:1", "-netcdf", gsm_multi_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:8:1", "-netcdf", gsm_multi_8_ref,
+    ]),
+    content="0",
+  )
+  let gsm_multi_8_bytes = @fs.read_file_to_bytes(gsm_multi_8) catch {
+    e => fail("failed to read gsm multi-8 netcdf: " + e.to_string())
+  }
+  let gsm_multi_8_ref_bytes = @fs.read_file_to_bytes(gsm_multi_8_ref) catch {
+    e => fail("failed to read gsm multi-8 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_multi_8_bytes == gsm_multi_8_ref_bytes, content="true")
+
+  let gsm_append_8 = "target/cmd_main_netcdf_append_gsm_var8.nc"
+  let gsm_append_8_ref = "target/cmd_main_netcdf_append_gsm_var8_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:8:1", "-netcdf", gsm_append_8,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:8:1", "-netcdf", gsm_append_8_ref,
+    ]),
+    content="0",
+  )
+  let gsm_append_8_bytes = @fs.read_file_to_bytes(gsm_append_8) catch {
+    e => fail("failed to read appended gsm variable-8 netcdf: " + e.to_string())
+  }
+  let gsm_append_8_ref_bytes = @fs.read_file_to_bytes(gsm_append_8_ref) catch {
+    e =>
+      fail("failed to read gsm variable-8 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_8_bytes == gsm_append_8_ref_bytes, content="true")
+
+  let gsm_multi_16 = "target/cmd_main_netcdf_gsm_multi_16.nc"
+  let gsm_multi_16_ref = "target/cmd_main_netcdf_gsm_multi_16_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:16:1", "-netcdf", gsm_multi_16,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:16:1", "-netcdf", gsm_multi_16_ref,
+    ]),
+    content="0",
+  )
+  let gsm_multi_16_bytes = @fs.read_file_to_bytes(gsm_multi_16) catch {
+    e => fail("failed to read gsm multi-16 netcdf: " + e.to_string())
+  }
+  let gsm_multi_16_ref_bytes = @fs.read_file_to_bytes(gsm_multi_16_ref) catch {
+    e => fail("failed to read gsm multi-16 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_multi_16_bytes == gsm_multi_16_ref_bytes, content="true")
+
+  let gsm_append_16 = "target/cmd_main_netcdf_append_gsm_var16.nc"
+  let gsm_append_16_ref = "target/cmd_main_netcdf_append_gsm_var16_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append_16,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:16:1", "-netcdf", gsm_append_16,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:16:1", "-netcdf", gsm_append_16_ref,
+    ]),
+    content="0",
+  )
+  let gsm_append_16_bytes = @fs.read_file_to_bytes(gsm_append_16) catch {
+    e =>
+      fail("failed to read appended gsm variable-16 netcdf: " + e.to_string())
+  }
+  let gsm_append_16_ref_bytes = @fs.read_file_to_bytes(gsm_append_16_ref) catch {
+    e =>
+      fail("failed to read gsm variable-16 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_16_bytes == gsm_append_16_ref_bytes, content="true")
+
+  let gsm_multi_32 = "target/cmd_main_netcdf_gsm_multi_32.nc"
+  let gsm_multi_32_ref = "target/cmd_main_netcdf_gsm_multi_32_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:32:1", "-netcdf", gsm_multi_32,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:32:1", "-netcdf", gsm_multi_32_ref,
+    ]),
+    content="0",
+  )
+  let gsm_multi_32_bytes = @fs.read_file_to_bytes(gsm_multi_32) catch {
+    e => fail("failed to read gsm multi-32 netcdf: " + e.to_string())
+  }
+  let gsm_multi_32_ref_bytes = @fs.read_file_to_bytes(gsm_multi_32_ref) catch {
+    e => fail("failed to read gsm multi-32 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_multi_32_bytes == gsm_multi_32_ref_bytes, content="true")
+
+  let gsm_append_32 = "target/cmd_main_netcdf_append_gsm_var32.nc"
+  let gsm_append_32_ref = "target/cmd_main_netcdf_append_gsm_var32_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append_32,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:32:1", "-netcdf", gsm_append_32,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:32:1", "-netcdf", gsm_append_32_ref,
+    ]),
+    content="0",
+  )
+  let gsm_append_32_bytes = @fs.read_file_to_bytes(gsm_append_32) catch {
+    e =>
+      fail("failed to read appended gsm variable-32 netcdf: " + e.to_string())
+  }
+  let gsm_append_32_ref_bytes = @fs.read_file_to_bytes(gsm_append_32_ref) catch {
+    e =>
+      fail("failed to read gsm variable-32 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_32_bytes == gsm_append_32_ref_bytes, content="true")
+
+  let gsm_multi_64 = "target/cmd_main_netcdf_gsm_multi_64.nc"
+  let gsm_multi_64_ref = "target/cmd_main_netcdf_gsm_multi_64_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:64:1", "-netcdf", gsm_multi_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:64:1", "-netcdf", gsm_multi_64_ref,
+    ]),
+    content="0",
+  )
+  let gsm_multi_64_bytes = @fs.read_file_to_bytes(gsm_multi_64) catch {
+    e => fail("failed to read gsm multi-64 netcdf: " + e.to_string())
+  }
+  let gsm_multi_64_ref_bytes = @fs.read_file_to_bytes(gsm_multi_64_ref) catch {
+    e => fail("failed to read gsm multi-64 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_multi_64_bytes == gsm_multi_64_ref_bytes, content="true")
+
+  let gsm_append_64 = "target/cmd_main_netcdf_append_gsm_var64.nc"
+  let gsm_append_64_ref = "target/cmd_main_netcdf_append_gsm_var64_ref.nc"
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:1:1", "-netcdf", gsm_append_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-append", "-for_n", "2:64:1", "-netcdf", gsm_append_64,
+    ]),
+    content="0",
+  )
+  inspect(
+    run_cli([
+      "grib2_mbt", gsm_fixture, "-for_n", "1:64:1", "-netcdf", gsm_append_64_ref,
+    ]),
+    content="0",
+  )
+  let gsm_append_64_bytes = @fs.read_file_to_bytes(gsm_append_64) catch {
+    e =>
+      fail("failed to read appended gsm variable-64 netcdf: " + e.to_string())
+  }
+  let gsm_append_64_ref_bytes = @fs.read_file_to_bytes(gsm_append_64_ref) catch {
+    e =>
+      fail("failed to read gsm variable-64 reference netcdf: " + e.to_string())
+  }
+  inspect(gsm_append_64_bytes == gsm_append_64_ref_bytes, content="true")
+
   let var_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
   let var_append = "target/cmd_main_netcdf_append_var.nc"
   let var_ref = "target/cmd_main_netcdf_append_var_ref.nc"
