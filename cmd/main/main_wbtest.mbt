@@ -430,6 +430,272 @@ fn write_forecast_input_with_values(
 }
 
 ///|
+fn full_realworld_pairwise_ncep_norm_specs() -> Array[
+  SyntheticForecastInputSpec,
+] {
+  [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 6, time_increment_length: 3, scale: 1.0 },
+  ]
+}
+
+///|
+fn full_realworld_pairwise_merge_fcst_specs() -> Array[
+  SyntheticForecastInputSpec,
+] {
+  [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 15, duration: 3, time_increment_length: 3, scale: 1.0 },
+  ]
+}
+
+///|
+fn full_realworld_pairwise_unmerge_fcst_specs() -> Array[
+  SyntheticForecastInputSpec,
+] {
+  [
+    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 15, time_increment_length: 3, scale: 1.0 },
+    { start_time: 0, duration: 18, time_increment_length: 3, scale: 1.0 },
+  ]
+}
+
+///|
+fn assert_template48_time_ranges(
+  templates : Array[@section4.Grib2ProductTemplate48],
+  expected : String,
+) -> Unit raise {
+  inspect(
+    templates
+    .map(fn(template) {
+      template.base.forecast_time.to_string() +
+      "/" +
+      template.time_range_specs[0].time_range_length.to_string()
+    })
+    .to_string(),
+    content=expected,
+  )
+}
+
+///|
+fn assert_realworld_full_ncep_norm_case(
+  label : String,
+  input : String,
+  out : String,
+  record_indices : Array[Int],
+  min_tolerance : Double?,
+) -> Unit raise {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let specs = full_realworld_pairwise_ncep_norm_specs()
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, record_indices) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-ncep_norm", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode " + label + " ncep_norm output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  assert_template48_time_ranges(
+    out_templates, "[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  for pair in [0, 2, 4] {
+    let residual = forecast_residual_values(
+      Ave,
+      source_fields[pair],
+      source_fields[pair + 1],
+      3,
+      6,
+    )
+    match min_tolerance {
+      Some(tolerance) => {
+        match
+          expect_forecast_values_close_with_min_tolerance(
+            label + " ncep_norm source record " + (pair + 1).to_string(),
+            out_values[pair],
+            source_fields[pair],
+            tolerance,
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+        match
+          expect_forecast_values_close_with_min_tolerance(
+            label + " ncep_norm residual record " + (pair + 2).to_string(),
+            out_values[pair + 1],
+            residual,
+            tolerance,
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+      }
+      None => {
+        match
+          expect_forecast_values_close(
+            label + " ncep_norm source record " + (pair + 1).to_string(),
+            out_values[pair],
+            source_fields[pair],
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+        match
+          expect_forecast_values_close(
+            label + " ncep_norm residual record " + (pair + 2).to_string(),
+            out_values[pair + 1],
+            residual,
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+      }
+    }
+  }
+}
+
+///|
+fn assert_realworld_full_merge_fcst_case(
+  label : String,
+  input : String,
+  out : String,
+  record_indices : Array[Int],
+  min_tolerance : Double?,
+) -> Unit raise {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let specs = full_realworld_pairwise_merge_fcst_specs()
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, record_indices) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  match
+    write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(run_cli(["grib2_mbt", input, "-merge_fcst", "2", out]), content="0")
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode " + label + " merge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="3")
+  assert_template48_time_ranges(out_templates, "[\"0/6\", \"6/6\", \"12/6\"]")
+  for pair in [0, 2, 4] {
+    let merged = forecast_scale_average_values(
+      forecast_merge_values(Ave, source_fields[pair], source_fields[pair + 1]),
+      0.5,
+    )
+    match min_tolerance {
+      Some(tolerance) =>
+        match
+          expect_forecast_values_close_with_min_tolerance(
+            label + " merge_fcst record " + (pair / 2 + 1).to_string(),
+            out_values[pair / 2],
+            merged,
+            tolerance,
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+      None =>
+        match
+          expect_forecast_values_close(
+            label + " merge_fcst record " + (pair / 2 + 1).to_string(),
+            out_values[pair / 2],
+            merged,
+          ) {
+          Ok(_) => ()
+          Err(e) => fail(e)
+        }
+    }
+  }
+}
+
+///|
+fn assert_realworld_full_unmerge_fcst_case(
+  label : String,
+  input : String,
+  out : String,
+  record_indices : Array[Int],
+) -> Unit raise {
+  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
+  let specs = full_realworld_pairwise_unmerge_fcst_specs()
+  let (source, source_fields) = match
+    load_real_forecast_test_values(source_fixture, record_indices) {
+    Ok(v) => v
+    Err(e) => fail(e)
+  }
+  let accumulated_fields = build_running_accumulated_forecast_values(
+    source_fields,
+  )
+  match
+    write_forecast_input_with_values(
+      input,
+      source,
+      Acc,
+      specs,
+      accumulated_fields,
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  inspect(
+    run_cli(["grib2_mbt", input, "-unmerge_fcst", out, "0hr", "1"]),
+    content="0",
+  )
+  let (_, out_templates, out_values) = match
+    decode_template48_outputs_with_values(out) {
+    Ok(v) => v
+    Err(e) => fail("failed to decode " + label + " unmerge_fcst output: " + e)
+  }
+  inspect(out_values.length(), content="6")
+  assert_template48_time_ranges(
+    out_templates, "[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+  )
+  match
+    expect_forecast_values_close(
+      label + " unmerge_fcst record 1",
+      out_values[0],
+      accumulated_fields[0],
+    ) {
+    Ok(_) => ()
+    Err(e) => fail(e)
+  }
+  for index in 1..<out_values.length() {
+    match
+      expect_forecast_values_close(
+        label + " unmerge_fcst zero record " + (index + 1).to_string(),
+        out_values[index],
+        Array::make(out_values[index].length(), 0.0),
+      ) {
+      Ok(_) => ()
+      Err(e) => fail(e)
+    }
+  }
+}
+
+///|
 fn build_submessage_grib_bytes_with_section1_override_for_test(
   message : @lib.Grib2MessageContext,
   submessage : @lib.Grib2SubmessageFrame,
@@ -11941,6 +12207,31 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (VGRD 
 }
 
 ///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)" {
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh00-15 full",
+    "target/cmd_main_ncep_norm_realworld_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+    None,
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh00-15 ugrd full",
+    "target/cmd_main_ncep_norm_realworld_ugrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+    Some(0.02),
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh00-15 vgrd full",
+    "target/cmd_main_ncep_norm_realworld_vgrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+    Some(0.02),
+  )
+}
+
+///|
 test "run_cli keeps varying-dt ncep_norm series as pass-through" {
   let input = "target/cmd_main_ncep_norm_passthrough_input.grb2"
   let out = "target/cmd_main_ncep_norm_passthrough_test.grb2"
@@ -13159,6 +13450,31 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (VGRD
 }
 
 ///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)" {
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh00-15 full",
+    "target/cmd_main_merge_fcst_realworld_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+    None,
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh00-15 ugrd full",
+    "target/cmd_main_merge_fcst_realworld_ugrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+    Some(0.02),
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh00-15 vgrd full",
+    "target/cmd_main_merge_fcst_realworld_vgrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+    Some(0.02),
+  )
+}
+
+///|
 test "run_cli supports -unmerge_fcst on synthetic PDT4.8 acc series" {
   let input = "target/cmd_main_unmerge_fcst_input.grb2"
   let out = "target/cmd_main_unmerge_fcst_test.grb2"
@@ -14099,6 +14415,28 @@ test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (VG
       Err(e) => fail(e)
     }
   }
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)" {
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh00-15 full",
+    "target/cmd_main_unmerge_fcst_realworld_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh00-15 ugrd full",
+    "target/cmd_main_unmerge_fcst_realworld_ugrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh00-15 vgrd full",
+    "target/cmd_main_unmerge_fcst_realworld_vgrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+  )
 }
 
 ///|

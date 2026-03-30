@@ -112,6 +112,15 @@ realworld_ugrd_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_ugrd1000_unmerge_fcs
 realworld_vgrd_ncep_norm_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_ncep_norm_input.grib2"
 realworld_vgrd_merge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_merge_fcst_input.grib2"
 realworld_vgrd_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_unmerge_fcst_input.grib2"
+realworld_full_ncep_norm_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_ncep_norm_full_input.grib2"
+realworld_full_merge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_merge_fcst_full_input.grib2"
+realworld_full_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_tmp1000_unmerge_fcst_full_input.grib2"
+realworld_ugrd_full_ncep_norm_out="${OUT_DIR}/jma_msm_fh00_15_ugrd1000_ncep_norm_full_input.grib2"
+realworld_ugrd_full_merge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_ugrd1000_merge_fcst_full_input.grib2"
+realworld_ugrd_full_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_ugrd1000_unmerge_fcst_full_input.grib2"
+realworld_vgrd_full_ncep_norm_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_ncep_norm_full_input.grib2"
+realworld_vgrd_full_merge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_merge_fcst_full_input.grib2"
+realworld_vgrd_full_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh00_15_vgrd1000_unmerge_fcst_full_input.grib2"
 realworld_fh18_33_ncep_norm_out="${OUT_DIR}/jma_msm_fh18_33_tmp1000_ncep_norm_input.grib2"
 realworld_fh18_33_merge_fcst_out="${OUT_DIR}/jma_msm_fh18_33_tmp1000_merge_fcst_input.grib2"
 realworld_fh18_33_unmerge_fcst_out="${OUT_DIR}/jma_msm_fh18_33_tmp1000_unmerge_fcst_input.grib2"
@@ -330,6 +339,51 @@ generate_forecast_fixture_from_wbtest \
   "${realworld_vgrd_unmerge_fcst_out}"
 
 generate_forecast_fixture_from_wbtest \
+  "*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_ncep_norm_realworld_full_input.grb2" \
+  "${realworld_full_ncep_norm_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_ncep_norm_realworld_ugrd_full_input.grb2" \
+  "${realworld_ugrd_full_ncep_norm_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_ncep_norm_realworld_vgrd_full_input.grb2" \
+  "${realworld_vgrd_full_ncep_norm_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_merge_fcst_realworld_full_input.grb2" \
+  "${realworld_full_merge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_merge_fcst_realworld_ugrd_full_input.grb2" \
+  "${realworld_ugrd_full_merge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*" \
+  "target/cmd_main_merge_fcst_realworld_vgrd_full_input.grb2" \
+  "${realworld_vgrd_full_merge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*" \
+  "target/cmd_main_unmerge_fcst_realworld_full_input.grb2" \
+  "${realworld_full_unmerge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*" \
+  "target/cmd_main_unmerge_fcst_realworld_ugrd_full_input.grb2" \
+  "${realworld_ugrd_full_unmerge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
+  "*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*" \
+  "target/cmd_main_unmerge_fcst_realworld_vgrd_full_input.grb2" \
+  "${realworld_vgrd_full_unmerge_fcst_out}"
+
+generate_forecast_fixture_from_wbtest \
   "*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-33)*" \
   "target/cmd_main_ncep_norm_realworld_fh18_33_input.grb2" \
   "${realworld_fh18_33_ncep_norm_out}"
@@ -513,6 +567,15 @@ realworld_ugrd_unmerge_fcst_sha="$(shasum -a 256 "${realworld_ugrd_unmerge_fcst_
 realworld_vgrd_ncep_norm_sha="$(shasum -a 256 "${realworld_vgrd_ncep_norm_out}" | awk '{print $1}')"
 realworld_vgrd_merge_fcst_sha="$(shasum -a 256 "${realworld_vgrd_merge_fcst_out}" | awk '{print $1}')"
 realworld_vgrd_unmerge_fcst_sha="$(shasum -a 256 "${realworld_vgrd_unmerge_fcst_out}" | awk '{print $1}')"
+realworld_full_ncep_norm_sha="$(shasum -a 256 "${realworld_full_ncep_norm_out}" | awk '{print $1}')"
+realworld_full_merge_fcst_sha="$(shasum -a 256 "${realworld_full_merge_fcst_out}" | awk '{print $1}')"
+realworld_full_unmerge_fcst_sha="$(shasum -a 256 "${realworld_full_unmerge_fcst_out}" | awk '{print $1}')"
+realworld_ugrd_full_ncep_norm_sha="$(shasum -a 256 "${realworld_ugrd_full_ncep_norm_out}" | awk '{print $1}')"
+realworld_ugrd_full_merge_fcst_sha="$(shasum -a 256 "${realworld_ugrd_full_merge_fcst_out}" | awk '{print $1}')"
+realworld_ugrd_full_unmerge_fcst_sha="$(shasum -a 256 "${realworld_ugrd_full_unmerge_fcst_out}" | awk '{print $1}')"
+realworld_vgrd_full_ncep_norm_sha="$(shasum -a 256 "${realworld_vgrd_full_ncep_norm_out}" | awk '{print $1}')"
+realworld_vgrd_full_merge_fcst_sha="$(shasum -a 256 "${realworld_vgrd_full_merge_fcst_out}" | awk '{print $1}')"
+realworld_vgrd_full_unmerge_fcst_sha="$(shasum -a 256 "${realworld_vgrd_full_unmerge_fcst_out}" | awk '{print $1}')"
 realworld_fh18_33_ncep_norm_sha="$(shasum -a 256 "${realworld_fh18_33_ncep_norm_out}" | awk '{print $1}')"
 realworld_fh18_33_merge_fcst_sha="$(shasum -a 256 "${realworld_fh18_33_merge_fcst_out}" | awk '{print $1}')"
 realworld_fh18_33_unmerge_fcst_sha="$(shasum -a 256 "${realworld_fh18_33_unmerge_fcst_out}" | awk '{print $1}')"
@@ -568,6 +631,15 @@ realworld_ugrd_unmerge_fcst_size="$(wc -c < "${realworld_ugrd_unmerge_fcst_out}"
 realworld_vgrd_ncep_norm_size="$(wc -c < "${realworld_vgrd_ncep_norm_out}" | tr -d ' ')"
 realworld_vgrd_merge_fcst_size="$(wc -c < "${realworld_vgrd_merge_fcst_out}" | tr -d ' ')"
 realworld_vgrd_unmerge_fcst_size="$(wc -c < "${realworld_vgrd_unmerge_fcst_out}" | tr -d ' ')"
+realworld_full_ncep_norm_size="$(wc -c < "${realworld_full_ncep_norm_out}" | tr -d ' ')"
+realworld_full_merge_fcst_size="$(wc -c < "${realworld_full_merge_fcst_out}" | tr -d ' ')"
+realworld_full_unmerge_fcst_size="$(wc -c < "${realworld_full_unmerge_fcst_out}" | tr -d ' ')"
+realworld_ugrd_full_ncep_norm_size="$(wc -c < "${realworld_ugrd_full_ncep_norm_out}" | tr -d ' ')"
+realworld_ugrd_full_merge_fcst_size="$(wc -c < "${realworld_ugrd_full_merge_fcst_out}" | tr -d ' ')"
+realworld_ugrd_full_unmerge_fcst_size="$(wc -c < "${realworld_ugrd_full_unmerge_fcst_out}" | tr -d ' ')"
+realworld_vgrd_full_ncep_norm_size="$(wc -c < "${realworld_vgrd_full_ncep_norm_out}" | tr -d ' ')"
+realworld_vgrd_full_merge_fcst_size="$(wc -c < "${realworld_vgrd_full_merge_fcst_out}" | tr -d ' ')"
+realworld_vgrd_full_unmerge_fcst_size="$(wc -c < "${realworld_vgrd_full_unmerge_fcst_out}" | tr -d ' ')"
 realworld_fh18_33_ncep_norm_size="$(wc -c < "${realworld_fh18_33_ncep_norm_out}" | tr -d ' ')"
 realworld_fh18_33_merge_fcst_size="$(wc -c < "${realworld_fh18_33_merge_fcst_out}" | tr -d ' ')"
 realworld_fh18_33_unmerge_fcst_size="$(wc -c < "${realworld_fh18_33_unmerge_fcst_out}" | tr -d ' ')"
@@ -626,6 +698,15 @@ jma_msm_fh00_15_ugrd1000_unmerge_fcst_input.grib2	${realworld_ugrd_unmerge_fcst_
 jma_msm_fh00_15_vgrd1000_ncep_norm_input.grib2	${realworld_vgrd_ncep_norm_size}	${realworld_vgrd_ncep_norm_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series (VGRD)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 VGRD:1000 mb records 95/187/279/371; used for exact -ncep_norm compare
 jma_msm_fh00_15_vgrd1000_merge_fcst_input.grib2	${realworld_vgrd_merge_fcst_size}	${realworld_vgrd_merge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series (VGRD)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 VGRD:1000 mb records 95/187/279/371; used for exact -merge_fcst compare
 jma_msm_fh00_15_vgrd1000_unmerge_fcst_input.grib2	${realworld_vgrd_unmerge_fcst_size}	${realworld_vgrd_unmerge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (VGRD)*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH00-15 VGRD:1000 mb records 95/187/279/371; used for exact -unmerge_fcst compare
+jma_msm_fh00_15_tmp1000_ncep_norm_full_input.grib2	${realworld_full_ncep_norm_size}	${realworld_full_ncep_norm_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 TMP:1000 mb records 4/96/188/280/372/464; used for exact full-series -ncep_norm compare
+jma_msm_fh00_15_tmp1000_merge_fcst_full_input.grib2	${realworld_full_merge_fcst_size}	${realworld_full_merge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 TMP:1000 mb records 4/96/188/280/372/464; used for exact full-series -merge_fcst compare
+jma_msm_fh00_15_tmp1000_unmerge_fcst_full_input.grib2	${realworld_full_unmerge_fcst_size}	${realworld_full_unmerge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH00-15 TMP:1000 mb records 4/96/188/280/372/464; used for exact full-series -unmerge_fcst compare
+jma_msm_fh00_15_ugrd1000_ncep_norm_full_input.grib2	${realworld_ugrd_full_ncep_norm_size}	${realworld_ugrd_full_ncep_norm_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 UGRD:1000 mb records 2/94/186/278/370/462; used for exact full-series -ncep_norm compare
+jma_msm_fh00_15_ugrd1000_merge_fcst_full_input.grib2	${realworld_ugrd_full_merge_fcst_size}	${realworld_ugrd_full_merge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 UGRD:1000 mb records 2/94/186/278/370/462; used for exact full-series -merge_fcst compare
+jma_msm_fh00_15_ugrd1000_unmerge_fcst_full_input.grib2	${realworld_ugrd_full_unmerge_fcst_size}	${realworld_ugrd_full_unmerge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH00-15 UGRD:1000 mb records 2/94/186/278/370/462; used for exact full-series -unmerge_fcst compare
+jma_msm_fh00_15_vgrd1000_ncep_norm_full_input.grib2	${realworld_vgrd_full_ncep_norm_size}	${realworld_vgrd_full_ncep_norm_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 VGRD:1000 mb records 3/95/187/279/371/463; used for exact full-series -ncep_norm compare
+jma_msm_fh00_15_vgrd1000_merge_fcst_full_input.grib2	${realworld_vgrd_full_merge_fcst_size}	${realworld_vgrd_full_merge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)*'	real-value PDT 4.8 ave series built from JMA MSM FH00-15 VGRD:1000 mb records 3/95/187/279/371/463; used for exact full-series -merge_fcst compare
+jma_msm_fh00_15_vgrd1000_unmerge_fcst_full_input.grib2	${realworld_vgrd_full_unmerge_fcst_size}	${realworld_vgrd_full_unmerge_fcst_sha}	${forecast_realworld_source}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH00-15 VGRD:1000 mb records 3/95/187/279/371/463; used for exact full-series -unmerge_fcst compare
 jma_msm_fh18_33_tmp1000_ncep_norm_input.grib2	${realworld_fh18_33_ncep_norm_size}	${realworld_fh18_33_ncep_norm_sha}	${forecast_realworld_source_fh18_33}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-33)*'	real-value PDT 4.8 ave series built from JMA MSM FH18-33 TMP:1000 mb records 4/96/188/280; used for exact -ncep_norm compare
 jma_msm_fh18_33_tmp1000_merge_fcst_input.grib2	${realworld_fh18_33_merge_fcst_size}	${realworld_fh18_33_merge_fcst_sha}	${forecast_realworld_source_fh18_33}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18-33)*'	real-value PDT 4.8 ave series built from JMA MSM FH18-33 TMP:1000 mb records 4/96/188/280; used for exact -merge_fcst compare
 jma_msm_fh18_33_tmp1000_unmerge_fcst_input.grib2	${realworld_fh18_33_unmerge_fcst_size}	${realworld_fh18_33_unmerge_fcst_sha}	${forecast_realworld_source_fh18_33}	${MOON_BIN} test cmd/main/main_wbtest.mbt --target native --filter '*supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH18-33)*'	real-value PDT 4.8 acc series built from running accumulation of JMA MSM FH18-33 TMP:1000 mb records 4/96/188/280; used for exact -unmerge_fcst compare
