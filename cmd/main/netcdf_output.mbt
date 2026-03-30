@@ -2978,7 +2978,9 @@ fn merge_existing_netcdf_with_plan(
         Some(v) => v
         None => return Err("failed to resolve appended netcdf time slot")
       }
-      merged_fields[field_index].slabs[time_index] = field.slabs[i]
+      if field.slabs[i] != fill_grid {
+        merged_fields[field_index].slabs[time_index] = field.slabs[i]
+      }
     }
   }
   Ok({
