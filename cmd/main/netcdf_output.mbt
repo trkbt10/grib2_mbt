@@ -53,6 +53,13 @@ priv struct NetcdfPreparedRecord {
 }
 
 ///|
+priv struct NetcdfResolvedRecord {
+  meta : @lib.Grib2RecordMeta
+  grid_info : NetcdfGridInfo
+  values : Array[Double]
+}
+
+///|
 priv struct NetcdfReferenceObservation {
   reference_time : Int64
   is_analysis : Bool
@@ -154,7 +161,7 @@ priv struct NetcdfExistingFile {
 
 ///|
 fn netcdf_supported_grid_error() -> String {
-  "-netcdf currently supports regular lat/lon, rotated lat/lon, Mercator, polar stereographic, and Lambert conformal grids (templates 3.0/3.1/3.10/3.20/3.30)"
+  "-netcdf currently supports regular lat/lon, rotated lat/lon, Mercator, polar stereographic, Lambert conformal, and Gaussian grids (templates 3.0/3.1/3.10/3.20/3.30/3.40)"
 }
 
 ///|
@@ -1383,6 +1390,188 @@ fn build_netcdf_longitude_values(
 }
 
 ///|
+fn netcdf_sqrt_nonnegative(v : Double) -> Double {
+  if v <= 0.0 {
+    return 0.0
+  }
+  let mut guess = if v >= 1.0 { v } else { 1.0 }
+  for _ in 0..<16 {
+    guess = 0.5 * (guess + v / guess)
+  }
+  guess
+}
+
+///|
+fn build_netcdf_gaussian_latitude_values(
+  n : Int,
+  nj : Int,
+) -> Result[Array[Double], String] {
+  if n <= 0 || nj <= 0 || nj != 2 * n {
+    return Err("failed to determine Gaussian latitude axis for -netcdf")
+  }
+  if n == 32 && nj == 64 {
+    return Ok([
+      netcdf_mercator_uint64_from_hi_lo(0xc055f748, 0x7aed7704).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc055462d, 0x7f888049).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0549406, 0xc4076aa8).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc053e1a3, 0x89c008a3).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0532f29, 0x5d46e758).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0527ca4, 0x1699b667).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc051ca18, 0x9be4a954).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0511789, 0x50ea86fe).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc05064f7, 0x83655c88).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04f64c7, 0xf1997f1f).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04dff9e, 0x5adbb656).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04c9a72, 0xe6e2c670).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04b3546, 0x06ac9352).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc049d018, 0x0a82eecf).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0486ae9, 0x2d0d29b1).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04705b9, 0x9a2cebc5).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc045a089, 0x73674044).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0443b58, 0xd2d0ed68).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc042d627, 0xcd0c0369).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc04170f6, 0x72ab252f).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0400bc4, 0xd12e9433).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc03d4d25, 0xe777ce50).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc03a82c1, 0xc74b94c6).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc037b85d, 0x51a3f6a0).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc034edf8, 0x940e3c6c).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0322393, 0x9a522bbb).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc02eb25c, 0xdda2309a).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc0291d92, 0x35a41e9e).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc02388c7, 0x4d80087b).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc01be7f8, 0x69769fc2).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xc010be61, 0xf3c6cf39).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0xbff6532d, 0x56dda563).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x3ff6532d, 0x56dda563).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4010be61, 0xf3c6cf39).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x401be7f8, 0x69769fc2).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x402388c7, 0x4d80087b).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40291d92, 0x35a41e9e).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x402eb25c, 0xdda2309a).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40322393, 0x9a522bbb).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4034edf8, 0x940e3c6c).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4037b85d, 0x51a3f6a0).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x403a82c1, 0xc74b94c6).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x403d4d25, 0xe777ce50).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40400bc4, 0xd12e9433).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404170f6, 0x72ab252f).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4042d627, 0xcd0c0369).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40443b58, 0xd2d0ed68).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4045a089, 0x73674044).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404705b9, 0x9a2cebc5).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40486ae9, 0x2d0d29b1).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4049d018, 0x0a82eecf).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404b3546, 0x06ac9352).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404c9a72, 0xe6e2c670).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404dff9e, 0x5adbb656).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x404f64c7, 0xf1997f1f).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x405064f7, 0x83655c88).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40511789, 0x50ea86fe).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4051ca18, 0x9be4a954).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40527ca4, 0x1699b667).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40532f29, 0x5d46e758).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4053e1a3, 0x89c008a3).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x40549406, 0xc4076aa8).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4055462d, 0x7f888049).reinterpret_as_double(),
+      netcdf_mercator_uint64_from_hi_lo(0x4055f748, 0x7aed7704).reinterpret_as_double(),
+    ])
+  }
+  let pi = 3.14159265358979
+  let c = (1.0 - 2.0 / pi * (2.0 / pi)) * 0.25
+  let eps = 1.0e-6
+  let jz = 50
+  let bz = [
+    2.4048255577, 5.5200781103, 8.6537279129, 11.7915344391, 14.9309177086, 18.0710639679,
+    21.2116366299, 24.3524715308, 27.4934791320, 30.6346064684, 33.7758202136, 36.9170983537,
+    40.0584257646, 43.1997917132, 46.3411883717, 49.4826098974, 52.6240518411, 55.7655107550,
+    58.9069839261, 62.0484691902, 65.1899648002, 68.3314693299, 71.4729816036, 74.6145006437,
+    77.7560256304, 80.8975558711, 84.0390907769, 87.1806298436, 90.3221726372, 93.4637187819,
+    96.6052679510, 99.7468198587, 102.888374254, 106.029930916, 109.171489649, 112.313050280,
+    115.454612653, 118.596176630, 121.737742088, 124.879308913, 128.020877005, 131.162446275,
+    134.304016638, 137.445588020, 140.587160352, 143.728733573, 146.870307625, 150.011882457,
+    153.153458019, 156.295034268,
+  ]
+  let jmax = nj
+  let jh = jmax / 2
+  let jhe = (jmax + 1) / 2
+  let r = 1.0 /
+    netcdf_sqrt_nonnegative(
+      (jmax.to_double() + 0.5) * (jmax.to_double() + 0.5) + c,
+    )
+  let slat : Array[Double] = Array::make(jmax, 0.0)
+  for j in 0..<Int::min(jh, jz) {
+    slat[j] = @math.cos(bz[j] * r)
+  }
+  for j in jz..<jh {
+    slat[j] = @math.cos((bz[jz - 1] + (j - (jz - 1)).to_double() * pi) * r)
+  }
+  let pkm1 : Array[Double] = Array::make(jh, 0.0)
+  let pkm2 : Array[Double] = Array::make(jh, 0.0)
+  let pk : Array[Double] = Array::make(jh, 0.0)
+  let mut spmax = 1.0
+  while spmax > eps {
+    spmax = 0.0
+    for j in 0..<jh {
+      pkm1[j] = 1.0
+      pk[j] = slat[j]
+    }
+    for order in 2..<=jmax {
+      for j in 0..<jh {
+        pkm2[j] = pkm1[j]
+        pkm1[j] = pk[j]
+        let numerator = (2 * order - 1).to_double() * slat[j] * pkm1[j] -
+          (order - 1).to_double() * pkm2[j]
+        pk[j] = numerator / order.to_double()
+      }
+    }
+    for j in 0..<jh {
+      let numerator = pk[j] * (1.0 - slat[j] * slat[j])
+      let denominator = jmax.to_double() * (pkm1[j] - slat[j] * pk[j])
+      let sp = numerator / denominator
+      slat[j] -= sp
+      if abs_double(sp) > spmax {
+        spmax = abs_double(sp)
+      }
+    }
+  }
+  for j in 0..<jh {
+    slat[jmax - 1 - j] = -slat[j]
+  }
+  if jhe > jh {
+    slat[jhe - 1] = 0.0
+  }
+  let values : Array[Double] = []
+  let dpr = 180.0 / pi
+  for index in 0..<slat.length() {
+    values.push(dpr * @math.asin(slat[slat.length() - 1 - index]))
+  }
+  Ok(values)
+}
+
+///|
+fn build_netcdf_gaussian_longitude_values(
+  ni : Int,
+  lo1_microdeg : Int,
+  di_microdeg : Int,
+) -> Result[Array[Double], String] {
+  if ni <= 0 {
+    return Err("failed to determine Gaussian longitude axis for -netcdf")
+  }
+  let values : Array[Double] = []
+  let units = 0.000001
+  let mut axis_lon0 = lo1_microdeg.to_double() * units
+  if axis_lon0 >= 180.0 {
+    axis_lon0 -= 360.0
+  }
+  let axis_dx = di_microdeg.to_double() * units
+  for ix in 0..<ni {
+    values.push(netcdf_fma(ix.to_double(), axis_dx, axis_lon0))
+  }
+  Ok(values)
+}
+
+///|
 fn netcdf_mercator_projected_y(latitude_deg : Double) -> Double {
   let deg_to_rad = 0.017453292519943295769
   @math.ln(@math.tan(0.5 * (latitude_deg + 90.0) * deg_to_rad))
@@ -2141,6 +2330,31 @@ fn build_netcdf_grid_info(
         longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
       })
     }
+    @section3.GridTemplate340(grid) => {
+      let latitude_values = match
+        build_netcdf_gaussian_latitude_values(grid.n, grid.nj) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      let longitude_values = match
+        build_netcdf_gaussian_longitude_values(grid.ni, grid.lo1, grid.di) {
+        Ok(v) => v
+        Err(error) => return Err(error)
+      }
+      Ok({
+        template_id: 40,
+        ni: grid.ni,
+        nj: grid.nj,
+        scanning_mode: grid.scanning_mode,
+        uses_projected_xy: false,
+        x_bytes: Bytes::new(0),
+        y_bytes: Bytes::new(0),
+        x_grid_spacing_m: 0.0,
+        y_grid_spacing_m: 0.0,
+        latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
+        longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
+      })
+    }
     _ => Err(netcdf_supported_grid_error())
   }
 }
@@ -2165,6 +2379,93 @@ fn build_netcdf_double_array_bytes(values : Array[Double]) -> Bytes {
 }
 
 ///|
+fn build_reduced_gaussian_netcdf_record(
+  message : @lib.Grib2MessageContext,
+  submessage : @lib.Grib2SubmessageFrame,
+  meta : @lib.Grib2RecordMeta,
+) -> Result[NetcdfResolvedRecord, String] {
+  let regularized_bytes = match
+    build_reduced_gaussian_submessage_bytes(message, submessage, meta, "linear") {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let regularized_context = match @lib.parse_grib2_file(regularized_bytes) {
+    Ok(v) => v
+    Err(error) =>
+      return Err(
+        "failed to parse reduced Gaussian regularized bytes for -netcdf: " +
+        error.to_string(),
+      )
+  }
+  if regularized_context.messages.length() != 1 ||
+    regularized_context.messages[0].submessages.length() != 1 {
+    return Err(
+      "internal: reduced Gaussian regularization did not yield one record",
+    )
+  }
+  let regularized_meta = @lib.decode_records(regularized_context)[0]
+  let regularized_message = regularized_context.messages[0]
+  let regularized_submessage = regularized_message.submessages[0]
+  let grid_info = match
+    build_netcdf_grid_info(
+      regularized_meta,
+      section_frame_bytes(regularized_message, regularized_submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let unpacked = match
+    @lib.unpack_submessage_data(regularized_message, regularized_submessage) {
+    Ok(v) => v
+    Err(_) =>
+      return Err(
+        "failed to unpack reduced Gaussian regularized record " +
+        meta.record_index.to_string() +
+        " (-netcdf)",
+      )
+  }
+  Ok({ meta: regularized_meta, grid_info, values: unpacked.values })
+}
+
+///|
+fn resolve_netcdf_record(
+  context : @lib.Grib2FileContext,
+  record_ref : SelectedRecordRef,
+  metas : Array[@lib.Grib2RecordMeta],
+) -> Result[NetcdfResolvedRecord, String] {
+  let meta_index = record_ref.record_index - 1
+  if meta_index < 0 || meta_index >= metas.length() {
+    return Err(
+      "record not found for -netcdf: " + record_ref.record_index.to_string(),
+    )
+  }
+  let meta = metas[meta_index]
+  let message = context.messages[record_ref.message_index]
+  let submessage = message.submessages[record_ref.submessage_index]
+  if is_reduced_gaussian_template_id(meta.section3_template.id()) {
+    return build_reduced_gaussian_netcdf_record(message, submessage, meta)
+  }
+  let grid_info = match
+    build_netcdf_grid_info(
+      meta,
+      section_frame_bytes(message, submessage.section3),
+    ) {
+    Ok(v) => v
+    Err(error) => return Err(error)
+  }
+  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    Ok(v) => v
+    Err(_) =>
+      return Err(
+        "failed to unpack record " +
+        record_ref.record_index.to_string() +
+        " (-netcdf)",
+      )
+  }
+  Ok({ meta, grid_info, values: unpacked.values })
+}
+
+///|
 fn build_netcdf_float_grid_bytes(
   grid_info : NetcdfGridInfo,
   values : Array[Double],
@@ -2181,6 +2482,24 @@ fn build_netcdf_float_grid_bytes(
           wgrib2_nodata_value()
         },
       )
+    }
+    return Ok(Bytes::from_array(out))
+  }
+  if grid_info.template_id == 40 &&
+    grid_info.ni * grid_info.nj == values.length() {
+    for j_out in 0..<grid_info.nj {
+      let row_start = (grid_info.nj - 1 - j_out) * grid_info.ni
+      for i_out in 0..<grid_info.ni {
+        let value = values[row_start + i_out]
+        append_netcdf_float_bytes(
+          out,
+          if value == value {
+            value
+          } else {
+            wgrib2_nodata_value()
+          },
+        )
+      }
     }
     return Ok(Bytes::from_array(out))
   }
@@ -2736,27 +3055,16 @@ fn build_selected_records_netcdf_plan(
   }
   let metas = @lib.decode_records(context)
   if refs.length() == 1 {
-    let record_index = refs[0].record_index
-    let meta = metas[record_index - 1]
-    let message = context.messages[refs[0].message_index]
-    let submessage = message.submessages[refs[0].submessage_index]
-    let grid_info = match
-      build_netcdf_grid_info(
-        meta,
-        section_frame_bytes(message, submessage.section3),
-      ) {
+    let resolved = match resolve_netcdf_record(context, refs[0], metas) {
       Ok(v) => v
       Err(error) => return Err(error)
     }
-    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
-      Ok(v) => v
-      Err(_) =>
-        return Err(
-          "failed to unpack record " + record_index.to_string() + " (-netcdf)",
-        )
-    }
     let plan = match
-      build_single_record_netcdf_plan(meta, grid_info, unpacked.values) {
+      build_single_record_netcdf_plan(
+        resolved.meta,
+        resolved.grid_info,
+        resolved.values,
+      ) {
       Ok(v) => v
       Err(error) => return Err(error)
     }
@@ -2768,23 +3076,12 @@ fn build_selected_records_netcdf_plan(
   let mut first_grid_info : NetcdfGridInfo? = None
   let mut fatal_reason : NetcdfPlanFatalReason? = None
   for record_ref in refs {
-    let meta_index = record_ref.record_index - 1
-    if meta_index < 0 || meta_index >= metas.length() {
-      return Err(
-        "record not found for -netcdf: " + record_ref.record_index.to_string(),
-      )
-    }
-    let meta = metas[meta_index]
-    let message = context.messages[record_ref.message_index]
-    let submessage = message.submessages[record_ref.submessage_index]
-    let grid_info = match
-      build_netcdf_grid_info(
-        meta,
-        section_frame_bytes(message, submessage.section3),
-      ) {
+    let resolved = match resolve_netcdf_record(context, record_ref, metas) {
       Ok(v) => v
       Err(error) => return Err(error)
     }
+    let meta = resolved.meta
+    let grid_info = resolved.grid_info
     match first_grid_info {
       Some(reference_grid_info) =>
         if !netcdf_grid_infos_match(reference_grid_info, grid_info) {
@@ -2799,28 +3096,19 @@ fn build_selected_records_netcdf_plan(
       }
     }
     reference_observations.push(netcdf_reference_observation(meta))
-    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
-      Ok(v) => v
-      Err(_) =>
-        return Err(
-          "failed to unpack record " +
-          record_ref.record_index.to_string() +
-          " (-netcdf)",
-        )
-    }
     let expected_points = grid_info.ni * grid_info.nj
-    if unpacked.values.length() != expected_points {
+    if resolved.values.length() != expected_points {
       return Err(
         "-netcdf requires regular-grid value count: expected=" +
         expected_points.to_string() +
         ", got=" +
-        unpacked.values.length().to_string(),
+        resolved.values.length().to_string(),
       )
     }
     let variable_name = netcdf_variable_name(meta)
     let (long_name, units) = netcdf_long_name_units(meta)
     let normalized_values : Array[Double] = []
-    for value in unpacked.values {
+    for value in resolved.values {
       normalized_values.push(normalize_packed_scalar_output_value(meta, value))
     }
     let grid_bytes = match

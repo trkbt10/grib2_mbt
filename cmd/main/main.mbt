@@ -406,30 +406,10 @@ fn unavailable_out_action_lines(action : CliAction) -> Array[String]? {
 
 ///|
 fn netcdf_wgrib2_fatal_lines(
-  context : @lib.Grib2FileContext,
-  selected : Array[Int]?,
+  _context : @lib.Grib2FileContext,
+  _selected : Array[Int]?,
 ) -> Array[String]? {
-  let first_record_index = match selected {
-    Some(records) => if records.length() == 0 { None } else { Some(records[0]) }
-    None => Some(1)
-  }
-  let record_index = match first_record_index {
-    Some(v) => v
-    None => return None
-  }
-  let meta = match find_record_meta(context, record_index) {
-    Some(v) => v
-    None => return None
-  }
-  match meta.section3_template.id() {
-    40 =>
-      Some([
-        meta.record_id + ":" + meta.message_offset.to_string(),
-        "*** FATAL ERROR: netcdf: only works in we:sn order ***",
-        "",
-      ])
-    _ => None
-  }
+  None
 }
 
 ///|

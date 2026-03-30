@@ -2188,10 +2188,7 @@ test "netcdf_wgrib2_fatal_lines matches reduced Gaussian wgrib2 message" {
     Ok(v) => v
     Err(e) => fail("failed to parse reduced Gaussian fixture: " + e.to_string())
   }
-  inspect(
-    netcdf_wgrib2_fatal_lines(context, Some([1])),
-    content="Some([\"1:0\", \"*** FATAL ERROR: netcdf: only works in we:sn order ***\", \"\"])",
-  )
+  inspect(netcdf_wgrib2_fatal_lines(context, Some([1])), content="None")
 }
 
 ///|
@@ -6196,13 +6193,17 @@ test "run_cli supports bitmap254 regular lat/lon multi-record and append -netcdf
 }
 
 ///|
-test "run_cli reports reduced Gaussian netcdf unavailable like wgrib2" {
+test "run_cli supports reduced Gaussian netcdf via regularized grid" {
   let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
   let out = "target/cmd_main_reduced_gaussian_netcdf.nc"
   inspect(
     run_cli(["grib2_mbt", fixture, "-for_n", "1:1", "-netcdf", out]),
-    content="8",
+    content="0",
   )
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e => fail("failed to read reduced Gaussian netcdf output: " + e.to_string())
+  }
+  inspect(bytes.length() > 0, content="true")
 }
 
 ///|
