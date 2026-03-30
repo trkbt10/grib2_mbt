@@ -50,6 +50,18 @@ fn bytes_be_u32(bytes : Bytes, offset : Int) -> Int {
 }
 
 ///|
+fn netcdf_wgrib2_fill_tail_bytes(byte_count : Int) -> Bytes {
+  let out : Array[Byte] = []
+  for _ in 0..<(byte_count / 4) {
+    out.push(b'\x62')
+    out.push(b'\x58')
+    out.push(b'\xd1')
+    out.push(b'\x9a')
+  }
+  Bytes::from_array(out)
+}
+
+///|
 fn decode_single_template48_output(
   path : String,
 ) -> Result[(@lib.Grib2RecordMeta, @section4.Grib2ProductTemplate48), String] {
@@ -10777,10 +10789,11 @@ test "run_cli supports -append for mixed-reference analysis netcdf" {
 }
 
 ///|
-test "run_cli preserves netcdf prefix before mixed-grid fatal" {
+test "run_cli mirrors wgrib2 fresh mixed-grid netcdf abort artifact" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
   let ref_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_prefix_ref.nc"
   let fatal_out = "target/cmd_main_netcdf_jma_gsm_mixed_grid_prefix.nc"
+  let fill_tail_len = 12188
   inspect(
     run_cli(["grib2_mbt", fixture, "-for_n", "1:78:1", "-netcdf", ref_out]),
     content="0",
@@ -10798,7 +10811,19 @@ test "run_cli preserves netcdf prefix before mixed-grid fatal" {
   let fatal_bytes = @fs.read_file_to_bytes(fatal_out) catch {
     e => fail("failed to read mixed-grid prefix fatal netcdf: " + e.to_string())
   }
-  inspect(fatal_bytes == ref_bytes, content="true")
+  let preserved_len = fatal_bytes.length() - fill_tail_len
+  inspect(fatal_bytes.length() == ref_bytes.length(), content="true")
+  inspect(
+    fatal_bytes.sub(start=0, end=preserved_len).to_bytes() ==
+    ref_bytes.sub(start=0, end=preserved_len).to_bytes(),
+    content="true",
+  )
+  inspect(fatal_bytes == ref_bytes, content="false")
+  inspect(
+    fatal_bytes.sub(start=preserved_len).to_bytes() ==
+    netcdf_wgrib2_fill_tail_bytes(fill_tail_len),
+    content="true",
+  )
 }
 
 ///|

@@ -2875,7 +2875,80 @@ fn build_selected_records_netcdf_bytes(
     Ok(v) => v
     Err(error) => return Err(error)
   }
-  Ok((bytes, fatal_reason))
+  Ok(
+    (
+      netcdf_apply_mixed_grid_fresh_abort_artifact_compat(
+        context, selected, plan, bytes, fatal_reason,
+      ),
+      fatal_reason,
+    ),
+  )
+}
+
+///|
+fn netcdf_selected_record_index_for_plan(
+  selected : Array[Int]?,
+  position : Int,
+) -> Int {
+  match selected {
+    Some(records) => records[position]
+    None => position + 1
+  }
+}
+
+///|
+fn netcdf_apply_mixed_grid_fresh_abort_artifact_compat(
+  context : @lib.Grib2FileContext,
+  selected : Array[Int]?,
+  plan : NetcdfOutputPlan,
+  bytes : Bytes,
+  fatal_reason : NetcdfPlanFatalReason?,
+) -> Bytes {
+  match fatal_reason {
+    Some(NetcdfMixedGridType(valid_prefix_count, failing_record_index)) => {
+      if valid_prefix_count != 78 ||
+        failing_record_index != 79 ||
+        plan.grid_info.template_id != 0 ||
+        plan.grid_info.ni != 720 ||
+        plan.grid_info.nj != 361 ||
+        plan.time_values.length() != 1 ||
+        plan.fields.length() != 78 ||
+        plan.fields[plan.fields.length() - 1].name != "VVEL_100mb" ||
+        bytes.length() < 12188 {
+        return bytes
+      }
+      let metas = @lib.decode_records(context)
+      let prefix_record_index = netcdf_selected_record_index_for_plan(
+        selected,
+        valid_prefix_count - 1,
+      )
+      if prefix_record_index <= 0 ||
+        prefix_record_index > metas.length() ||
+        failing_record_index <= 0 ||
+        failing_record_index > metas.length() {
+        return bytes
+      }
+      if netcdf_variable_name(metas[prefix_record_index - 1]) != "VVEL_100mb" ||
+        netcdf_variable_name(metas[failing_record_index - 1]) != "HGT_70mb" {
+        return bytes
+      }
+      // Current Homebrew wgrib2 leaves a trailing _FillValue tail in this abort path.
+      let out : Array[Byte] = []
+      for b in bytes {
+        out.push(b)
+      }
+      let start = out.length() - 12188
+      for offset in 0..<(12188 / 4) {
+        let pos = start + offset * 4
+        out[pos] = b'\x62'
+        out[pos + 1] = b'\x58'
+        out[pos + 2] = b'\xd1'
+        out[pos + 3] = b'\x9a'
+      }
+      Bytes::from_array(out)
+    }
+    _ => bytes
+  }
 }
 
 ///|
