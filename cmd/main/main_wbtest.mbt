@@ -11275,6 +11275,23 @@ test "run_cli supports -reduced_gaussian_grid non-Gaussian empty output" {
 }
 
 ///|
+test "run_cli supports -reduced_gaussian_grid scan32 notice empty output" {
+  let fixture = "fixtures/grib2_derived/eccodes_reduced_gaussian_scan32_record1.grib2"
+  let out = "target/cmd_main_reduced_gaussian_grid_scan32_neighbor.grb2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1", "-reduced_gaussian_grid", out, "-1", "neighbor",
+  ]
+  inspect(run_cli(args), content="0")
+  let bytes = @fs.read_file_to_bytes(out) catch {
+    e =>
+      fail(
+        "failed to read reduced_gaussian_grid scan32 output: " + e.to_string(),
+      )
+  }
+  inspect(bytes.length(), content="0")
+}
+
+///|
 test "run_cli validates -reduced_gaussian_grid y argument" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
   let out = "target/cmd_main_reduced_gaussian_grid_bad_y.grb2"

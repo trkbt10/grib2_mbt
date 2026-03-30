@@ -83,6 +83,7 @@ forecast_source="fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
 forecast_realworld_source="fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
 forecast_realworld_source_fh18_33="fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
 forecast_realworld_source_fh36_39="fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin"
+reduced_gaussian_source="fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
 
 scan32_out="${OUT_DIR}/noaa_gfs_pgrb2_scan32_record1.grib2"
 scan48_out="${OUT_DIR}/noaa_gfs_pgrb2_scan48_record1.grib2"
@@ -90,6 +91,7 @@ scan32_uv_out="${OUT_DIR}/noaa_gfs_pgrb2_scan32_uv_records11_12.grib2"
 scan48_uv_out="${OUT_DIR}/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
 scan32_bitmap_out="${OUT_DIR}/noaa_gfs_pgrb2b_scan32_bitmap_record266.grib2"
 scan48_bitmap_out="${OUT_DIR}/noaa_gfs_pgrb2b_scan48_bitmap_record266.grib2"
+reduced_gaussian_scan32_out="${OUT_DIR}/eccodes_reduced_gaussian_scan32_record1.grib2"
 bitmap254_out="${OUT_DIR}/noaa_gfswave_global_bitmap254_records5_6.grib2"
 ncep_norm_out="${OUT_DIR}/noaa_gfswave_atlocn_0p16_ncep_norm_input.grib2"
 merge_fcst_out="${OUT_DIR}/noaa_gfswave_atlocn_0p16_merge_fcst_input.grib2"
@@ -202,6 +204,14 @@ if derived_group_enabled inventory; then
     -set_flag_table_3.4 48 \
     -rpn 2raw \
     -grib_out "${scan48_bitmap_out}" \
+    >/dev/null
+
+  echo "generating derived fixture: ${reduced_gaussian_scan32_out}"
+  "${WGRIB2_BIN}" "${reduced_gaussian_source}" \
+    -for_n 1:1 \
+    -set_grib_type simple \
+    -set_flag_table_3.4 32 \
+    -grib_out "${reduced_gaussian_scan32_out}" \
     >/dev/null
 
   echo "generating derived fixture: ${bitmap254_out}"
@@ -545,6 +555,7 @@ scan32_uv_sha="$(shasum -a 256 "${scan32_uv_out}" | awk '{print $1}')"
 scan48_uv_sha="$(shasum -a 256 "${scan48_uv_out}" | awk '{print $1}')"
 scan32_bitmap_sha="$(shasum -a 256 "${scan32_bitmap_out}" | awk '{print $1}')"
 scan48_bitmap_sha="$(shasum -a 256 "${scan48_bitmap_out}" | awk '{print $1}')"
+reduced_gaussian_scan32_sha="$(shasum -a 256 "${reduced_gaussian_scan32_out}" | awk '{print $1}')"
 bitmap254_sha="$(shasum -a 256 "${bitmap254_out}" | awk '{print $1}')"
 ncep_norm_sha="$(shasum -a 256 "${ncep_norm_out}" | awk '{print $1}')"
 merge_fcst_sha="$(shasum -a 256 "${merge_fcst_out}" | awk '{print $1}')"
@@ -610,6 +621,7 @@ scan32_uv_size="$(wc -c < "${scan32_uv_out}" | tr -d ' ')"
 scan48_uv_size="$(wc -c < "${scan48_uv_out}" | tr -d ' ')"
 scan32_bitmap_size="$(wc -c < "${scan32_bitmap_out}" | tr -d ' ')"
 scan48_bitmap_size="$(wc -c < "${scan48_bitmap_out}" | tr -d ' ')"
+reduced_gaussian_scan32_size="$(wc -c < "${reduced_gaussian_scan32_out}" | tr -d ' ')"
 ncep_norm_size="$(wc -c < "${ncep_norm_out}" | tr -d ' ')"
 merge_fcst_size="$(wc -c < "${merge_fcst_out}" | tr -d ' ')"
 unmerge_fcst_size="$(wc -c < "${unmerge_fcst_out}" | tr -d ' ')"
@@ -672,6 +684,7 @@ cat > "${OUT_DIR}/manifest.tsv" <<EOF
 file	size_bytes	sha256	source_fixture	source_command	notes
 noaa_gfs_pgrb2_scan32_record1.grib2	${scan32_size}	${scan32_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 1:1 -set_grib_type simple -set_flag_table_3.4 32 -rpn 2raw -grib_out ${scan32_out}	record 1 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j)
 noaa_gfs_pgrb2_scan48_record1.grib2	${scan48_size}	${scan48_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 1:1 -set_grib_type simple -set_flag_table_3.4 48 -rpn 2raw -grib_out ${scan48_out}	record 1 re-encoded with flag_table_3.4=48 (NS(W|E), consecutive_j + alternating_rows)
+eccodes_reduced_gaussian_scan32_record1.grib2	${reduced_gaussian_scan32_size}	${reduced_gaussian_scan32_sha}	${reduced_gaussian_source}	${WGRIB2_BIN} ${reduced_gaussian_source} -for_n 1:1 -set_grib_type simple -set_flag_table_3.4 32 -grib_out ${reduced_gaussian_scan32_out}	record 1 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j) for exact -reduced_gaussian_grid unsupported notice compare
 noaa_gfs_pgrb2_scan32_uv_records11_12.grib2	${scan32_uv_size}	${scan32_uv_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 11:12 -set_grib_type simple -set_flag_table_3.4 32 -rpn 2raw -grib_out ${scan32_uv_out}	records 11:12 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j) for exact -new_grid U/V compare
 noaa_gfs_pgrb2_scan48_uv_records11_12.grib2	${scan48_uv_size}	${scan48_uv_sha}	${scan_source}	${WGRIB2_BIN} ${scan_source} -for_n 11:12 -set_grib_type simple -set_flag_table_3.4 48 -rpn 2raw -grib_out ${scan48_uv_out}	records 11:12 re-encoded with flag_table_3.4=48 (NS(W|E), consecutive_j + alternating_rows) for exact -new_grid U/V notice compare
 noaa_gfs_pgrb2b_scan32_bitmap_record266.grib2	${scan32_bitmap_size}	${scan32_bitmap_sha}	fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2	${WGRIB2_BIN} fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2 -for_n 266:266 -set_grib_type simple -set_flag_table_3.4 32 -rpn 2raw -grib_out ${scan32_bitmap_out}	record 266 re-encoded with flag_table_3.4=32 (NS:WE, consecutive_j) for exact bitmap -new_grid/-cress_lola compare

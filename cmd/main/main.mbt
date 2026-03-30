@@ -432,7 +432,7 @@ fn netcdf_wgrib2_fatal_lines_for_reason(
       for i in 0..<valid_prefix_count {
         let record_index = netcdf_selected_record_index(selected, i)
         match find_record_meta(context, record_index) {
-          Some(meta) => lines.push(netcdf_wgrib2_default_inventory_line(meta))
+          Some(meta) => lines.push(wgrib2_default_inventory_line(meta))
           None => ()
         }
       }
@@ -450,7 +450,7 @@ fn netcdf_wgrib2_fatal_lines_for_reason(
 }
 
 ///|
-fn netcdf_wgrib2_default_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
+fn wgrib2_default_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
   meta.record_id +
   ":" +
   meta.message_offset.to_string() +
@@ -486,7 +486,7 @@ fn netcdf_wgrib2_notice_lines(
     1 =>
       Some([
         "netcdf: doesn't support yet grid_template 1",
-        netcdf_wgrib2_default_inventory_line(meta),
+        wgrib2_default_inventory_line(meta),
       ])
     _ => None
   }
@@ -5357,7 +5357,7 @@ fn normalize_reduced_gaussian_values_for_cli(
     return Err("failed to determine reduced Gaussian row count")
   }
   let scan = @lib.parse_scanning_mode(grid_info.scan_mode)
-  if scan.consecutive_j || scan.alternating_rows {
+  if !reduced_gaussian_scan_mode_supported(section3) {
     return Err(
       "-reduced_gaussian_grid currently requires consecutive-i Gaussian rows",
     )
@@ -5414,6 +5414,25 @@ fn reduced_gaussian_target_ni(row_counts : Array[Int], n : Int) -> Int {
   } else {
     max_count
   }
+}
+
+///|
+fn reduced_gaussian_scan_mode_supported(
+  section3 : @lib.Grib2Section3Decoded,
+) -> Bool {
+  let grid_info = @lib.get_section3_grid_info(section3.template)
+  let scan = @lib.parse_scanning_mode(grid_info.scan_mode)
+  !scan.consecutive_j && !scan.alternating_rows
+}
+
+///|
+fn reduced_gaussian_wgrib2_unsupported_scan_notice_lines(
+  meta : @lib.Grib2RecordMeta,
+) -> Array[String] {
+  [
+    "reduced_gaussian_grid: only WESN or WENS processed",
+    wgrib2_default_inventory_line(meta),
+  ]
 }
 
 ///|
@@ -5654,6 +5673,21 @@ fn write_reduced_gaussian_grid_output(
         }
         let meta = metas[meta_index]
         if is_reduced_gaussian_template_id(meta.section3_template.id()) {
+          let section3 = match
+            @lib.decode_submessage_section3(message, submessage) {
+            Ok(v) => v
+            Err(e) => return Err("failed to decode Section 3: \{e}")
+          }
+          if !reduced_gaussian_scan_mode_supported(section3) {
+            for
+              line in reduced_gaussian_wgrib2_unsupported_scan_notice_lines(
+                meta,
+              ) {
+              println(line)
+            }
+            record_index += 1
+            continue
+          }
           let bytes = match
             build_reduced_gaussian_submessage_bytes(
               message, submessage, meta, interp_method,
