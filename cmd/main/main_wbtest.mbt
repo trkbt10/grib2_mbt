@@ -3610,6 +3610,71 @@ test "run_cli supports -cress_lola regular lat/lon output" {
 }
 
 ///|
+test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+
+  let out = "target/cmd_main_cress_lola_jma_offgrid_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      out, "1:2",
+    ]),
+    content="0",
+  )
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid jma_gsm cress_lola output: " + e.to_string(),
+      )
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_ni, content="6")
+  inspect(meta.section3_nj, content="5")
+  inspect(meta.section3_scanning_mode, content="64")
+
+  let neg_out = "target/cmd_main_cress_lola_jma_offgrid_neg_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      neg_out, "-50",
+    ]),
+    content="0",
+  )
+  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse negative off-grid jma_gsm cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let neg_meta = @lib.decode_records(neg_context)[0]
+  inspect(neg_meta.section3_ni, content="6")
+  inspect(neg_meta.section3_nj, content="5")
+
+  let negpos_out = "target/cmd_main_cress_lola_jma_offgrid_neg_pos_test.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-cress_lola", "0.25:6:0.5", "-89:5:0.5",
+      negpos_out, "-1:2",
+    ]),
+    content="0",
+  )
+  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse mixed-sign off-grid jma_gsm cress_lola output: " +
+        e.to_string(),
+      )
+  }
+  let negpos_meta = @lib.decode_records(negpos_context)[0]
+  inspect(negpos_meta.section3_ni, content="6")
+  inspect(negpos_meta.section3_nj, content="5")
+}
+
+///|
 test "run_cli supports -cress_lola off-grid output on pgrb2" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let out = "target/cmd_main_cress_lola_pgrb2_offgrid_test.grib2"
@@ -4960,6 +5025,27 @@ test "run_cli supports -new_grid latlon identity output" {
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="360")
   inspect(meta.section3_nj, content="181")
+}
+
+///|
+test "run_cli supports -new_grid latlon bilinear scalar output on jma_gsm off-grid target" {
+  let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
+  let out = "target/cmd_main_new_grid_bilinear_jma_offgrid_out.grib2"
+  let args = [
+    "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid", "latlon", "0.5:8:1", "-89.5:8:1",
+    out,
+  ]
+  inspect(run_cli(args), content="0")
+  let context = match @lib.parse_with_io(native_read_bytes, out) {
+    Ok(v) => v
+    Err(e) =>
+      fail("failed to parse off-grid jma_gsm new_grid output: " + e.to_string())
+  }
+  let meta = @lib.decode_records(context)[0]
+  inspect(meta.section3_template.id(), content="0")
+  inspect(meta.section3_ni, content="8")
+  inspect(meta.section3_nj, content="8")
+  inspect(meta.section3_scanning_mode, content="64")
 }
 
 ///|
