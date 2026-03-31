@@ -5046,6 +5046,29 @@ test "run_cli supports -new_grid latlon bilinear scalar output on jma_gsm off-gr
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
   inspect(meta.section3_scanning_mode, content="64")
+
+  let neighbor_out = "target/cmd_main_new_grid_neighbor_jma_offgrid_out.grib2"
+  inspect(
+    run_cli([
+      "grib2_mbt", fixture, "-for_n", "1:1:1", "-new_grid_interpolation", "neighbor",
+      "-new_grid", "latlon", "0.5:8:1", "-89.5:8:1", neighbor_out,
+    ]),
+    content="0",
+  )
+  let neighbor_context = match
+    @lib.parse_with_io(native_read_bytes, neighbor_out) {
+    Ok(v) => v
+    Err(e) =>
+      fail(
+        "failed to parse off-grid neighbor jma_gsm new_grid output: " +
+        e.to_string(),
+      )
+  }
+  let neighbor_meta = @lib.decode_records(neighbor_context)[0]
+  inspect(neighbor_meta.section3_template.id(), content="0")
+  inspect(neighbor_meta.section3_ni, content="8")
+  inspect(neighbor_meta.section3_nj, content="8")
+  inspect(neighbor_meta.section3_scanning_mode, content="64")
 }
 
 ///|
