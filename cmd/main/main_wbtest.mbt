@@ -491,12 +491,12 @@ fn assert_template48_time_ranges(
 ///|
 fn assert_realworld_full_ncep_norm_case(
   label : String,
+  source_fixture : String,
   input : String,
   out : String,
   record_indices : Array[Int],
   min_tolerance : Double?,
 ) -> Unit raise {
-  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
   let specs = full_realworld_pairwise_ncep_norm_specs()
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
@@ -576,12 +576,12 @@ fn assert_realworld_full_ncep_norm_case(
 ///|
 fn assert_realworld_full_merge_fcst_case(
   label : String,
+  source_fixture : String,
   input : String,
   out : String,
   record_indices : Array[Int],
   min_tolerance : Double?,
 ) -> Unit raise {
-  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
   let specs = full_realworld_pairwise_merge_fcst_specs()
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
@@ -635,11 +635,11 @@ fn assert_realworld_full_merge_fcst_case(
 ///|
 fn assert_realworld_full_unmerge_fcst_case(
   label : String,
+  source_fixture : String,
   input : String,
   out : String,
   record_indices : Array[Int],
 ) -> Unit raise {
-  let source_fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin"
   let specs = full_realworld_pairwise_unmerge_fcst_specs()
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
@@ -12227,6 +12227,7 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (VGRD 
 test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-15 full)" {
   assert_realworld_full_ncep_norm_case(
     "realworld fh00-15 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_ncep_norm_realworld_full_input.grb2",
     "target/cmd_main_ncep_norm_realworld_full_test.grb2",
     [4, 96, 188, 280, 372, 464],
@@ -12234,6 +12235,7 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-
   )
   assert_realworld_full_ncep_norm_case(
     "realworld fh00-15 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_ncep_norm_realworld_ugrd_full_input.grb2",
     "target/cmd_main_ncep_norm_realworld_ugrd_full_test.grb2",
     [2, 94, 186, 278, 370, 462],
@@ -12241,8 +12243,37 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH00-
   )
   assert_realworld_full_ncep_norm_case(
     "realworld fh00-15 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_ncep_norm_realworld_vgrd_full_input.grb2",
     "target/cmd_main_ncep_norm_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+    Some(0.02),
+  )
+}
+
+///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-33 full)" {
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh18-33 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+    None,
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh18-33 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_ugrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+    Some(0.02),
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh18-33 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_vgrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh18_33_vgrd_full_test.grb2",
     [3, 95, 187, 279, 371, 463],
     Some(0.02),
   )
@@ -13470,6 +13501,7 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (VGRD
 test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00-15 full)" {
   assert_realworld_full_merge_fcst_case(
     "realworld fh00-15 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_merge_fcst_realworld_full_input.grb2",
     "target/cmd_main_merge_fcst_realworld_full_test.grb2",
     [4, 96, 188, 280, 372, 464],
@@ -13477,6 +13509,7 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00
   )
   assert_realworld_full_merge_fcst_case(
     "realworld fh00-15 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_merge_fcst_realworld_ugrd_full_input.grb2",
     "target/cmd_main_merge_fcst_realworld_ugrd_full_test.grb2",
     [2, 94, 186, 278, 370, 462],
@@ -13484,8 +13517,37 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH00
   )
   assert_realworld_full_merge_fcst_case(
     "realworld fh00-15 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_merge_fcst_realworld_vgrd_full_input.grb2",
     "target/cmd_main_merge_fcst_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+    Some(0.02),
+  )
+}
+
+///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18-33 full)" {
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh18-33 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+    None,
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh18-33 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_ugrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+    Some(0.02),
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh18-33 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_vgrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh18_33_vgrd_full_test.grb2",
     [3, 95, 187, 279, 371, 463],
     Some(0.02),
   )
@@ -14438,20 +14500,48 @@ test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (VG
 test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH00-15 full)" {
   assert_realworld_full_unmerge_fcst_case(
     "realworld fh00-15 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_unmerge_fcst_realworld_full_input.grb2",
     "target/cmd_main_unmerge_fcst_realworld_full_test.grb2",
     [4, 96, 188, 280, 372, 464],
   )
   assert_realworld_full_unmerge_fcst_case(
     "realworld fh00-15 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_unmerge_fcst_realworld_ugrd_full_input.grb2",
     "target/cmd_main_unmerge_fcst_realworld_ugrd_full_test.grb2",
     [2, 94, 186, 278, 370, 462],
   )
   assert_realworld_full_unmerge_fcst_case(
     "realworld fh00-15 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH00-15_grib2.bin",
     "target/cmd_main_unmerge_fcst_realworld_vgrd_full_input.grb2",
     "target/cmd_main_unmerge_fcst_realworld_vgrd_full_test.grb2",
+    [3, 95, 187, 279, 371, 463],
+  )
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH18-33 full)" {
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh18-33 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_full_test.grb2",
+    [4, 96, 188, 280, 372, 464],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh18-33 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_ugrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_ugrd_full_test.grb2",
+    [2, 94, 186, 278, 370, 462],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh18-33 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_vgrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh18_33_vgrd_full_test.grb2",
     [3, 95, 187, 279, 371, 463],
   )
 }
