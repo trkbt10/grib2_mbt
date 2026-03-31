@@ -430,45 +430,56 @@ fn write_forecast_input_with_values(
 }
 
 ///|
-fn full_realworld_pairwise_ncep_norm_specs() -> Array[
-  SyntheticForecastInputSpec,
-] {
-  [
-    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
-    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 6, duration: 6, time_increment_length: 3, scale: 1.0 },
-    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 12, duration: 6, time_increment_length: 3, scale: 1.0 },
-  ]
+fn full_realworld_pairwise_ncep_norm_specs(
+  pair_count : Int,
+) -> Array[SyntheticForecastInputSpec] {
+  let specs : Array[SyntheticForecastInputSpec] = []
+  for pair in 0..<pair_count {
+    let start_time = pair * 6
+    specs.push({ start_time, duration: 3, time_increment_length: 3, scale: 1.0 })
+    specs.push({ start_time, duration: 6, time_increment_length: 3, scale: 1.0 })
+  }
+  specs
 }
 
 ///|
-fn full_realworld_pairwise_merge_fcst_specs() -> Array[
-  SyntheticForecastInputSpec,
-] {
-  [
-    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 3, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 6, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 9, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 12, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 15, duration: 3, time_increment_length: 3, scale: 1.0 },
-  ]
+fn full_realworld_pairwise_merge_fcst_specs(
+  pair_count : Int,
+) -> Array[SyntheticForecastInputSpec] {
+  let specs : Array[SyntheticForecastInputSpec] = []
+  for pair in 0..<pair_count {
+    let start_time = pair * 6
+    specs.push({ start_time, duration: 3, time_increment_length: 3, scale: 1.0 })
+    specs.push({
+      start_time: start_time + 3,
+      duration: 3,
+      time_increment_length: 3,
+      scale: 1.0,
+    })
+  }
+  specs
 }
 
 ///|
-fn full_realworld_pairwise_unmerge_fcst_specs() -> Array[
-  SyntheticForecastInputSpec,
-] {
-  [
-    { start_time: 0, duration: 3, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 6, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 9, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 12, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 15, time_increment_length: 3, scale: 1.0 },
-    { start_time: 0, duration: 18, time_increment_length: 3, scale: 1.0 },
-  ]
+fn full_realworld_pairwise_unmerge_fcst_specs(
+  pair_count : Int,
+) -> Array[SyntheticForecastInputSpec] {
+  let specs : Array[SyntheticForecastInputSpec] = []
+  for pair in 0..<pair_count {
+    specs.push({
+      start_time: 0,
+      duration: pair * 6 + 3,
+      time_increment_length: 3,
+      scale: 1.0,
+    })
+    specs.push({
+      start_time: 0,
+      duration: pair * 6 + 6,
+      time_increment_length: 3,
+      scale: 1.0,
+    })
+  }
+  specs
 }
 
 ///|
@@ -489,6 +500,26 @@ fn assert_template48_time_ranges(
 }
 
 ///|
+fn pairwise_split_time_ranges_string(pair_count : Int) -> String {
+  let parts : Array[String] = []
+  for pair in 0..<pair_count {
+    let forecast_time = pair * 6
+    parts.push(forecast_time.to_string() + "/3")
+    parts.push((forecast_time + 3).to_string() + "/3")
+  }
+  parts.to_string()
+}
+
+///|
+fn pairwise_merge_time_ranges_string(pair_count : Int) -> String {
+  let parts : Array[String] = []
+  for pair in 0..<pair_count {
+    parts.push((pair * 6).to_string() + "/6")
+  }
+  parts.to_string()
+}
+
+///|
 fn assert_realworld_full_ncep_norm_case(
   label : String,
   source_fixture : String,
@@ -497,12 +528,15 @@ fn assert_realworld_full_ncep_norm_case(
   record_indices : Array[Int],
   min_tolerance : Double?,
 ) -> Unit raise {
-  let specs = full_realworld_pairwise_ncep_norm_specs()
+  let specs = full_realworld_pairwise_ncep_norm_specs(
+    record_indices.length() / 2,
+  )
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
     Ok(v) => v
     Err(e) => fail(e)
   }
+  let pair_count = record_indices.length() / 2
   match
     write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
     Ok(_) => ()
@@ -514,15 +548,17 @@ fn assert_realworld_full_ncep_norm_case(
     Ok(v) => v
     Err(e) => fail("failed to decode " + label + " ncep_norm output: " + e)
   }
-  inspect(out_values.length(), content="6")
+  inspect(out_values.length(), content=record_indices.length().to_string())
   assert_template48_time_ranges(
-    out_templates, "[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+    out_templates,
+    pairwise_split_time_ranges_string(pair_count),
   )
-  for pair in [0, 2, 4] {
+  for pair in 0..<pair_count {
+    let record_base = pair * 2
     let residual = forecast_residual_values(
       Ave,
-      source_fields[pair],
-      source_fields[pair + 1],
+      source_fields[record_base],
+      source_fields[record_base + 1],
       3,
       6,
     )
@@ -530,9 +566,9 @@ fn assert_realworld_full_ncep_norm_case(
       Some(tolerance) => {
         match
           expect_forecast_values_close_with_min_tolerance(
-            label + " ncep_norm source record " + (pair + 1).to_string(),
-            out_values[pair],
-            source_fields[pair],
+            label + " ncep_norm source record " + (record_base + 1).to_string(),
+            out_values[record_base],
+            source_fields[record_base],
             tolerance,
           ) {
           Ok(_) => ()
@@ -540,8 +576,10 @@ fn assert_realworld_full_ncep_norm_case(
         }
         match
           expect_forecast_values_close_with_min_tolerance(
-            label + " ncep_norm residual record " + (pair + 2).to_string(),
-            out_values[pair + 1],
+            label +
+            " ncep_norm residual record " +
+            (record_base + 2).to_string(),
+            out_values[record_base + 1],
             residual,
             tolerance,
           ) {
@@ -552,17 +590,19 @@ fn assert_realworld_full_ncep_norm_case(
       None => {
         match
           expect_forecast_values_close(
-            label + " ncep_norm source record " + (pair + 1).to_string(),
-            out_values[pair],
-            source_fields[pair],
+            label + " ncep_norm source record " + (record_base + 1).to_string(),
+            out_values[record_base],
+            source_fields[record_base],
           ) {
           Ok(_) => ()
           Err(e) => fail(e)
         }
         match
           expect_forecast_values_close(
-            label + " ncep_norm residual record " + (pair + 2).to_string(),
-            out_values[pair + 1],
+            label +
+            " ncep_norm residual record " +
+            (record_base + 2).to_string(),
+            out_values[record_base + 1],
             residual,
           ) {
           Ok(_) => ()
@@ -582,12 +622,15 @@ fn assert_realworld_full_merge_fcst_case(
   record_indices : Array[Int],
   min_tolerance : Double?,
 ) -> Unit raise {
-  let specs = full_realworld_pairwise_merge_fcst_specs()
+  let specs = full_realworld_pairwise_merge_fcst_specs(
+    record_indices.length() / 2,
+  )
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
     Ok(v) => v
     Err(e) => fail(e)
   }
+  let pair_count = record_indices.length() / 2
   match
     write_forecast_input_with_values(input, source, Ave, specs, source_fields) {
     Ok(_) => ()
@@ -599,19 +642,27 @@ fn assert_realworld_full_merge_fcst_case(
     Ok(v) => v
     Err(e) => fail("failed to decode " + label + " merge_fcst output: " + e)
   }
-  inspect(out_values.length(), content="3")
-  assert_template48_time_ranges(out_templates, "[\"0/6\", \"6/6\", \"12/6\"]")
-  for pair in [0, 2, 4] {
+  inspect(out_values.length(), content=pair_count.to_string())
+  assert_template48_time_ranges(
+    out_templates,
+    pairwise_merge_time_ranges_string(pair_count),
+  )
+  for pair in 0..<pair_count {
+    let record_base = pair * 2
     let merged = forecast_scale_average_values(
-      forecast_merge_values(Ave, source_fields[pair], source_fields[pair + 1]),
+      forecast_merge_values(
+        Ave,
+        source_fields[record_base],
+        source_fields[record_base + 1],
+      ),
       0.5,
     )
     match min_tolerance {
       Some(tolerance) =>
         match
           expect_forecast_values_close_with_min_tolerance(
-            label + " merge_fcst record " + (pair / 2 + 1).to_string(),
-            out_values[pair / 2],
+            label + " merge_fcst record " + (pair + 1).to_string(),
+            out_values[pair],
             merged,
             tolerance,
           ) {
@@ -621,8 +672,8 @@ fn assert_realworld_full_merge_fcst_case(
       None =>
         match
           expect_forecast_values_close(
-            label + " merge_fcst record " + (pair / 2 + 1).to_string(),
-            out_values[pair / 2],
+            label + " merge_fcst record " + (pair + 1).to_string(),
+            out_values[pair],
             merged,
           ) {
           Ok(_) => ()
@@ -640,7 +691,9 @@ fn assert_realworld_full_unmerge_fcst_case(
   out : String,
   record_indices : Array[Int],
 ) -> Unit raise {
-  let specs = full_realworld_pairwise_unmerge_fcst_specs()
+  let specs = full_realworld_pairwise_unmerge_fcst_specs(
+    record_indices.length() / 2,
+  )
   let (source, source_fields) = match
     load_real_forecast_test_values(source_fixture, record_indices) {
     Ok(v) => v
@@ -669,9 +722,11 @@ fn assert_realworld_full_unmerge_fcst_case(
     Ok(v) => v
     Err(e) => fail("failed to decode " + label + " unmerge_fcst output: " + e)
   }
-  inspect(out_values.length(), content="6")
+  let pair_count = record_indices.length() / 2
+  inspect(out_values.length(), content=record_indices.length().to_string())
   assert_template48_time_ranges(
-    out_templates, "[\"0/3\", \"3/3\", \"6/3\", \"9/3\", \"12/3\", \"15/3\"]",
+    out_templates,
+    pairwise_split_time_ranges_string(pair_count),
   )
   match
     expect_forecast_values_close(
@@ -12542,6 +12597,34 @@ test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH18-
 }
 
 ///|
+test "run_cli supports -ncep_norm on real-world-derived PDT4.8 ave series (FH36-39 full)" {
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh36-39 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_full_test.grb2",
+    [4, 96],
+    None,
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh36-39 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_ugrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_ugrd_full_test.grb2",
+    [2, 94],
+    Some(0.02),
+  )
+  assert_realworld_full_ncep_norm_case(
+    "realworld fh36-39 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_vgrd_full_input.grb2",
+    "target/cmd_main_ncep_norm_realworld_fh36_39_vgrd_full_test.grb2",
+    [3, 95],
+    Some(0.02),
+  )
+}
+
+///|
 test "run_cli keeps varying-dt ncep_norm series as pass-through" {
   let input = "target/cmd_main_ncep_norm_passthrough_input.grb2"
   let out = "target/cmd_main_ncep_norm_passthrough_test.grb2"
@@ -13816,6 +13899,34 @@ test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH18
 }
 
 ///|
+test "run_cli supports -merge_fcst on real-world-derived PDT4.8 ave series (FH36-39 full)" {
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh36-39 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_full_test.grb2",
+    [4, 96],
+    None,
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh36-39 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_ugrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_ugrd_full_test.grb2",
+    [2, 94],
+    Some(0.02),
+  )
+  assert_realworld_full_merge_fcst_case(
+    "realworld fh36-39 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_vgrd_full_input.grb2",
+    "target/cmd_main_merge_fcst_realworld_fh36_39_vgrd_full_test.grb2",
+    [3, 95],
+    Some(0.02),
+  )
+}
+
+///|
 test "run_cli supports -unmerge_fcst on synthetic PDT4.8 acc series" {
   let input = "target/cmd_main_unmerge_fcst_input.grb2"
   let out = "target/cmd_main_unmerge_fcst_test.grb2"
@@ -14805,6 +14916,31 @@ test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH
     "target/cmd_main_unmerge_fcst_realworld_fh18_33_vgrd_full_input.grb2",
     "target/cmd_main_unmerge_fcst_realworld_fh18_33_vgrd_full_test.grb2",
     [3, 95, 187, 279, 371, 463],
+  )
+}
+
+///|
+test "run_cli supports -unmerge_fcst on real-world-derived PDT4.8 acc series (FH36-39 full)" {
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh36-39 full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_full_test.grb2",
+    [4, 96],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh36-39 ugrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_ugrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_ugrd_full_test.grb2",
+    [2, 94],
+  )
+  assert_realworld_full_unmerge_fcst_case(
+    "realworld fh36-39 vgrd full",
+    "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH36-39_grib2.bin",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_vgrd_full_input.grb2",
+    "target/cmd_main_unmerge_fcst_realworld_fh36_39_vgrd_full_test.grb2",
+    [3, 95],
   )
 }
 
