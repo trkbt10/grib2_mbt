@@ -8,17 +8,8 @@ fn typed_encode_template_50(
   typed_push_u16_be(out, template.decimal_scale_factor)
   out.push(template.bits_per_value.to_byte())
   out.push(template.original_field_value_type.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
-}
-
-///|
-fn typed_push_u32_list(out : Array[Byte], values : Array[Int]) -> Unit {
-  for value in values {
-    typed_push_u32_be(out, value)
-  }
 }
 
 ///|
@@ -43,9 +34,7 @@ fn typed_encode_template_51(
   out.push(template.second_dimension_physical_significance.to_byte())
   typed_push_u32_list(out, template.first_dimension_values_ieee)
   typed_push_u32_list(out, template.second_dimension_values_ieee)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -70,9 +59,7 @@ fn typed_encode_template_52(
   out.push(template.length_increment_group_lengths.to_byte())
   typed_push_u32_be(out, template.true_length_last_group)
   out.push(template.bits_used_for_scaled_group_lengths.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -99,9 +86,7 @@ fn typed_encode_template_53(
   out.push(template.bits_used_for_scaled_group_lengths.to_byte())
   out.push(template.order_of_spatial_difference.to_byte())
   out.push(template.extra_descriptors_octet_count.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -110,9 +95,7 @@ fn typed_encode_template_54(
   template : Grib2DataRepresentationTemplate54,
 ) -> Bytes {
   let out : Array[Byte] = [template.precision.to_byte()]
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -128,9 +111,7 @@ fn typed_encode_template_540(
   out.push(template.original_field_value_type.to_byte())
   out.push(template.compression_type.to_byte())
   out.push(template.target_compression_ratio.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -144,9 +125,7 @@ fn typed_encode_template_541(
   typed_push_u16_be(out, template.decimal_scale_factor)
   out.push(template.bits_per_value.to_byte())
   out.push(template.original_field_value_type.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -163,9 +142,7 @@ fn typed_encode_template_542(
   out.push(template.ccsds_compression_options_mask.to_byte())
   out.push(template.block_size.to_byte())
   typed_push_u16_be(out, template.reference_sample_interval)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -179,9 +156,7 @@ fn typed_encode_template_550(
   typed_push_u16_be(out, template.decimal_scale_factor)
   out.push(template.bits_per_value.to_byte())
   typed_push_u32_be(out, template.real_part_of_00_coefficient_ieee)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -200,9 +175,7 @@ fn typed_encode_template_551(
   typed_push_u16_be(out, template.ms)
   typed_push_u32_be(out, template.ts)
   out.push(template.unpacked_subset_precision.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -222,9 +195,7 @@ fn typed_encode_template_553(
   typed_push_u16_be(out, template.ms)
   typed_push_u32_be(out, template.s)
   out.push(template.unpacked_subset_precision.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -238,17 +209,8 @@ fn typed_encode_template_561(
   typed_push_u16_be(out, template.decimal_scale_factor)
   out.push(template.bits_per_value.to_byte())
   typed_push_u32_be(out, template.pre_processing_parameter_ieee)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
-}
-
-///|
-fn typed_push_u16_list(out : Array[Byte], values : Array[Int]) -> Unit {
-  for value in values {
-    typed_push_u16_be(out, value)
-  }
 }
 
 ///|
@@ -261,8 +223,6 @@ fn typed_encode_template_5200(
   typed_push_u16_be(out, template.mvl)
   out.push(template.decimal_scale_factor_of_representative_values.to_byte())
   typed_push_u16_list(out, template.representative_values_by_level)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }

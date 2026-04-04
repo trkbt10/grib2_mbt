@@ -34,8 +34,6 @@ pub fn encode_section2_bytes(section : Grib2Section2Decoded) -> Bytes {
     LocalUseTemplateUnknown(template_number, raw) => (template_number, raw)
   }
   out.push(template_number.to_byte())
-  for b in template_payload {
-    out.push(b)
-  }
+  typed_push_bytes(out, template_payload)
   typed_build_section(2, Bytes::from_array(out))
 }

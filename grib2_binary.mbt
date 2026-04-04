@@ -1,25 +1,25 @@
 ///|
-fn binary_read_u8_as_int(bytes : Bytes, offset : Int) -> Int {
+pub fn binary_read_u8_as_int(bytes : Bytes, offset : Int) -> Int {
   bytes[offset].to_uint().reinterpret_as_int()
 }
 
 ///|
-fn binary_read_u32_be_uint(bytes : Bytes, offset : Int) -> UInt {
+pub fn binary_read_u32_be_uint(bytes : Bytes, offset : Int) -> UInt {
   bytes.unsafe_read_uint32_be(offset)
 }
 
 ///|
-fn binary_read_u16_be(bytes : Bytes, offset : Int) -> Int {
+pub fn binary_read_u16_be(bytes : Bytes, offset : Int) -> Int {
   bytes.unsafe_read_uint16_be(offset).to_uint().reinterpret_as_int()
 }
 
 ///|
-fn binary_read_u16_be_view(bytes : BytesView, offset : Int) -> Int {
+pub fn binary_read_u16_be_view(bytes : BytesView, offset : Int) -> Int {
   bytes.unsafe_read_uint16_be(offset).to_uint().reinterpret_as_int()
 }
 
 ///|
-fn binary_read_u32_be_view(bytes : BytesView, offset : Int) -> Int {
+pub fn binary_read_u32_be_view(bytes : BytesView, offset : Int) -> Int {
   bytes.unsafe_read_uint32_be(offset).reinterpret_as_int()
 }
 
@@ -74,7 +74,7 @@ pub fn binary_encode_f32le_latin1(values : Array[Double]) -> String {
 }
 
 ///|
-fn binary_has_magic_at(
+pub fn binary_has_magic_at(
   bytes : Bytes,
   offset : Int,
   b0 : Byte,
@@ -89,7 +89,7 @@ fn binary_has_magic_at(
 }
 
 ///|
-fn binary_has_magic_tail(
+pub fn binary_has_magic_tail(
   bytes : Bytes,
   b0 : Byte,
   b1 : Byte,

@@ -2,6 +2,7 @@
 using @section1 {
   type Grib2SectionCodecError,
   type Grib2U64Be,
+  typed_read_u8_view,
   typed_read_u16_be,
   typed_read_u32_be,
   typed_read_u16_be_view,
@@ -12,6 +13,10 @@ using @section1 {
   typed_push_u24_be,
   typed_push_u32_be,
   typed_push_u64_be,
+  typed_push_u32_list,
+  typed_push_bytes,
   typed_validate_section_header,
+  typed_validate_template_exact_length,
+  typed_validate_template_min_length,
   typed_build_section,
 }

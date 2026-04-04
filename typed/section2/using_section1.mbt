@@ -5,6 +5,7 @@ using @section1 {
   typed_read_u32_be,
   typed_push_u16_be,
   typed_push_u32_be,
+  typed_push_bytes,
   typed_validate_section_header,
   typed_build_section,
 }

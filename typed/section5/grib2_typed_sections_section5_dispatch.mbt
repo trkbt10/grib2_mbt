@@ -121,8 +121,6 @@ pub fn encode_section5_bytes(section : Grib2Section5Decoded) -> Bytes {
       (template_number, raw)
   }
   typed_push_u16_be(payload, template_number)
-  for b in template_raw {
-    payload.push(b)
-  }
+  typed_push_bytes(payload, template_raw)
   typed_build_section(5, Bytes::from_array(payload))
 }

@@ -58,9 +58,7 @@ fn typed_encode_template_43(template : Grib2ProductTemplate43) -> Bytes {
   for forecast_number in template.ensemble_forecast_numbers {
     out.push(forecast_number.to_byte())
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -85,9 +83,7 @@ fn typed_encode_template_44(template : Grib2ProductTemplate44) -> Bytes {
   for forecast_number in template.ensemble_forecast_numbers {
     out.push(forecast_number.to_byte())
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -101,9 +97,7 @@ fn typed_encode_template_45(template : Grib2ProductTemplate45) -> Bytes {
   typed_push_u32_be(out, template.scaled_value_of_lower_limit)
   out.push(template.scale_factor_of_upper_limit.to_byte())
   typed_push_u32_be(out, template.scaled_value_of_upper_limit)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -111,18 +105,14 @@ fn typed_encode_template_45(template : Grib2ProductTemplate45) -> Bytes {
 fn typed_encode_template_46(template : Grib2ProductTemplate46) -> Bytes {
   let out = typed_encode_template_40(template.base).to_array()
   out.push(template.percentile_value.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
 ///|
 fn typed_encode_template_47(template : Grib2ProductTemplate47) -> Bytes {
   let out = typed_encode_template_40(template.base).to_array()
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -141,9 +131,7 @@ fn typed_encode_template_48(template : Grib2ProductTemplate48) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -162,9 +150,7 @@ fn typed_encode_template_49(template : Grib2ProductTemplate49) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -183,9 +169,7 @@ fn typed_encode_template_410(template : Grib2ProductTemplate410) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -204,9 +188,7 @@ fn typed_encode_template_411(template : Grib2ProductTemplate411) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -225,9 +207,7 @@ fn typed_encode_template_412(template : Grib2ProductTemplate412) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -265,9 +245,7 @@ fn typed_encode_template_413(template : Grib2ProductTemplate413) -> Bytes {
   for forecast_number in template.ensemble_forecast_numbers {
     out.push(forecast_number.to_byte())
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -304,9 +282,7 @@ fn typed_encode_template_414(template : Grib2ProductTemplate414) -> Bytes {
   for forecast_number in template.ensemble_forecast_numbers {
     out.push(forecast_number.to_byte())
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -334,9 +310,7 @@ fn typed_encode_template_430(template : Grib2ProductTemplate430) -> Bytes {
     out.push(band.scale_factor_of_central_wave_number.to_byte())
     typed_push_u32_be(out, band.scaled_value_of_central_wave_number)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -355,9 +329,7 @@ fn typed_encode_template_431(template : Grib2ProductTemplate431) -> Bytes {
     out.push(band.scale_factor_of_central_wave_number.to_byte())
     typed_push_u32_be(out, band.scaled_value_of_central_wave_number)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -381,9 +353,7 @@ fn typed_encode_template_432(template : Grib2ProductTemplate432) -> Bytes {
     out.push(band.scale_factor_of_central_wave_number.to_byte())
     typed_push_u32_be(out, band.scaled_value_of_central_wave_number)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -410,9 +380,7 @@ fn typed_encode_template_433(template : Grib2ProductTemplate433) -> Bytes {
   out.push(template.type_of_ensemble_forecast.to_byte())
   out.push(template.perturbation_number.to_byte())
   out.push(template.number_of_forecasts_in_ensemble.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -451,9 +419,7 @@ fn typed_encode_template_434(template : Grib2ProductTemplate434) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -473,9 +439,7 @@ fn typed_encode_template_435(template : Grib2ProductTemplate435) -> Bytes {
     out.push(band.scale_factor_of_central_wave_number.to_byte())
     typed_push_u32_be(out, band.scaled_value_of_central_wave_number)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -525,9 +489,7 @@ fn typed_encode_template_442(template : Grib2ProductTemplate442) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -546,9 +508,7 @@ fn typed_encode_template_443(template : Grib2ProductTemplate443) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -645,9 +605,7 @@ fn typed_encode_template_446(template : Grib2ProductTemplate446) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -690,9 +648,7 @@ fn typed_encode_template_447(template : Grib2ProductTemplate447) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -802,9 +758,7 @@ fn typed_encode_template_451(template : Grib2ProductTemplate451) -> Bytes {
     out.push(category.scale_factor_of_second_limit.to_byte())
     typed_push_u32_be(out, category.scaled_value_of_second_limit)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -815,9 +769,7 @@ fn typed_encode_template_453(template : Grib2ProductTemplate453) -> Bytes {
   out.push(template.parameter_number.to_byte())
   out.push(template.partition_table_number.to_byte())
   out.push(template.number_of_partitions.to_byte())
-  for partition in template.partition_set {
-    typed_push_u16_be(out, partition)
-  }
+  typed_push_u16_list(out, template.partition_set)
   typed_push_u16_be(out, template.partition_number)
   out.push(template.type_of_generating_process.to_byte())
   out.push(template.background_process_identifier.to_byte())
@@ -832,9 +784,7 @@ fn typed_encode_template_453(template : Grib2ProductTemplate453) -> Bytes {
   out.push(template.type_of_second_fixed_surface.to_byte())
   out.push(template.scale_factor_of_second_fixed_surface.to_byte())
   typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -845,9 +795,7 @@ fn typed_encode_template_454(template : Grib2ProductTemplate454) -> Bytes {
   out.push(template.parameter_number.to_byte())
   out.push(template.partition_table_number.to_byte())
   out.push(template.number_of_partitions.to_byte())
-  for partition in template.partition_set {
-    typed_push_u16_be(out, partition)
-  }
+  typed_push_u16_list(out, template.partition_set)
   typed_push_u16_be(out, template.partition_number)
   out.push(template.type_of_generating_process.to_byte())
   out.push(template.background_process_identifier.to_byte())
@@ -865,9 +813,7 @@ fn typed_encode_template_454(template : Grib2ProductTemplate454) -> Bytes {
   out.push(template.type_of_ensemble_forecast.to_byte())
   out.push(template.perturbation_number.to_byte())
   out.push(template.number_of_forecasts_in_ensemble.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -959,9 +905,7 @@ fn typed_encode_template_457(template : Grib2ProductTemplate457) -> Bytes {
   out.push(template.type_of_second_fixed_surface.to_byte())
   out.push(template.scale_factor_of_second_fixed_surface.to_byte())
   typed_push_u32_be(out, template.scaled_value_of_second_fixed_surface)
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -1000,9 +944,7 @@ fn typed_encode_template_458(template : Grib2ProductTemplate458) -> Bytes {
   out.push(template.type_of_ensemble_forecast.to_byte())
   out.push(template.perturbation_number.to_byte())
   out.push(template.number_of_forecasts_in_ensemble.to_byte())
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -1105,9 +1047,7 @@ fn typed_encode_template_461(template : Grib2ProductTemplate461) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -1147,9 +1087,7 @@ fn typed_encode_template_462(template : Grib2ProductTemplate462) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 
@@ -1192,9 +1130,7 @@ fn typed_encode_template_463(template : Grib2ProductTemplate463) -> Bytes {
   for b in time_specs {
     out.push(b)
   }
-  for b in template.reserved_tail {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_tail)
   Bytes::from_array(out)
 }
 

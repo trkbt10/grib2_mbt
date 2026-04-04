@@ -10,13 +10,13 @@ test "editing API supports remove/insert while keeping strict writer valid" {
     Err(error) => fail(error.to_string())
   }
   let first_raw = original.messages[0].raw
-  let removed = match original.remove_message(0) {
+  let removed = match @lib.context_remove_message(original, 0) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   inspect(removed.message_count(), content="346")
   inspect(removed.messages[0].offset, content="0")
-  let restored = match removed.insert_message_raw(0, first_raw) {
+  let restored = match @lib.context_insert_message_raw(removed, 0, first_raw) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }

@@ -69,12 +69,8 @@ fn typed_encode_template_34(template : Grib2GridTemplate34) -> Bytes {
   typed_push_u32_be(out, template.subdivisions_of_basic_angle)
   out.push(template.resolution_and_component_flags.to_byte())
   out.push(template.scanning_mode.to_byte())
-  for value in template.longitude_list {
-    typed_push_u32_be(out, value)
-  }
-  for value in template.latitude_list {
-    typed_push_u32_be(out, value)
-  }
+  typed_push_u32_list(out, template.longitude_list)
+  typed_push_u32_list(out, template.latitude_list)
   Bytes::from_array(out)
 }
 
@@ -98,12 +94,8 @@ fn typed_encode_template_35(template : Grib2GridTemplate35) -> Bytes {
   typed_push_u32_be(out, template.latitude_of_southern_pole)
   typed_push_u32_be(out, template.longitude_of_southern_pole)
   typed_push_u32_be(out, template.angle_of_rotation)
-  for value in base.longitude_list {
-    typed_push_u32_be(out, value)
-  }
-  for value in base.latitude_list {
-    typed_push_u32_be(out, value)
-  }
+  typed_push_u32_list(out, base.longitude_list)
+  typed_push_u32_list(out, base.latitude_list)
   Bytes::from_array(out)
 }
 
@@ -491,9 +483,7 @@ fn typed_encode_template_3101(template : Grib2GridTemplate3101) -> Bytes {
   out.push(template.shape_of_earth.to_byte())
   typed_push_u24_be(out, template.number_of_grid_used)
   out.push(template.number_of_grid_in_reference.to_byte())
-  for b in template.uuid_of_horizontal_grid {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.uuid_of_horizontal_grid)
   Bytes::from_array(out)
 }
 
@@ -590,13 +580,9 @@ fn typed_encode_template_3204(template : Grib2GridTemplate3204) -> Bytes {
   typed_push_u32_be(out, template.scaled_value_minor_axis)
   typed_push_u32_be(out, template.ni)
   typed_push_u32_be(out, template.nj)
-  for b in template.reserved_octets_39_54 {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_octets_39_54)
   out.push(template.resolution_and_component_flags.to_byte())
-  for b in template.reserved_octets_56_71 {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.reserved_octets_56_71)
   out.push(template.scanning_mode.to_byte())
   Bytes::from_array(out)
 }
@@ -624,9 +610,7 @@ fn typed_encode_template_31000(template : Grib2GridTemplate31000) -> Bytes {
   out.push(template.physical_meaning_of_vertical_coordinate.to_byte())
   out.push(template.vertical_dimension_coordinate_values_definition.to_byte())
   typed_push_u16_be(out, template.nc)
-  for b in template.vertical_coordinate_values_raw {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.vertical_coordinate_values_raw)
   Bytes::from_array(out)
 }
 
@@ -683,9 +667,7 @@ fn typed_encode_template_31200(template : Grib2GridTemplate31200) -> Bytes {
   out.push(template.physical_meaning_of_vertical_coordinate.to_byte())
   out.push(template.vertical_dimension_coordinate_values_definition.to_byte())
   typed_push_u16_be(out, template.nc)
-  for b in template.vertical_coordinate_values_raw {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.vertical_coordinate_values_raw)
   Bytes::from_array(out)
 }
 

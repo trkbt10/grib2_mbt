@@ -1000,11 +1000,7 @@ pub fn encode_section4_bytes(section : Grib2Section4Decoded) -> Bytes {
     ProductTemplateUnknown(template_number, raw) => (template_number, raw)
   }
   typed_push_u16_be(payload, template_number)
-  for b in template_raw {
-    payload.push(b)
-  }
-  for b in section.coordinate_values_raw {
-    payload.push(b)
-  }
+  typed_push_bytes(payload, template_raw)
+  typed_push_bytes(payload, section.coordinate_values_raw)
   typed_build_section(4, Bytes::from_array(payload))
 }

@@ -4,15 +4,11 @@ fn typed_decode_time_range_spec(
   offset : Int,
 ) -> Grib2TimeRangeSpec {
   {
-    statistical_process: template_payload[offset].to_uint().reinterpret_as_int(),
-    type_of_time_increment: template_payload[offset + 1]
-    .to_uint()
-    .reinterpret_as_int(),
-    time_range_unit: template_payload[offset + 2].to_uint().reinterpret_as_int(),
+    statistical_process: typed_read_u8_view(template_payload, offset),
+    type_of_time_increment: typed_read_u8_view(template_payload, offset + 1),
+    time_range_unit: typed_read_u8_view(template_payload, offset + 2),
     time_range_length: typed_read_u32_be_view(template_payload, offset + 3),
-    time_increment_unit: template_payload[offset + 7]
-    .to_uint()
-    .reinterpret_as_int(),
+    time_increment_unit: typed_read_u8_view(template_payload, offset + 7),
     time_increment_length: typed_read_u32_be_view(template_payload, offset + 8),
   }
 }

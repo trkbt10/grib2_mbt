@@ -9,6 +9,11 @@ pub fn typed_read_u32_be(bytes : Bytes, offset : Int) -> Int {
 }
 
 ///|
+pub fn typed_read_u8_view(bytes : BytesView, offset : Int) -> Int {
+  bytes[offset].to_uint().reinterpret_as_int()
+}
+
+///|
 pub fn typed_read_u16_be_view(bytes : BytesView, offset : Int) -> Int {
   bytes.unsafe_read_uint16_be(offset).to_uint().reinterpret_as_int()
 }
@@ -62,6 +67,27 @@ pub fn typed_push_u64_be(out : Array[Byte], value : Grib2U64Be) -> Unit {
 }
 
 ///|
+pub fn typed_push_bytes(out : Array[Byte], bytes : Bytes) -> Unit {
+  for b in bytes {
+    out.push(b)
+  }
+}
+
+///|
+pub fn typed_push_u16_list(out : Array[Byte], values : Array[Int]) -> Unit {
+  for value in values {
+    typed_push_u16_be(out, value)
+  }
+}
+
+///|
+pub fn typed_push_u32_list(out : Array[Byte], values : Array[Int]) -> Unit {
+  for value in values {
+    typed_push_u32_be(out, value)
+  }
+}
+
+///|
 pub fn typed_validate_section_header(
   section : Bytes,
   expected_number : Int,
@@ -99,13 +125,51 @@ pub fn typed_validate_section_header(
 }
 
 ///|
+pub fn typed_validate_template_exact_length(
+  template_payload : BytesView,
+  expected : Int,
+  template_name : String,
+) -> Result[Unit, Grib2SectionCodecError] {
+  if template_payload.length() != expected {
+    return Err(
+      InvalidSectionLength(
+        template_name +
+        " expected " +
+        expected.to_string() +
+        " octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok(())
+}
+
+///|
+pub fn typed_validate_template_min_length(
+  template_payload : BytesView,
+  minimum : Int,
+  template_name : String,
+) -> Result[Unit, Grib2SectionCodecError] {
+  if template_payload.length() < minimum {
+    return Err(
+      InvalidSectionLength(
+        template_name +
+        " too short: expected at least " +
+        minimum.to_string() +
+        " octets, got " +
+        template_payload.length().to_string(),
+      ),
+    )
+  }
+  Ok(())
+}
+
+///|
 pub fn typed_build_section(section_number : Int, payload : Bytes) -> Bytes {
   let out : Array[Byte] = []
   typed_push_u32_be(out, 5 + payload.length())
   out.push(section_number.to_byte())
-  for b in payload {
-    out.push(b)
-  }
+  typed_push_bytes(out, payload)
   Bytes::from_array(out)
 }
 
@@ -201,15 +265,9 @@ pub fn encode_section1_bytes(section : Grib2Section1Decoded) -> Bytes {
   payload.push(section.reference_second.to_byte())
   payload.push(section.production_status.to_byte())
   payload.push(section.processed_data_type.to_byte())
-  for b in section.reserved_octets_22_23 {
-    payload.push(b)
-  }
+  typed_push_bytes(payload, section.reserved_octets_22_23)
   let template_raw = typed_id_template_raw(section.identification_template)
-  for b in template_raw {
-    payload.push(b)
-  }
-  for b in section.reserved_tail {
-    payload.push(b)
-  }
+  typed_push_bytes(payload, template_raw)
+  typed_push_bytes(payload, section.reserved_tail)
   typed_build_section(1, Bytes::from_array(payload))
 }

@@ -7,8 +7,6 @@ fn typed_encode_template_21(template : Grib2MdlTemplate21) -> Bytes {
   typed_push_u16_be(out, template.decimal_scale_factor)
   out.push(template.bits_per_value.to_byte())
   out.push(template.first_group_data_type.to_byte())
-  for b in template.first_group_packed_values_raw {
-    out.push(b)
-  }
+  typed_push_bytes(out, template.first_group_packed_values_raw)
   Bytes::from_array(out)
 }
