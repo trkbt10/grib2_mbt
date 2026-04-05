@@ -126,36 +126,36 @@ fn grib2_snapshot_view_name(view : Grib2SnapshotView) -> String {
 
 ///|
 fn grib2_snapshot_view_lines(
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   view : Grib2SnapshotView,
 ) -> Array[String] {
   match view {
-    SnapshotDefault => @lib.wgrib2_default_lines(context)
-    SnapshotS => @lib.wgrib2_s_lines(context)
-    SnapshotSec0 => @lib.wgrib2_sec0_lines(context)
-    SnapshotSec3 => @lib.wgrib2_sec3_lines(context)
-    SnapshotSec4 => @lib.wgrib2_sec4_lines(context)
-    SnapshotSec5 => @lib.wgrib2_sec5_lines(context)
-    SnapshotSec6 => @lib.wgrib2_sec6_lines(context)
-    SnapshotSecLen => @lib.wgrib2_sec_len_lines(context)
-    SnapshotN => @lib.wgrib2_n_lines(context)
-    SnapshotRange => @lib.wgrib2_range_lines(context)
-    SnapshotVar => @lib.wgrib2_var_lines(context)
-    SnapshotLev => @lib.wgrib2_lev_lines(context)
-    SnapshotFtime => @lib.wgrib2_ftime_lines(context)
-    SnapshotGrid => @lib.wgrib2_grid_lines(context)
-    SnapshotPdt => @lib.wgrib2_pdt_lines(context)
-    SnapshotProcess => @lib.wgrib2_process_lines(context)
-    SnapshotEns => @lib.wgrib2_ens_lines(context)
-    SnapshotProb => @lib.wgrib2_prob_lines(context)
-    SnapshotDisc => @lib.wgrib2_disc_lines(context)
-    SnapshotCenter => @lib.wgrib2_center_lines(context)
-    SnapshotSubcenter => @lib.wgrib2_subcenter_lines(context)
-    SnapshotPacking => @lib.wgrib2_packing_lines(context)
-    SnapshotBitmap => @lib.wgrib2_bitmap_lines(context)
-    SnapshotNxny => @lib.wgrib2_nxny_lines(context)
-    SnapshotNpts => @lib.wgrib2_npts_lines(context)
-    SnapshotVarLev => @lib.wgrib2_var_lev_lines(context)
+    SnapshotDefault => @wgrib2.wgrib2_default_lines(context)
+    SnapshotS => @wgrib2.wgrib2_s_lines(context)
+    SnapshotSec0 => @wgrib2.wgrib2_sec0_lines(context)
+    SnapshotSec3 => @wgrib2.wgrib2_sec3_lines(context)
+    SnapshotSec4 => @wgrib2.wgrib2_sec4_lines(context)
+    SnapshotSec5 => @wgrib2.wgrib2_sec5_lines(context)
+    SnapshotSec6 => @wgrib2.wgrib2_sec6_lines(context)
+    SnapshotSecLen => @wgrib2.wgrib2_sec_len_lines(context)
+    SnapshotN => @wgrib2.wgrib2_n_lines(context)
+    SnapshotRange => @wgrib2.wgrib2_range_lines(context)
+    SnapshotVar => @wgrib2.wgrib2_var_lines(context)
+    SnapshotLev => @wgrib2.wgrib2_lev_lines(context)
+    SnapshotFtime => @wgrib2.wgrib2_ftime_lines(context)
+    SnapshotGrid => @wgrib2.wgrib2_grid_lines(context)
+    SnapshotPdt => @wgrib2.wgrib2_pdt_lines(context)
+    SnapshotProcess => @wgrib2.wgrib2_process_lines(context)
+    SnapshotEns => @wgrib2.wgrib2_ens_lines(context)
+    SnapshotProb => @wgrib2.wgrib2_prob_lines(context)
+    SnapshotDisc => @wgrib2.wgrib2_disc_lines(context)
+    SnapshotCenter => @wgrib2.wgrib2_center_lines(context)
+    SnapshotSubcenter => @wgrib2.wgrib2_subcenter_lines(context)
+    SnapshotPacking => @wgrib2.wgrib2_packing_lines(context)
+    SnapshotBitmap => @wgrib2.wgrib2_bitmap_lines(context)
+    SnapshotNxny => @wgrib2.wgrib2_nxny_lines(context)
+    SnapshotNpts => @wgrib2.wgrib2_npts_lines(context)
+    SnapshotVarLev => @wgrib2.wgrib2_var_lev_lines(context)
   }
 }
 

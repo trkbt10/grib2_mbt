@@ -99,7 +99,7 @@ fn same_section_frame(lhs : Grib2SectionFrame, rhs : Grib2SectionFrame) -> Bool 
 }
 
 ///|
-fn find_submessage_index(
+pub fn find_submessage_index(
   message : Grib2MessageContext,
   target : Grib2SubmessageFrame,
 ) -> Int? {
@@ -117,7 +117,7 @@ fn find_submessage_index(
 }
 
 ///|
-fn resolve_bitmap_raw(
+pub fn resolve_bitmap_raw(
   message : Grib2MessageContext,
   submessage : Grib2SubmessageFrame,
   section6 : @typed.Grib2Section6Decoded,
@@ -227,7 +227,7 @@ fn apply_bitmap_to_unpacked(
 
 ///|
 /// Normalize unpacked data ordering to wgrib2's WE:SN output convention.
-fn normalize_unpacked_to_wgrib2_scan_order(
+pub fn normalize_unpacked_to_wgrib2_scan_order(
   message : Grib2MessageContext,
   submessage : Grib2SubmessageFrame,
   unpacked : @typed.UnpackedGridData,
@@ -271,7 +271,7 @@ fn is_reduced_gaussian_template(template_id : Int) -> Bool {
 }
 
 ///|
-fn regular_grid_scan_source_index(
+pub fn regular_grid_scan_source_index(
   ni : Int,
   nj : Int,
   scan : @typed.ScanningMode,
@@ -293,7 +293,7 @@ fn regular_grid_scan_source_index(
 }
 
 ///|
-fn normalize_regular_grid_to_wgrib2_scan_order(
+pub fn normalize_regular_grid_to_wgrib2_scan_order(
   ni : Int,
   nj : Int,
   scan : @typed.ScanningMode,
@@ -347,7 +347,7 @@ fn normalize_reduced_gaussian_to_wgrib2_scan_order(
 }
 
 ///|
-fn decode_reduced_gaussian_row_counts(
+pub fn decode_reduced_gaussian_row_counts(
   section3 : @typed.Grib2Section3Decoded,
   expected_rows : Int,
 ) -> Array[Int]? {

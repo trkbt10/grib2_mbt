@@ -1,0 +1,19 @@
+import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/strconv",
+  "trkbt10/grib2_mbt/cmd/wgrib2/common" @common,
+  "trkbt10/grib2_mbt/context" @context,
+  "trkbt10/grib2_mbt/core" @core,
+  "trkbt10/grib2_mbt/decode" @decode,
+  "trkbt10/grib2_mbt/io" @io,
+  "trkbt10/grib2_mbt/wgrib2" @wgrib2_lib,
+  "trkbt10/grib2_mbt/typed" @typed,
+  "trkbt10/grib2_mbt/typed/section3" @section3,
+  "trkbt10/grib2_mbt/typed/section4" @section4,
+  "moonbitlang/x/fs" @fs,
+  "moonbitlang/x/sys" @sys,
+}
+
+options(
+  "is-main": true,
+)

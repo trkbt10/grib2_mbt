@@ -4,16 +4,16 @@ pub fn grib2_verify_roundtrip_strict(path : String) -> Result[Unit, String] {
     Ok(bytes) => bytes
     Err(error) => return Err(error)
   }
-  let parsed = match @lib.parse_grib2_file(original_bytes) {
+  let parsed = match @core.parse_grib2_file(original_bytes) {
     Ok(context) => context
     Err(error) =>
       return Err("parse failed for " + path + ": " + error.to_string())
   }
-  let raw_bytes = @lib.rebuild_raw(parsed)
+  let raw_bytes = @decode.rebuild_raw(parsed)
   if raw_bytes != original_bytes {
     return Err("raw rebuild mismatch for " + path)
   }
-  let strict_bytes = match @lib.rebuild_strict(parsed) {
+  let strict_bytes = match @decode.rebuild_strict(parsed) {
     Ok(bytes) => bytes
     Err(error) =>
       return Err("strict rebuild failed for " + path + ": " + error.to_string())
@@ -21,7 +21,7 @@ pub fn grib2_verify_roundtrip_strict(path : String) -> Result[Unit, String] {
   if strict_bytes != original_bytes {
     return Err("strict rebuild mismatch for " + path)
   }
-  let reparsed = match @lib.parse_grib2_file(strict_bytes) {
+  let reparsed = match @core.parse_grib2_file(strict_bytes) {
     Ok(context) => context
     Err(error) =>
       return Err("reparse failed for " + path + ": " + error.to_string())

@@ -1,21 +1,7 @@
 ///|
-/// Re-export context types from the context sub-package.
-pub using @context {
-  type Grib2ParseError,
-  type Grib2ContextEditError,
-  type Grib2SectionFrame,
-  type Grib2SubmessageFrame,
-  type Grib2MessageContext,
-  type Grib2FileContext,
-  shift_section_frame,
-  reindex_message,
-  reindex_messages,
-}
-
-///|
 fn parse_single_message(
   raw : Bytes,
-) -> Result[@context.Grib2MessageContext, @context.Grib2ContextEditError] {
+) -> Result[Grib2MessageContext, @context.Grib2ContextEditError] {
   match parse_grib2_file(raw) {
     Ok(context) =>
       if context.messages.length() != 1 {
@@ -34,10 +20,10 @@ fn parse_single_message(
 
 ///|
 pub fn context_replace_message_raw(
-  context : @context.Grib2FileContext,
+  context : Grib2FileContext,
   message_index : Int,
   raw : Bytes,
-) -> Result[@context.Grib2FileContext, @context.Grib2ContextEditError] {
+) -> Result[Grib2FileContext, @context.Grib2ContextEditError] {
   if message_index < 0 || message_index >= context.messages.length() {
     return Err(
       @context.Grib2ContextEditError::InvalidMessageIndex(
@@ -60,10 +46,10 @@ pub fn context_replace_message_raw(
 
 ///|
 pub fn context_insert_message_raw(
-  context : @context.Grib2FileContext,
+  context : Grib2FileContext,
   message_index : Int,
   raw : Bytes,
-) -> Result[@context.Grib2FileContext, @context.Grib2ContextEditError] {
+) -> Result[Grib2FileContext, @context.Grib2ContextEditError] {
   if message_index < 0 || message_index > context.messages.length() {
     return Err(
       @context.Grib2ContextEditError::InvalidMessageIndex(
@@ -79,7 +65,7 @@ pub fn context_insert_message_raw(
     Ok(message) => message
     Err(error) => return Err(error)
   }
-  let messages : Array[@context.Grib2MessageContext] = []
+  let messages : Array[Grib2MessageContext] = []
   for i in 0..<context.messages.length() {
     if i == message_index {
       messages.push(parsed)
@@ -94,17 +80,17 @@ pub fn context_insert_message_raw(
 
 ///|
 pub fn context_append_message_raw(
-  context : @context.Grib2FileContext,
+  context : Grib2FileContext,
   raw : Bytes,
-) -> Result[@context.Grib2FileContext, @context.Grib2ContextEditError] {
+) -> Result[Grib2FileContext, @context.Grib2ContextEditError] {
   context_insert_message_raw(context, context.messages.length(), raw)
 }
 
 ///|
 pub fn context_remove_message(
-  context : @context.Grib2FileContext,
+  context : Grib2FileContext,
   message_index : Int,
-) -> Result[@context.Grib2FileContext, @context.Grib2ContextEditError] {
+) -> Result[Grib2FileContext, @context.Grib2ContextEditError] {
   if message_index < 0 || message_index >= context.messages.length() {
     return Err(
       @context.Grib2ContextEditError::InvalidMessageIndex(
@@ -116,7 +102,7 @@ pub fn context_remove_message(
       ),
     )
   }
-  let messages : Array[@context.Grib2MessageContext] = []
+  let messages : Array[Grib2MessageContext] = []
   for i in 0..<context.messages.length() {
     if i != message_index {
       messages.push(context.messages[i])

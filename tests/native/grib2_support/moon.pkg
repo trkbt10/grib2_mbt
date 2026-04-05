@@ -1,4 +1,7 @@
 import {
-  "trkbt10/grib2_mbt" @lib,
+  "trkbt10/grib2_mbt/context" @context,
+  "trkbt10/grib2_mbt/core" @core,
+  "trkbt10/grib2_mbt/decode" @decode,
+  "trkbt10/grib2_mbt/wgrib2" @wgrib2,
   "moonbitlang/x/fs" @fs,
 }

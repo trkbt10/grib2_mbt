@@ -32,7 +32,7 @@ pub fn grib2_verify_fixture_raw_roundtrip(
       expected_record_count.to_string(),
     )
   }
-  if @lib.rebuild_raw(context) != bytes {
+  if @decode.rebuild_raw(context) != bytes {
     return Err("raw rebuild mismatch for " + path)
   }
   Ok(())

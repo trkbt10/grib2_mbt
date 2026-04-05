@@ -1,8 +1,8 @@
 ///|
 pub fn grib2_message_with_offset(
-  message : @lib.Grib2MessageContext,
+  message : @context.Grib2MessageContext,
   offset : Int,
-) -> @lib.Grib2MessageContext {
+) -> @context.Grib2MessageContext {
   {
     offset,
     total_length: message.total_length,
@@ -18,9 +18,9 @@ pub fn grib2_message_with_offset(
 
 ///|
 pub fn grib2_message_with_raw(
-  message : @lib.Grib2MessageContext,
+  message : @context.Grib2MessageContext,
   raw : Bytes,
-) -> @lib.Grib2MessageContext {
+) -> @context.Grib2MessageContext {
   {
     offset: message.offset,
     total_length: message.total_length,
@@ -36,9 +36,9 @@ pub fn grib2_message_with_raw(
 
 ///|
 pub fn grib2_message_with_section8_offset(
-  message : @lib.Grib2MessageContext,
+  message : @context.Grib2MessageContext,
   section8_offset : Int,
-) -> @lib.Grib2MessageContext {
+) -> @context.Grib2MessageContext {
   {
     offset: message.offset,
     total_length: message.total_length,
@@ -54,9 +54,9 @@ pub fn grib2_message_with_section8_offset(
 
 ///|
 pub fn grib2_context_with_replaced_message0(
-  context : @lib.Grib2FileContext,
-  message0 : @lib.Grib2MessageContext,
-) -> @lib.Grib2FileContext {
+  context : @context.Grib2FileContext,
+  message0 : @context.Grib2MessageContext,
+) -> @context.Grib2FileContext {
   let messages = [..context.messages]
   messages[0] = message0
   { messages, }

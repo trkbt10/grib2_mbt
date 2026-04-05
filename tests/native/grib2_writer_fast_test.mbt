@@ -5,24 +5,24 @@ test "editing API supports remove/insert while keeping strict writer valid" {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
-  let original = match @lib.parse_grib2_file(original_bytes) {
+  let original = match @core.parse_grib2_file(original_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   let first_raw = original.messages[0].raw
-  let removed = match @lib.context_remove_message(original, 0) {
+  let removed = match @core.context_remove_message(original, 0) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   inspect(removed.message_count(), content="346")
   inspect(removed.messages[0].offset, content="0")
-  let restored = match @lib.context_insert_message_raw(removed, 0, first_raw) {
+  let restored = match @core.context_insert_message_raw(removed, 0, first_raw) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   inspect(restored.message_count(), content="347")
-  inspect(@lib.rebuild_raw(restored) == original_bytes, content="true")
-  let strict_bytes = match @lib.rebuild_strict(restored) {
+  inspect(@decode.rebuild_raw(restored) == original_bytes, content="true")
+  let strict_bytes = match @decode.rebuild_strict(restored) {
     Ok(bytes) => bytes
     Err(error) => fail(error.to_string())
   }
@@ -43,8 +43,8 @@ test "strict writer detects invariant violations" {
     messages[0],
     messages[0].offset + 1,
   )
-  let broken : @lib.Grib2FileContext = { messages, }
-  let rejected = match @lib.rebuild_strict(broken) {
+  let broken : @context.Grib2FileContext = { messages, }
+  let rejected = match @decode.rebuild_strict(broken) {
     Ok(_) => false
     Err(_) => true
   }
@@ -58,20 +58,20 @@ test "strict writer rejects malformed typed section4 payload" {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
-  let parsed = match @lib.parse_grib2_file(bytes) {
+  let parsed = match @core.parse_grib2_file(bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   let section4_num_coord_offset = parsed.messages[0].submessages[0].section4.start +
     5
-  let mutated_bytes = @lib.binary_bytes_with_u16_be_at(
+  let mutated_bytes = @core.binary_bytes_with_u16_be_at(
     bytes, section4_num_coord_offset, 4096,
   )
-  let mutated = match @lib.parse_grib2_file(mutated_bytes) {
+  let mutated = match @core.parse_grib2_file(mutated_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
-  let rejected = match @lib.rebuild_strict(mutated) {
+  let rejected = match @decode.rebuild_strict(mutated) {
     Ok(_) => false
     Err(_) => true
   }
@@ -85,24 +85,24 @@ test "unknown template id is preserved through parse and rebuild" {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
-  let original = match @lib.parse_grib2_file(bytes) {
+  let original = match @core.parse_grib2_file(bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   let section4_template_offset = original.messages[0].submessages[0].section4.start +
     7
-  let mutated_bytes = @lib.binary_bytes_with_u16_be_at(
+  let mutated_bytes = @core.binary_bytes_with_u16_be_at(
     bytes, section4_template_offset, 999,
   )
-  let mutated = match @lib.parse_grib2_file(mutated_bytes) {
+  let mutated = match @core.parse_grib2_file(mutated_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
-  let records = @lib.decode_records(mutated)
+  let records = @decode.decode_records(mutated)
   inspect(records[0].section4_template.id(), content="999")
   inspect(records[0].section4_template.is_known(), content="false")
-  inspect(@lib.rebuild_raw(mutated) == mutated_bytes, content="true")
-  let strict_bytes = match @lib.rebuild_strict(mutated) {
+  inspect(@decode.rebuild_raw(mutated) == mutated_bytes, content="true")
+  let strict_bytes = match @decode.rebuild_strict(mutated) {
     Ok(bytes) => bytes
     Err(error) => fail(error.to_string())
   }
@@ -119,7 +119,7 @@ test "strict writer rejects section0 length header mismatch" {
     Err(error) => fail(error)
   }
   let message0 = context.messages[0]
-  let broken_raw = @lib.binary_bytes_with_u32_be_at(
+  let broken_raw = @core.binary_bytes_with_u32_be_at(
     message0.raw,
     12,
     message0.total_length - 1,
@@ -128,7 +128,7 @@ test "strict writer rejects section0 length header mismatch" {
     context,
     @grib2support.grib2_message_with_raw(message0, broken_raw),
   )
-  let rejected = match @lib.rebuild_strict(broken) {
+  let rejected = match @decode.rebuild_strict(broken) {
     Ok(_) => false
     Err(_) => true
   }
@@ -145,7 +145,7 @@ test "strict writer rejects broken section8 magic in raw message" {
     Err(error) => fail(error)
   }
   let message0 = context.messages[0]
-  let broken_raw = @lib.binary_bytes_with_u8_at(
+  let broken_raw = @core.binary_bytes_with_u8_at(
     message0.raw,
     message0.raw.length() - 1,
     56,
@@ -154,7 +154,7 @@ test "strict writer rejects broken section8 magic in raw message" {
     context,
     @grib2support.grib2_message_with_raw(message0, broken_raw),
   )
-  let rejected = match @lib.rebuild_strict(broken) {
+  let rejected = match @decode.rebuild_strict(broken) {
     Ok(_) => false
     Err(_) => true
   }
@@ -178,7 +178,7 @@ test "strict writer rejects section8 offset mismatch" {
       message0.section8_offset + 1,
     ),
   )
-  let rejected = match @lib.rebuild_strict(broken) {
+  let rejected = match @decode.rebuild_strict(broken) {
     Ok(_) => false
     Err(_) => true
   }

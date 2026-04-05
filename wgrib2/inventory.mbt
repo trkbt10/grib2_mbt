@@ -5,19 +5,7 @@ fn format_prefix(meta : Grib2RecordMeta) -> String {
 
 ///|
 fn pad6(value : Int) -> String {
-  if value >= 100000 {
-    value.to_string()
-  } else if value >= 10000 {
-    "0" + value.to_string()
-  } else if value >= 1000 {
-    "00" + value.to_string()
-  } else if value >= 100 {
-    "000" + value.to_string()
-  } else if value >= 10 {
-    "0000" + value.to_string()
-  } else {
-    "00000" + value.to_string()
-  }
+  pad_zero(value, 6)
 }
 
 ///|

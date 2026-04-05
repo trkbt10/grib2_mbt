@@ -6,15 +6,15 @@ test "io adapter parse and render matches direct path" {
     Err(error) => fail(error)
   }
   let via_adapter = match
-    @lib.parse_with_io(@grib2support.grib2_io_read_bytes, path) {
+    @io.parse_with_io(@grib2support.grib2_io_read_bytes, path) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   inspect(via_adapter.message_count() == direct.message_count(), content="true")
   inspect(via_adapter.record_count() == direct.record_count(), content="true")
   inspect(
-    @lib.render_inventory_lines(via_adapter, @lib.InventorySec3),
-    content=@lib.render_inventory_lines(direct, @lib.InventorySec3).to_string(),
+    @wgrib2.render_inventory_lines(via_adapter, @wgrib2.InventorySec3),
+    content=@wgrib2.render_inventory_lines(direct, @wgrib2.InventorySec3).to_string(),
   )
 }
 
@@ -22,13 +22,13 @@ test "io adapter parse and render matches direct path" {
 test "io adapter strict write emits parseable bytes" {
   let path = @grib2support.grib2_fixture_path_noaa_gfs_pgrb2_1p00_f000()
   let context = match
-    @lib.parse_with_io(@grib2support.grib2_io_read_bytes, path) {
+    @io.parse_with_io(@grib2support.grib2_io_read_bytes, path) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   let out_path = "target/grib2_io_adapter_test_output.grib2"
   match
-    @lib.write_with_io(
+    @io.write_with_io(
       @grib2support.grib2_io_write_bytes,
       out_path,
       context,
@@ -41,7 +41,7 @@ test "io adapter strict write emits parseable bytes" {
     Ok(bytes) => bytes
     Err(error) => fail(error)
   }
-  let reparsed = match @lib.parse_grib2_file(out_bytes) {
+  let reparsed = match @core.parse_grib2_file(out_bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
@@ -51,7 +51,7 @@ test "io adapter strict write emits parseable bytes" {
 
 ///|
 test "io adapter read error is mapped" {
-  let result = @lib.parse_with_io(
+  let result = @io.parse_with_io(
     @grib2support.grib2_io_read_bytes,
     @grib2support.grib2_fixture_path_noaa_not_found(),
   )

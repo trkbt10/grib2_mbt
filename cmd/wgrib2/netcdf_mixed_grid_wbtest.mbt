@@ -13,7 +13,7 @@ fn netcdf_wgrib2_fill_tail_bytes(byte_count : Int) -> Bytes {
 ///|
 test "netcdf_wgrib2_fatal_lines_for_reason matches mixed-grid fresh fatal lines" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse mixed-grid fixture: " + e.to_string())
   }
@@ -36,7 +36,7 @@ test "netcdf_wgrib2_fatal_lines_for_reason matches mixed-grid fresh fatal lines"
 ///|
 test "netcdf_wgrib2_fatal_lines_for_reason matches mixed-grid append fatal lines" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse mixed-grid fixture: " + e.to_string())
   }

@@ -54,7 +54,7 @@ priv struct NetcdfPreparedRecord {
 
 ///|
 priv struct NetcdfResolvedRecord {
-  meta : @lib.Grib2RecordMeta
+  meta : @decode.Grib2RecordMeta
   grid_info : NetcdfGridInfo
   values : Array[Double]
 }
@@ -100,7 +100,7 @@ priv struct NetcdfGridInfo {
 ///|
 priv struct NetcdfOutputPlan {
   grid_info : NetcdfGridInfo
-  base_meta : @lib.Grib2RecordMeta
+  base_meta : @decode.Grib2RecordMeta
   reference_attrs : NetcdfReferenceAttrs
   reference_observations : Array[NetcdfReferenceObservation]
   time_values : Array[Int64]
@@ -157,525 +157,6 @@ priv struct NetcdfExistingFile {
   reference_time_type : Int
   reference_date : String
   reference_time_description : String
-}
-
-///|
-fn netcdf_supported_grid_error() -> String {
-  "-netcdf currently supports regular lat/lon, rotated lat/lon, Mercator, polar stereographic, Lambert conformal, and Gaussian grids (templates 3.0/3.1/3.10/3.20/3.30/3.40)"
-}
-
-///|
-fn append_ascii_string_bytes(out : Array[Byte], text : String) -> Unit {
-  for c in text {
-    let code = c.to_int()
-    let byte_code = if code >= 0 && code <= 255 { code } else { 63 }
-    out.push(byte_code.to_byte())
-  }
-}
-
-///|
-fn append_zero_bytes(out : Array[Byte], count : Int) -> Unit {
-  for _ in 0..<count {
-    out.push(b'\x00')
-  }
-}
-
-///|
-fn netcdf_padded_size(size : Int) -> Int {
-  let rem = size % 4
-  if rem == 0 {
-    size
-  } else {
-    size + 4 - rem
-  }
-}
-
-///|
-fn append_netcdf_name(out : Array[Byte], name : String) -> Unit {
-  append_u32_bytes(out, name.length(), true)
-  append_ascii_string_bytes(out, name)
-  append_zero_bytes(out, netcdf_padded_size(name.length()) - name.length())
-}
-
-///|
-fn netcdf_attr_xtype(value : NetcdfAttrValue) -> Int {
-  match value {
-    NetcdfAttrChars(_) => 2
-    NetcdfAttrInt(_) => 4
-    NetcdfAttrFloat(_) => 5
-    NetcdfAttrDouble(_) => 6
-  }
-}
-
-///|
-fn netcdf_attr_payload_length(value : NetcdfAttrValue) -> Int {
-  match value {
-    NetcdfAttrChars(text) => text.length()
-    NetcdfAttrInt(_) => 4
-    NetcdfAttrFloat(_) => 4
-    NetcdfAttrDouble(_) => 8
-  }
-}
-
-///|
-fn netcdf_attr_element_count(value : NetcdfAttrValue) -> Int {
-  match value {
-    NetcdfAttrChars(text) => text.length()
-    _ => 1
-  }
-}
-
-///|
-fn netcdf_attr_payload_bytes(value : NetcdfAttrValue) -> Bytes {
-  let out : Array[Byte] = []
-  match value {
-    NetcdfAttrChars(text) => append_ascii_string_bytes(out, text)
-    NetcdfAttrInt(v) => append_u32_bytes(out, v, true)
-    NetcdfAttrFloat(v) => append_bytes(out, Float::from_double(v).to_be_bytes())
-    NetcdfAttrDouble(v) =>
-      append_bytes(out, v.reinterpret_as_uint64().to_be_bytes())
-  }
-  Bytes::from_array(out)
-}
-
-///|
-fn netcdf_attr_size(attr : NetcdfAttr) -> Int {
-  4 +
-  netcdf_padded_size(attr.name.length()) +
-  4 +
-  4 +
-  netcdf_padded_size(netcdf_attr_payload_length(attr.value))
-}
-
-///|
-fn netcdf_attr_list_size(attrs : Array[NetcdfAttr]) -> Int {
-  let mut total = 8
-  for attr in attrs {
-    total += netcdf_attr_size(attr)
-  }
-  total
-}
-
-///|
-fn netcdf_dimension_list_size(dims : Array[NetcdfDimension]) -> Int {
-  let mut total = 8
-  for dim in dims {
-    total += 4 + netcdf_padded_size(dim.name.length()) + 4
-  }
-  total
-}
-
-///|
-fn netcdf_variable_metadata_size(nc_var : NetcdfVariable) -> Int {
-  4 +
-  netcdf_padded_size(nc_var.name.length()) +
-  4 +
-  nc_var.dimids.length() * 4 +
-  netcdf_attr_list_size(nc_var.attrs) +
-  4 +
-  4 +
-  4
-}
-
-///|
-fn netcdf_variable_value_size(nc_var : NetcdfVariable) -> Int {
-  if nc_var.is_record {
-    if nc_var.record_values.length() == 0 {
-      0
-    } else {
-      nc_var.record_values[0].length()
-    }
-  } else {
-    nc_var.fixed_values.length()
-  }
-}
-
-///|
-fn netcdf_variable_list_size(vars : Array[NetcdfVariable]) -> Int {
-  let mut total = 8
-  for nc_var in vars {
-    total += netcdf_variable_metadata_size(nc_var)
-  }
-  total
-}
-
-///|
-fn netcdf_header_size(
-  dims : Array[NetcdfDimension],
-  global_attrs : Array[NetcdfAttr],
-  vars : Array[NetcdfVariable],
-) -> Int {
-  8 +
-  netcdf_dimension_list_size(dims) +
-  netcdf_attr_list_size(global_attrs) +
-  netcdf_variable_list_size(vars)
-}
-
-///|
-fn build_netcdf_dimension_list_bytes(dims : Array[NetcdfDimension]) -> Bytes {
-  let out : Array[Byte] = []
-  append_u32_bytes(out, 10, true)
-  append_u32_bytes(out, dims.length(), true)
-  for dim in dims {
-    append_netcdf_name(out, dim.name)
-    append_u32_bytes(out, dim.length, true)
-  }
-  Bytes::from_array(out)
-}
-
-///|
-fn build_netcdf_attr_list_bytes(attrs : Array[NetcdfAttr]) -> Bytes {
-  let out : Array[Byte] = []
-  append_u32_bytes(out, 12, true)
-  append_u32_bytes(out, attrs.length(), true)
-  for attr in attrs {
-    append_netcdf_name(out, attr.name)
-    append_u32_bytes(out, netcdf_attr_xtype(attr.value), true)
-    append_u32_bytes(out, netcdf_attr_element_count(attr.value), true)
-    let payload = netcdf_attr_payload_bytes(attr.value)
-    append_bytes(out, payload)
-    append_zero_bytes(
-      out,
-      netcdf_padded_size(payload.length()) - payload.length(),
-    )
-  }
-  Bytes::from_array(out)
-}
-
-///|
-fn build_netcdf_variable_list_bytes(
-  vars : Array[NetcdfVariable],
-  placements : Array[NetcdfVariablePlacement],
-) -> Bytes {
-  let out : Array[Byte] = []
-  append_u32_bytes(out, 11, true)
-  append_u32_bytes(out, vars.length(), true)
-  for i in 0..<vars.length() {
-    let nc_var = vars[i]
-    let placement = placements[i]
-    append_netcdf_name(out, nc_var.name)
-    append_u32_bytes(out, nc_var.dimids.length(), true)
-    for dimid in nc_var.dimids {
-      append_u32_bytes(out, dimid, true)
-    }
-    append_bytes(out, build_netcdf_attr_list_bytes(nc_var.attrs))
-    append_u32_bytes(out, nc_var.xtype, true)
-    append_u32_bytes(out, placement.vsize, true)
-    append_u32_bytes(out, placement.begin, true)
-  }
-  Bytes::from_array(out)
-}
-
-///|
-fn netcdf_ensure_range(
-  bytes : Bytes,
-  offset : Int,
-  length : Int,
-  context : String,
-) -> Result[Unit, String] {
-  if offset < 0 || length < 0 || offset + length > bytes.length() {
-    Err("invalid netcdf payload while reading " + context)
-  } else {
-    Ok(())
-  }
-}
-
-///|
-fn netcdf_read_u32_be(bytes : Bytes, offset : Int) -> Int {
-  bytes.unsafe_read_uint32_be(offset).reinterpret_as_int()
-}
-
-///|
-fn netcdf_read_u64_be(bytes : Bytes, offset : Int) -> UInt64 {
-  let mut value = UInt64::default()
-  for i in 0..<8 {
-    value = (value << 8).lor(UInt64::extend_uint(bytes[offset + i].to_uint()))
-  }
-  value
-}
-
-///|
-fn netcdf_read_double_be(bytes : Bytes, offset : Int) -> Double {
-  netcdf_read_u64_be(bytes, offset).reinterpret_as_double()
-}
-
-///|
-fn netcdf_read_float_be(bytes : Bytes, offset : Int) -> Double {
-  netcdf_read_u32_be(bytes, offset)
-  .reinterpret_as_uint()
-  .reinterpret_as_float()
-  .to_double()
-}
-
-///|
-fn netcdf_ascii_string_from_bytes(
-  bytes : Bytes,
-  offset : Int,
-  length : Int,
-) -> String {
-  let out = StringBuilder::new()
-  for i in 0..<length {
-    out.write_char(
-      Int::unsafe_to_char(bytes[offset + i].to_uint().reinterpret_as_int()),
-    )
-  }
-  out.to_string()
-}
-
-///|
-fn parse_netcdf_name(
-  bytes : Bytes,
-  offset : Int,
-  context : String,
-) -> Result[NetcdfParsedName, String] {
-  match netcdf_ensure_range(bytes, offset, 4, context) {
-    Ok(_) => ()
-    Err(error) => return Err(error)
-  }
-  let length = netcdf_read_u32_be(bytes, offset)
-  let padded = netcdf_padded_size(length)
-  match netcdf_ensure_range(bytes, offset + 4, padded, context) {
-    Ok(_) => ()
-    Err(error) => return Err(error)
-  }
-  Ok({
-    name: netcdf_ascii_string_from_bytes(bytes, offset + 4, length),
-    next_offset: offset + 4 + padded,
-  })
-}
-
-///|
-fn parse_netcdf_attr_list(
-  bytes : Bytes,
-  offset : Int,
-  context : String,
-) -> Result[NetcdfParsedAttrList, String] {
-  match netcdf_ensure_range(bytes, offset, 8, context) {
-    Ok(_) => ()
-    Err(error) => return Err(error)
-  }
-  let tag = netcdf_read_u32_be(bytes, offset)
-  let count = netcdf_read_u32_be(bytes, offset + 4)
-  if tag == 0 && count == 0 {
-    return Ok({ attrs: [], next_offset: offset + 8 })
-  }
-  if tag != 12 {
-    return Err("invalid netcdf attr list tag in " + context)
-  }
-  let attrs : Array[NetcdfAttr] = []
-  let mut cursor = offset + 8
-  for _ in 0..<count {
-    let parsed_name = match
-      parse_netcdf_name(bytes, cursor, context + " attr name") {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    cursor = parsed_name.next_offset
-    match netcdf_ensure_range(bytes, cursor, 8, context + " attr header") {
-      Ok(_) => ()
-      Err(error) => return Err(error)
-    }
-    let xtype = netcdf_read_u32_be(bytes, cursor)
-    let element_count = netcdf_read_u32_be(bytes, cursor + 4)
-    cursor += 8
-    let element_size = match xtype {
-      2 => 1
-      4 => 4
-      5 => 4
-      6 => 8
-      _ => return Err("unsupported netcdf attr xtype in " + context)
-    }
-    let payload_length = element_count * element_size
-    let padded = netcdf_padded_size(payload_length)
-    match
-      netcdf_ensure_range(bytes, cursor, padded, context + " attr payload") {
-      Ok(_) => ()
-      Err(error) => return Err(error)
-    }
-    let value = match xtype {
-      2 =>
-        NetcdfAttrChars(
-          netcdf_ascii_string_from_bytes(bytes, cursor, payload_length),
-        )
-      4 => {
-        if element_count != 1 {
-          return Err("unsupported netcdf attr int vector in " + context)
-        }
-        NetcdfAttrInt(netcdf_read_u32_be(bytes, cursor))
-      }
-      5 => {
-        if element_count != 1 {
-          return Err("unsupported netcdf attr float vector in " + context)
-        }
-        NetcdfAttrFloat(netcdf_read_float_be(bytes, cursor))
-      }
-      6 => {
-        if element_count != 1 {
-          return Err("unsupported netcdf attr double vector in " + context)
-        }
-        NetcdfAttrDouble(netcdf_read_double_be(bytes, cursor))
-      }
-      _ => return Err("unsupported netcdf attr xtype in " + context)
-    }
-    attrs.push({ name: parsed_name.name, value })
-    cursor += padded
-  }
-  Ok({ attrs, next_offset: cursor })
-}
-
-///|
-fn parse_netcdf_dimension_list(
-  bytes : Bytes,
-  offset : Int,
-  context : String,
-) -> Result[NetcdfParsedDimensionList, String] {
-  match netcdf_ensure_range(bytes, offset, 8, context) {
-    Ok(_) => ()
-    Err(error) => return Err(error)
-  }
-  let tag = netcdf_read_u32_be(bytes, offset)
-  let count = netcdf_read_u32_be(bytes, offset + 4)
-  if tag == 0 && count == 0 {
-    return Ok({ dims: [], next_offset: offset + 8 })
-  }
-  if tag != 10 {
-    return Err("invalid netcdf dimension list tag in " + context)
-  }
-  let dims : Array[NetcdfDimension] = []
-  let mut cursor = offset + 8
-  for _ in 0..<count {
-    let parsed_name = match
-      parse_netcdf_name(bytes, cursor, context + " dim name") {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    cursor = parsed_name.next_offset
-    match netcdf_ensure_range(bytes, cursor, 4, context + " dim length") {
-      Ok(_) => ()
-      Err(error) => return Err(error)
-    }
-    dims.push({
-      name: parsed_name.name,
-      length: netcdf_read_u32_be(bytes, cursor),
-    })
-    cursor += 4
-  }
-  Ok({ dims, next_offset: cursor })
-}
-
-///|
-fn parse_netcdf_variable_list(
-  bytes : Bytes,
-  offset : Int,
-  dims : Array[NetcdfDimension],
-  context : String,
-) -> Result[NetcdfParsedVariableList, String] {
-  match netcdf_ensure_range(bytes, offset, 8, context) {
-    Ok(_) => ()
-    Err(error) => return Err(error)
-  }
-  let tag = netcdf_read_u32_be(bytes, offset)
-  let count = netcdf_read_u32_be(bytes, offset + 4)
-  if tag == 0 && count == 0 {
-    return Ok({ vars: [], next_offset: offset + 8 })
-  }
-  if tag != 11 {
-    return Err("invalid netcdf variable list tag in " + context)
-  }
-  let vars : Array[NetcdfParsedVariableInfo] = []
-  let mut cursor = offset + 8
-  for _ in 0..<count {
-    let parsed_name = match
-      parse_netcdf_name(bytes, cursor, context + " var name") {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    cursor = parsed_name.next_offset
-    match netcdf_ensure_range(bytes, cursor, 4, context + " dimid count") {
-      Ok(_) => ()
-      Err(error) => return Err(error)
-    }
-    let dimid_count = netcdf_read_u32_be(bytes, cursor)
-    cursor += 4
-    let dimids : Array[Int] = []
-    for _ in 0..<dimid_count {
-      match netcdf_ensure_range(bytes, cursor, 4, context + " dimid") {
-        Ok(_) => ()
-        Err(error) => return Err(error)
-      }
-      let dimid = netcdf_read_u32_be(bytes, cursor)
-      if dimid < 0 || dimid >= dims.length() {
-        return Err("invalid netcdf dimid in " + context)
-      }
-      dimids.push(dimid)
-      cursor += 4
-    }
-    let parsed_attrs = match
-      parse_netcdf_attr_list(bytes, cursor, context + " var attrs") {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    cursor = parsed_attrs.next_offset
-    match netcdf_ensure_range(bytes, cursor, 12, context + " var placement") {
-      Ok(_) => ()
-      Err(error) => return Err(error)
-    }
-    let xtype = netcdf_read_u32_be(bytes, cursor)
-    let vsize = netcdf_read_u32_be(bytes, cursor + 4)
-    let begin = netcdf_read_u32_be(bytes, cursor + 8)
-    cursor += 12
-    let is_record = dimids.length() > 0 && dims[dimids[0]].length == 0
-    vars.push({
-      name: parsed_name.name,
-      dimids,
-      attrs: parsed_attrs.attrs,
-      xtype,
-      vsize,
-      begin,
-      is_record,
-    })
-  }
-  Ok({ vars, next_offset: cursor })
-}
-
-///|
-fn netcdf_attr_string(attrs : Array[NetcdfAttr], name : String) -> String? {
-  for attr in attrs {
-    if attr.name == name {
-      match attr.value {
-        NetcdfAttrChars(value) => return Some(value)
-        _ => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn netcdf_attr_int(attrs : Array[NetcdfAttr], name : String) -> Int? {
-  for attr in attrs {
-    if attr.name == name {
-      match attr.value {
-        NetcdfAttrInt(value) => return Some(value)
-        _ => return None
-      }
-    }
-  }
-  None
-}
-
-///|
-fn netcdf_attr_double(attrs : Array[NetcdfAttr], name : String) -> Double? {
-  for attr in attrs {
-    if attr.name == name {
-      match attr.value {
-        NetcdfAttrDouble(value) => return Some(value)
-        NetcdfAttrFloat(value) => return Some(value)
-        _ => return None
-      }
-    }
-  }
-  None
 }
 
 ///|
@@ -902,7 +383,7 @@ fn parse_existing_netcdf_file(
 }
 
 ///|
-fn netcdf_record_reference_time_type(meta : @lib.Grib2RecordMeta) -> Int {
+fn netcdf_record_reference_time_type(meta : @decode.Grib2RecordMeta) -> Int {
   if netcdf_record_is_analysis(meta) {
     1
   } else {
@@ -912,7 +393,7 @@ fn netcdf_record_reference_time_type(meta : @lib.Grib2RecordMeta) -> Int {
 
 ///|
 fn netcdf_record_reference_time_description(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
 ) -> String {
   if netcdf_record_is_analysis(meta) {
     "analyses, reference date is fixed"
@@ -922,7 +403,7 @@ fn netcdf_record_reference_time_description(
 }
 
 ///|
-fn netcdf_record_is_analysis(meta : @lib.Grib2RecordMeta) -> Bool {
+fn netcdf_record_is_analysis(meta : @decode.Grib2RecordMeta) -> Bool {
   meta.tail.length() == 0 || meta.tail == "anl"
 }
 
@@ -953,7 +434,7 @@ fn netcdf_reference_date_text_from_unix(reference_time : Int64) -> String {
 
 ///|
 fn netcdf_reference_observation(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
 ) -> NetcdfReferenceObservation {
   { reference_time: meta.unix_rt, is_analysis: netcdf_record_is_analysis(meta) }
 }
@@ -1058,7 +539,7 @@ fn build_netcdf_reference_attrs(
 }
 
 ///|
-fn netcdf_verification_time_unix(meta : @lib.Grib2RecordMeta) -> Int64 {
+fn netcdf_verification_time_unix(meta : @decode.Grib2RecordMeta) -> Int64 {
   match csv_long_forecast_offset_seconds(meta) {
     Some(offset) => meta.unix_rt + offset
     None => meta.unix_rt
@@ -1100,7 +581,7 @@ fn sanitize_netcdf_name_part(text : String) -> String {
 }
 
 ///|
-fn netcdf_variable_name(meta : @lib.Grib2RecordMeta) -> String {
+fn netcdf_variable_name(meta : @decode.Grib2RecordMeta) -> String {
   let raw_parameter = sanitize_netcdf_name_part(
     name_lookup_text(meta.parameter_name),
   )
@@ -1121,7 +602,7 @@ fn netcdf_variable_name(meta : @lib.Grib2RecordMeta) -> String {
 }
 
 ///|
-fn netcdf_long_name_units(meta : @lib.Grib2RecordMeta) -> (String, String) {
+fn netcdf_long_name_units(meta : @decode.Grib2RecordMeta) -> (String, String) {
   let name = name_lookup_text(meta.parameter_name)
   let (desc, raw_units) = gribtable_used_desc_units(
     meta.discipline,
@@ -1297,1067 +778,6 @@ fn netcdf_fma(a : Double, b : Double, c : Double) -> Double {
 }
 
 ///|
-fn build_netcdf_latitude_values(
-  meta : @lib.Grib2RecordMeta,
-) -> Result[Array[Double], String] {
-  let values : Array[Double] = []
-  let scan = meta.section3_scanning_mode
-  let units = 0.000001
-  let lat1 = meta.section3_lat1_microdeg.to_double() * units
-  let lat2 = meta.section3_lat2_microdeg.to_double() * units
-  let south_lat = if (scan & 0x40) != 0 { lat1 } else { lat2 }
-  let north_lat = if (scan & 0x40) != 0 { lat2 } else { lat1 }
-  let dy = if meta.section3_nj > 1 {
-    ((north_lat - south_lat) / (meta.section3_nj - 1).to_double()).abs()
-  } else {
-    0.0
-  }
-  let y0 = if (scan & 0x40) != 0 {
-    0.0
-  } else {
-    1.0 - meta.section3_nj.to_double()
-  }
-  for iy in 0..<meta.section3_nj {
-    values.push(netcdf_fma(y0 + iy.to_double(), dy, lat1))
-  }
-  Ok(values)
-}
-
-///|
-fn build_netcdf_longitude_values(
-  meta : @lib.Grib2RecordMeta,
-) -> Result[Array[Double], String] {
-  let values : Array[Double] = []
-  let scan = meta.section3_scanning_mode
-  let units = 0.000001
-  let lon1 = meta.section3_lon1_microdeg.to_double() * units
-  let lon2 = meta.section3_lon2_microdeg.to_double() * units
-  let mut west_lon = if (scan & 0x80) == 0 { lon1 } else { lon2 }
-  let mut east_lon = if (scan & 0x80) == 0 { lon2 } else { lon1 }
-  if east_lon <= west_lon {
-    east_lon += 360.0
-  }
-  if east_lon - west_lon > 360.0 {
-    east_lon -= 360.0
-  }
-  if west_lon < 0.0 {
-    west_lon += 360.0
-    east_lon += 360.0
-  }
-  let dx = if meta.section3_ni > 1 {
-    ((east_lon - west_lon) / (meta.section3_ni - 1).to_double()).abs()
-  } else {
-    0.0
-  }
-  let x0 = if (scan & 0x80) == 0 {
-    0.0
-  } else {
-    1.0 - meta.section3_ni.to_double()
-  }
-  let mut lon0 = netcdf_fma(x0, dx, lon1)
-  if lon0 >= 360.0 {
-    lon0 -= 360.0
-  }
-  if lon0 < 0.0 {
-    lon0 += 360.0
-  }
-  let lon1_axis = if meta.section3_ni > 1 {
-    let mut next_lon = netcdf_fma(x0 + 1.0, dx, lon1)
-    if next_lon >= 360.0 {
-      next_lon -= 360.0
-    }
-    if next_lon < 0.0 {
-      next_lon += 360.0
-    }
-    next_lon
-  } else {
-    lon0
-  }
-  let axis_dx = if meta.section3_ni > 1 {
-    if lon1_axis > lon0 {
-      lon1_axis - lon0
-    } else {
-      360.0 + lon1_axis - lon0
-    }
-  } else {
-    0.0
-  }
-  let axis_lon0 = if lon0 >= 180.0 { lon0 - 360.0 } else { lon0 }
-  for ix in 0..<meta.section3_ni {
-    values.push(netcdf_fma(ix.to_double(), axis_dx, axis_lon0))
-  }
-  Ok(values)
-}
-
-///|
-fn netcdf_sqrt_nonnegative(v : Double) -> Double {
-  if v <= 0.0 {
-    return 0.0
-  }
-  let mut guess = if v >= 1.0 { v } else { 1.0 }
-  for _ in 0..<16 {
-    guess = 0.5 * (guess + v / guess)
-  }
-  guess
-}
-
-///|
-fn build_netcdf_gaussian_latitude_values(
-  n : Int,
-  nj : Int,
-) -> Result[Array[Double], String] {
-  if n <= 0 || nj <= 0 || nj != 2 * n {
-    return Err("failed to determine Gaussian latitude axis for -netcdf")
-  }
-  if n == 32 && nj == 64 {
-    return Ok([
-      netcdf_mercator_uint64_from_hi_lo(0xc055f748, 0x7aed7704).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc055462d, 0x7f888049).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0549406, 0xc4076aa8).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc053e1a3, 0x89c008a3).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0532f29, 0x5d46e758).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0527ca4, 0x1699b667).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc051ca18, 0x9be4a954).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0511789, 0x50ea86fe).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc05064f7, 0x83655c88).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04f64c7, 0xf1997f1f).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04dff9e, 0x5adbb656).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04c9a72, 0xe6e2c670).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04b3546, 0x06ac9352).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc049d018, 0x0a82eecf).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0486ae9, 0x2d0d29b1).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04705b9, 0x9a2cebc5).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc045a089, 0x73674044).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0443b58, 0xd2d0ed68).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc042d627, 0xcd0c0369).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc04170f6, 0x72ab252f).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0400bc4, 0xd12e9433).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc03d4d25, 0xe777ce50).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc03a82c1, 0xc74b94c6).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc037b85d, 0x51a3f6a0).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc034edf8, 0x940e3c6c).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0322393, 0x9a522bbb).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc02eb25c, 0xdda2309a).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc0291d92, 0x35a41e9e).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc02388c7, 0x4d80087b).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc01be7f8, 0x69769fc2).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xc010be61, 0xf3c6cf39).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0xbff6532d, 0x56dda563).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x3ff6532d, 0x56dda563).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4010be61, 0xf3c6cf39).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x401be7f8, 0x69769fc2).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x402388c7, 0x4d80087b).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40291d92, 0x35a41e9e).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x402eb25c, 0xdda2309a).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40322393, 0x9a522bbb).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4034edf8, 0x940e3c6c).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4037b85d, 0x51a3f6a0).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x403a82c1, 0xc74b94c6).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x403d4d25, 0xe777ce50).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40400bc4, 0xd12e9433).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404170f6, 0x72ab252f).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4042d627, 0xcd0c0369).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40443b58, 0xd2d0ed68).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4045a089, 0x73674044).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404705b9, 0x9a2cebc5).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40486ae9, 0x2d0d29b1).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4049d018, 0x0a82eecf).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404b3546, 0x06ac9352).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404c9a72, 0xe6e2c670).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404dff9e, 0x5adbb656).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x404f64c7, 0xf1997f1f).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x405064f7, 0x83655c88).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40511789, 0x50ea86fe).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4051ca18, 0x9be4a954).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40527ca4, 0x1699b667).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40532f29, 0x5d46e758).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4053e1a3, 0x89c008a3).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x40549406, 0xc4076aa8).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4055462d, 0x7f888049).reinterpret_as_double(),
-      netcdf_mercator_uint64_from_hi_lo(0x4055f748, 0x7aed7704).reinterpret_as_double(),
-    ])
-  }
-  let pi = 3.14159265358979
-  let c = (1.0 - 2.0 / pi * (2.0 / pi)) * 0.25
-  let eps = 1.0e-6
-  let jz = 50
-  let bz = [
-    2.4048255577, 5.5200781103, 8.6537279129, 11.7915344391, 14.9309177086, 18.0710639679,
-    21.2116366299, 24.3524715308, 27.4934791320, 30.6346064684, 33.7758202136, 36.9170983537,
-    40.0584257646, 43.1997917132, 46.3411883717, 49.4826098974, 52.6240518411, 55.7655107550,
-    58.9069839261, 62.0484691902, 65.1899648002, 68.3314693299, 71.4729816036, 74.6145006437,
-    77.7560256304, 80.8975558711, 84.0390907769, 87.1806298436, 90.3221726372, 93.4637187819,
-    96.6052679510, 99.7468198587, 102.888374254, 106.029930916, 109.171489649, 112.313050280,
-    115.454612653, 118.596176630, 121.737742088, 124.879308913, 128.020877005, 131.162446275,
-    134.304016638, 137.445588020, 140.587160352, 143.728733573, 146.870307625, 150.011882457,
-    153.153458019, 156.295034268,
-  ]
-  let jmax = nj
-  let jh = jmax / 2
-  let jhe = (jmax + 1) / 2
-  let r = 1.0 /
-    netcdf_sqrt_nonnegative(
-      (jmax.to_double() + 0.5) * (jmax.to_double() + 0.5) + c,
-    )
-  let slat : Array[Double] = Array::make(jmax, 0.0)
-  for j in 0..<Int::min(jh, jz) {
-    slat[j] = @math.cos(bz[j] * r)
-  }
-  for j in jz..<jh {
-    slat[j] = @math.cos((bz[jz - 1] + (j - (jz - 1)).to_double() * pi) * r)
-  }
-  let pkm1 : Array[Double] = Array::make(jh, 0.0)
-  let pkm2 : Array[Double] = Array::make(jh, 0.0)
-  let pk : Array[Double] = Array::make(jh, 0.0)
-  let mut spmax = 1.0
-  while spmax > eps {
-    spmax = 0.0
-    for j in 0..<jh {
-      pkm1[j] = 1.0
-      pk[j] = slat[j]
-    }
-    for order in 2..<=jmax {
-      for j in 0..<jh {
-        pkm2[j] = pkm1[j]
-        pkm1[j] = pk[j]
-        let numerator = (2 * order - 1).to_double() * slat[j] * pkm1[j] -
-          (order - 1).to_double() * pkm2[j]
-        pk[j] = numerator / order.to_double()
-      }
-    }
-    for j in 0..<jh {
-      let numerator = pk[j] * (1.0 - slat[j] * slat[j])
-      let denominator = jmax.to_double() * (pkm1[j] - slat[j] * pk[j])
-      let sp = numerator / denominator
-      slat[j] -= sp
-      if abs_double(sp) > spmax {
-        spmax = abs_double(sp)
-      }
-    }
-  }
-  for j in 0..<jh {
-    slat[jmax - 1 - j] = -slat[j]
-  }
-  if jhe > jh {
-    slat[jhe - 1] = 0.0
-  }
-  let values : Array[Double] = []
-  let dpr = 180.0 / pi
-  for index in 0..<slat.length() {
-    values.push(dpr * @math.asin(slat[slat.length() - 1 - index]))
-  }
-  Ok(values)
-}
-
-///|
-fn build_netcdf_gaussian_longitude_values(
-  ni : Int,
-  lo1_microdeg : Int,
-  di_microdeg : Int,
-) -> Result[Array[Double], String] {
-  if ni <= 0 {
-    return Err("failed to determine Gaussian longitude axis for -netcdf")
-  }
-  let values : Array[Double] = []
-  let units = 0.000001
-  let mut axis_lon0 = lo1_microdeg.to_double() * units
-  if axis_lon0 >= 180.0 {
-    axis_lon0 -= 360.0
-  }
-  let axis_dx = di_microdeg.to_double() * units
-  for ix in 0..<ni {
-    values.push(netcdf_fma(ix.to_double(), axis_dx, axis_lon0))
-  }
-  Ok(values)
-}
-
-///|
-fn netcdf_mercator_projected_y(latitude_deg : Double) -> Double {
-  let deg_to_rad = 0.017453292519943295769
-  @math.ln(@math.tan(0.5 * (latitude_deg + 90.0) * deg_to_rad))
-}
-
-///|
-priv struct NetcdfMercatorProjectionInfo {
-  r_major : Double
-  eccentricity : Double
-  m1 : Double
-  center_lon_rad : Double
-  first_x_m : Double
-  first_y_m : Double
-  dx_m : Double
-  dy_m : Double
-}
-
-///|
-fn netcdf_grid_major_minor_axes(
-  shape_of_earth : Int,
-  scale_factor_radius : Int,
-  scaled_value_radius : Int,
-  scale_factor_major_axis : Int,
-  scaled_value_major_axis : Int,
-  scale_factor_minor_axis : Int,
-  scaled_value_minor_axis : Int,
-) -> (Double, Double) {
-  let (major, minor) : (Double, Double) = match shape_of_earth {
-    0 => (6367470.0, 6367470.0)
-    1 => {
-      let r = cress_lola_apply_scale_factor(
-        scaled_value_radius, scale_factor_radius,
-      )
-      (r, r)
-    }
-    2 => (6378160.0, 6356775.0)
-    3 => {
-      let a = cress_lola_apply_scale_factor(
-          scaled_value_major_axis, scale_factor_major_axis,
-        ) *
-        1000.0
-      let b = cress_lola_apply_scale_factor(
-          scaled_value_minor_axis, scale_factor_minor_axis,
-        ) *
-        1000.0
-      (a, b)
-    }
-    4 => (6378137.0, 6356752.140)
-    5 => (6378137.0, 6356752.245)
-    6 => (6371229.0, 6371229.0)
-    7 => {
-      let a = cress_lola_apply_scale_factor(
-        scaled_value_major_axis, scale_factor_major_axis,
-      )
-      let b = cress_lola_apply_scale_factor(
-        scaled_value_minor_axis, scale_factor_minor_axis,
-      )
-      (a, b)
-    }
-    8 => (6371200.0, 6371200.0)
-    9 => (6377563.396, 6356256.909)
-    _ => (6367470.0, 6367470.0)
-  }
-  (major, minor)
-}
-
-///|
-fn netcdf_grid_major_minor_axes_from_template_310(
-  grid : @section3.Grib2GridTemplate310,
-) -> (Double, Double) {
-  netcdf_grid_major_minor_axes(
-    grid.shape_of_earth,
-    grid.scale_factor_radius,
-    grid.scaled_value_radius,
-    grid.scale_factor_major_axis,
-    grid.scaled_value_major_axis,
-    grid.scale_factor_minor_axis,
-    grid.scaled_value_minor_axis,
-  )
-}
-
-///|
-fn netcdf_grid_major_minor_axes_from_template_320(
-  grid : @section3.Grib2GridTemplate320,
-) -> (Double, Double) {
-  netcdf_grid_major_minor_axes(
-    grid.shape_of_earth,
-    grid.scale_factor_radius,
-    grid.scaled_value_radius,
-    grid.scale_factor_major_axis,
-    grid.scaled_value_major_axis,
-    grid.scale_factor_minor_axis,
-    grid.scaled_value_minor_axis,
-  )
-}
-
-///|
-fn netcdf_mercator_adjust_lon_radians(angle : Double) -> Double {
-  let pi = 3.14159265358979323846
-  let two_pi = 6.28318530717958647693
-  let mut x = angle
-  while x > pi {
-    x -= two_pi
-  }
-  while x < -pi {
-    x += two_pi
-  }
-  x
-}
-
-///|
-fn netcdf_gctpc_msfnz(
-  eccentricity : Double,
-  sin_phi : Double,
-  cos_phi : Double,
-) -> Double {
-  let con = eccentricity * sin_phi
-  cos_phi / (1.0 - con * con).sqrt()
-}
-
-///|
-fn netcdf_gctpc_e4fn(eccentricity : Double) -> Double {
-  let con = 1.0 + eccentricity
-  let com = 1.0 - eccentricity
-  (@math.pow(con, con) * @math.pow(com, com)).sqrt()
-}
-
-///|
-fn netcdf_gctpc_tsfnz(
-  eccentricity : Double,
-  latitude_rad : Double,
-  sin_latitude : Double,
-) -> Double {
-  let half_pi = 1.57079632679489661923
-  let con = eccentricity * sin_latitude
-  let com = 0.5 * eccentricity
-  let ratio = @math.pow((1.0 - con) / (1.0 + con), com)
-  @math.tan(0.5 * (half_pi - latitude_rad)) / ratio
-}
-
-///|
-fn netcdf_gctpc_phi2z(
-  eccentricity : Double,
-  ts : Double,
-) -> Result[Double, String] {
-  let half_pi = 1.57079632679489661923
-  if eccentricity == 0.0 {
-    return Ok(half_pi - 2.0 * netcdf_mercator_atan_wgrib2_compat(ts))
-  }
-  let eccnth = 0.5 * eccentricity
-  let mut phi = half_pi - 2.0 * @math.atan(ts)
-  for _ in 0..<16 {
-    let sin_phi = @math.sin(phi)
-    let con = eccentricity * sin_phi
-    let dphi = half_pi -
-      2.0 * @math.atan(ts * @math.pow((1.0 - con) / (1.0 + con), eccnth)) -
-      phi
-    phi += dphi
-    if dphi.abs() <= 0.0000000001 {
-      return Ok(phi)
-    }
-  }
-  Err("projected latitude conversion failed in -netcdf")
-}
-
-///|
-fn netcdf_mercator_tsfnz(
-  eccentricity : Double,
-  latitude_rad : Double,
-  sin_latitude : Double,
-) -> Double {
-  let half_pi = 1.57079632679489661923
-  if eccentricity == 0.0 {
-    return @math.tan(0.5 * (half_pi - latitude_rad))
-  }
-  let con = eccentricity * sin_latitude
-  let com = 0.5 * eccentricity
-  let ratio = @math.pow((1.0 - con) / (1.0 + con), com)
-  @math.tan(0.5 * (half_pi - latitude_rad)) / ratio
-}
-
-///|
-fn netcdf_mercator_phi2z(
-  eccentricity : Double,
-  ts : Double,
-) -> Result[Double, String] {
-  let half_pi = 1.57079632679489661923
-  if eccentricity == 0.0 {
-    return Ok(half_pi - 2.0 * netcdf_mercator_atan_wgrib2_compat(ts))
-  }
-  let eccnth = 0.5 * eccentricity
-  let mut phi = half_pi - 2.0 * @math.atan(ts)
-  for _ in 0..<16 {
-    let sin_phi = @math.sin(phi)
-    let con = eccentricity * sin_phi
-    let dphi = half_pi -
-      2.0 * @math.atan(ts * @math.pow((1.0 - con) / (1.0 + con), eccnth)) -
-      phi
-    phi += dphi
-    if dphi.abs() <= 0.0000000001 {
-      return Ok(phi)
-    }
-  }
-  Err("Mercator latitude conversion failed in -netcdf")
-}
-
-///|
-fn build_netcdf_mercator_projection_info(
-  grid : @section3.Grib2GridTemplate310,
-) -> Result[NetcdfMercatorProjectionInfo, String] {
-  let deg_to_rad = 0.017453292519943295769
-  let (r_major, r_minor) = netcdf_grid_major_minor_axes_from_template_310(grid)
-  let center_lon_rad = grid.orientation_of_the_grid.to_double() *
-    0.000001 *
-    deg_to_rad
-  let center_lat_rad = grid.lad.to_double() * 0.000001 * deg_to_rad
-  let temp = r_minor / r_major
-  let eccentricity_squared = 1.0 - temp * temp
-  let eccentricity = eccentricity_squared.sqrt()
-  let sin_center_lat = @math.sin(center_lat_rad)
-  let m1 = @math.cos(center_lat_rad) /
-    (1.0 - eccentricity_squared * sin_center_lat * sin_center_lat).sqrt()
-  let lon1_rad = grid.lo1.to_double() * 0.000001 * deg_to_rad
-  let lat1_rad = grid.la1.to_double() * 0.000001 * deg_to_rad
-  let first_x_m = r_major *
-    m1 *
-    netcdf_mercator_adjust_lon_radians(lon1_rad - center_lon_rad)
-  let ts = netcdf_mercator_tsfnz(eccentricity, lat1_rad, @math.sin(lat1_rad))
-  let first_y_m = -r_major * m1 * @math.ln(ts)
-  Ok({
-    r_major,
-    eccentricity,
-    m1,
-    center_lon_rad,
-    first_x_m,
-    first_y_m,
-    dx_m: grid.di.to_double() * 0.001,
-    dy_m: grid.dj.to_double() * 0.001,
-  })
-}
-
-///|
-fn build_netcdf_mercator_latitude_values(
-  grid : @section3.Grib2GridTemplate310,
-) -> Result[Array[Double], String] {
-  let rad_to_deg = 57.295779513082320877
-  if grid.nj <= 0 {
-    return Err("invalid Mercator nj in -netcdf")
-  }
-  let values : Array[Double] = []
-  let info = match build_netcdf_mercator_projection_info(grid) {
-    Ok(v) => v
-    Err(error) => return Err(error)
-  }
-  let scan = @lib.parse_scanning_mode(grid.scanning_mode)
-  let y_origin = if scan.j_positive { 0.0 } else { 1.0 - grid.nj.to_double() }
-  for j in 0..<grid.nj {
-    let projected_y = info.first_y_m + (y_origin + j.to_double()) * info.dy_m
-    let target_scaled_y = projected_y / (info.r_major * info.m1)
-    let ts = if info.eccentricity == 0.0 {
-      netcdf_mercator_fixed_exp(-target_scaled_y)
-    } else {
-      @math.exp(-target_scaled_y)
-    }
-    let lat_rad = match netcdf_mercator_phi2z(info.eccentricity, ts) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    values.push(lat_rad * rad_to_deg)
-  }
-  Ok(values)
-}
-
-///|
-fn build_netcdf_mercator_longitude_values(
-  grid : @section3.Grib2GridTemplate310,
-) -> Result[Array[Double], String] {
-  let rad_to_deg = 57.295779513082320877
-  if grid.ni <= 0 {
-    return Err("invalid Mercator ni in -netcdf")
-  }
-  let values : Array[Double] = []
-  let info = match build_netcdf_mercator_projection_info(grid) {
-    Ok(v) => v
-    Err(error) => return Err(error)
-  }
-  let scan = @lib.parse_scanning_mode(grid.scanning_mode)
-  let x_origin = if scan.i_negative { 1.0 - grid.ni.to_double() } else { 0.0 }
-  let lon_rad0 = netcdf_mercator_adjust_lon_radians(
-    info.center_lon_rad +
-    (info.first_x_m + x_origin * info.dx_m) / (info.r_major * info.m1),
-  )
-  let mut lon0 = lon_rad0 * rad_to_deg
-  if lon0 < 0.0 {
-    lon0 += 360.0
-  }
-  let axis_lon0 = if lon0 >= 180.0 { lon0 - 360.0 } else { lon0 }
-  let axis_dx = if grid.ni > 1 {
-    let lon_rad1 = netcdf_mercator_adjust_lon_radians(
-      info.center_lon_rad +
-      (info.first_x_m + (x_origin + 1.0) * info.dx_m) / (info.r_major * info.m1),
-    )
-    let mut lon1 = lon_rad1 * rad_to_deg
-    if lon1 < 0.0 {
-      lon1 += 360.0
-    }
-    if lon1 > lon0 {
-      lon1 - lon0
-    } else {
-      360.0 + lon1 - lon0
-    }
-  } else {
-    0.0
-  }
-  for i in 0..<grid.ni {
-    values.push(netcdf_fma(i.to_double(), axis_dx, axis_lon0))
-  }
-  Ok(values)
-}
-
-///|
-fn netcdf_wrap_longitude_360(value : Double) -> Double {
-  let mut out = value
-  while out < 0.0 {
-    out += 360.0
-  }
-  while out >= 360.0 {
-    out -= 360.0
-  }
-  if out == 0.0 || out == 360.0 {
-    0.0
-  } else {
-    out
-  }
-}
-
-///|
-fn build_netcdf_projected_axis_bytes(length : Int, spacing_m : Double) -> Bytes {
-  let values : Array[Double] = []
-  for i in 0..<length {
-    values.push(netcdf_fma(i.to_double(), spacing_m, 0.0))
-  }
-  build_netcdf_double_array_bytes(values)
-}
-
-///|
-fn netcdf_projected_grid_output_origins(
-  ni : Int,
-  nj : Int,
-  scan_mode : Int,
-) -> (Double, Double) {
-  let scan = @lib.parse_scanning_mode(scan_mode)
-  (
-    if scan.i_negative {
-      1.0 - ni.to_double()
-    } else {
-      0.0
-    },
-    if scan.j_positive {
-      0.0
-    } else {
-      1.0 - nj.to_double()
-    },
-  )
-}
-
-///|
-priv struct NetcdfPolarStereographicProjectionInfo {
-  major_axis : Double
-  eccentricity : Double
-  e4 : Double
-  center_lon_rad : Double
-  fac : Double
-  ind : Bool
-  mcs : Double
-  tcs : Double
-  false_easting : Double
-  false_northing : Double
-  dx : Double
-  dy : Double
-}
-
-///|
-fn build_netcdf_polar_stereographic_projection_info(
-  grid : @section3.Grib2GridTemplate320,
-) -> Result[NetcdfPolarStereographicProjectionInfo, String] {
-  let deg_to_rad = 0.017453292519943295769
-  let half_pi = 1.57079632679489661923
-  let eps = 0.0000000001
-  let (major, minor) = netcdf_grid_major_minor_axes_from_template_320(grid)
-  if grid.nx <= 0 || grid.ny <= 0 {
-    return Err("invalid polar stereographic grid size in -netcdf")
-  }
-  let dx = grid.dx.to_double() * 0.001
-  let dy = grid.dy.to_double() * 0.001
-  if dx <= 0.0 || dy <= 0.0 {
-    return Err("invalid polar stereographic grid spacing in -netcdf")
-  }
-  let temp = minor / major
-  let es = 1.0 - temp * temp
-  let eccentricity = es.sqrt()
-  let e4 = netcdf_gctpc_e4fn(eccentricity)
-  let fac = if (grid.projection_center_flag & 0x80) != 0 { -1.0 } else { 1.0 }
-  let center_lat_rad = grid.lad.to_double() * 0.000001 * deg_to_rad
-  let center_lon_rad = grid.lov.to_double() * 0.000001 * deg_to_rad
-  let lat1_rad = grid.la1.to_double() * 0.000001 * deg_to_rad
-  let lon1_rad = grid.lo1.to_double() * 0.000001 * deg_to_rad
-  let ind = (center_lat_rad.abs() - half_pi).abs() > eps
-  let mut mcs = 0.0
-  let mut tcs = 0.0
-  if ind {
-    let con1 = fac * center_lat_rad
-    let sinphi = @math.sin(con1)
-    let cosphi = @math.cos(con1)
-    mcs = netcdf_gctpc_msfnz(eccentricity, sinphi, cosphi)
-    tcs = netcdf_gctpc_tsfnz(eccentricity, con1, sinphi)
-  }
-  let con1 = fac * netcdf_mercator_adjust_lon_radians(lon1_rad - center_lon_rad)
-  let con2 = fac * lat1_rad
-  let sinphi = @math.sin(con2)
-  let ts = netcdf_gctpc_tsfnz(eccentricity, con2, sinphi)
-  let rh = if ind { major * mcs * ts / tcs } else { 2.0 * major * ts / e4 }
-  let x0 = fac * rh * @math.sin(con1)
-  let y0 = -fac * rh * @math.cos(con1)
-  Ok({
-    major_axis: major,
-    eccentricity,
-    e4,
-    center_lon_rad,
-    fac,
-    ind,
-    mcs,
-    tcs,
-    false_easting: -x0,
-    false_northing: -y0,
-    dx,
-    dy,
-  })
-}
-
-///|
-fn build_netcdf_polar_stereographic_latlon_values(
-  grid : @section3.Grib2GridTemplate320,
-) -> Result[(Array[Double], Array[Double]), String] {
-  let rad_to_deg = 57.295779513082320877
-  let info = match build_netcdf_polar_stereographic_projection_info(grid) {
-    Ok(v) => v
-    Err(error) => return Err(error)
-  }
-  let latitude_values : Array[Double] = []
-  let longitude_values : Array[Double] = []
-  let (x_origin, y_origin) = netcdf_projected_grid_output_origins(
-    grid.nx,
-    grid.ny,
-    grid.scanning_mode,
-  )
-  for j in 0..<grid.ny {
-    for i in 0..<grid.nx {
-      let x = netcdf_fma(x_origin + i.to_double(), info.dx, 0.0)
-      let y = netcdf_fma(y_origin + j.to_double(), info.dy, 0.0)
-      let adj_x = (x - info.false_easting) * info.fac
-      let adj_y = (y - info.false_northing) * info.fac
-      let rh = (adj_x * adj_x + adj_y * adj_y).sqrt()
-      let ts = if info.ind {
-        rh * info.tcs / (info.major_axis * info.mcs)
-      } else {
-        rh * info.e4 / (info.major_axis * 2.0)
-      }
-      let lat_rad = match netcdf_gctpc_phi2z(info.eccentricity, ts) {
-        Ok(v) => info.fac * v
-        Err(error) => return Err(error)
-      }
-      let lon_rad = if rh == 0.0 {
-        info.fac * info.center_lon_rad
-      } else {
-        netcdf_mercator_adjust_lon_radians(
-          info.fac * @math.atan2(adj_x, -adj_y) + info.center_lon_rad,
-        )
-      }
-      latitude_values.push(lat_rad * rad_to_deg)
-      longitude_values.push(netcdf_wrap_longitude_360(lon_rad * rad_to_deg))
-    }
-  }
-  netcdf_apply_known_polar_stereographic_corrections(grid, longitude_values)
-  Ok((latitude_values, longitude_values))
-}
-
-///|
-priv struct NetcdfLambertConformalProjectionInfo {
-  major_axis : Double
-  eccentricity : Double
-  center_lon_rad : Double
-  cone_factor : Double
-  f0 : Double
-  rh : Double
-  false_easting : Double
-  false_northing : Double
-  dx : Double
-  dy : Double
-}
-
-///|
-fn build_netcdf_lambert_conformal_projection_info(
-  grid : @section3.Grib2GridTemplate330,
-) -> Result[NetcdfLambertConformalProjectionInfo, String] {
-  let deg_to_rad = 0.017453292519943295769
-  let quarter_pi = 0.78539816339744830962
-  let half_pi = 1.57079632679489661923
-  let eps = 0.0000000001
-  if grid.latitude_of_southern_pole != -90000000 ||
-    grid.longitude_of_southern_pole != 0 {
-    return Err(
-      "-netcdf Lambert conformal currently supports the unrotated pole only",
-    )
-  }
-  let (major, minor) = netcdf_grid_major_minor_axes_from_template_320(grid.base)
-  if grid.base.nx <= 0 || grid.base.ny <= 0 {
-    return Err("invalid Lambert conformal grid size in -netcdf")
-  }
-  let dx = grid.base.dx.to_double() * 0.001
-  let dy = grid.base.dy.to_double() * 0.001
-  if dx <= 0.0 || dy <= 0.0 {
-    return Err("invalid Lambert conformal grid spacing in -netcdf")
-  }
-  let phi1 = grid.latin1.to_double() * 0.000001 * deg_to_rad
-  let phi2 = grid.latin2.to_double() * 0.000001 * deg_to_rad
-  let center_lat_rad = grid.base.lad.to_double() * 0.000001 * deg_to_rad
-  let center_lon_rad = grid.base.lov.to_double() * 0.000001 * deg_to_rad
-  let lat1_rad = grid.base.la1.to_double() * 0.000001 * deg_to_rad
-  let lon1_rad = grid.base.lo1.to_double() * 0.000001 * deg_to_rad
-  if phi1 == 0.0 || phi2 == 0.0 {
-    return Err("invalid Lambert conformal standard latitude in -netcdf")
-  }
-  if (phi1 + phi2).abs() < eps {
-    return Err("invalid Lambert conformal standard latitude in -netcdf")
-  }
-  let temp = minor / major
-  let es = 1.0 - temp * temp
-  let eccentricity = es.sqrt()
-  let sin1 = @math.sin(phi1)
-  let cos1 = @math.cos(phi1)
-  let ms1 = netcdf_gctpc_msfnz(eccentricity, sin1, cos1)
-  let ts1 = netcdf_gctpc_tsfnz(eccentricity, phi1, sin1)
-  let sin2 = @math.sin(phi2)
-  let cos2 = @math.cos(phi2)
-  let ms2 = netcdf_gctpc_msfnz(eccentricity, sin2, cos2)
-  let ts2 = netcdf_gctpc_tsfnz(eccentricity, phi2, sin2)
-  let cone_factor = if (phi1 - phi2).abs() > eps {
-    @math.ln(ms1 / ms2) / @math.ln(ts1 / ts2)
-  } else {
-    sin1
-  }
-  if cone_factor == 0.0 {
-    return Err("invalid Lambert conformal cone factor in -netcdf")
-  }
-  let ts0 = netcdf_gctpc_tsfnz(
-    eccentricity,
-    center_lat_rad,
-    @math.sin(center_lat_rad),
-  )
-  let f0 = ms1 / (cone_factor * @math.pow(ts1, cone_factor))
-  let rh = major * f0 * @math.pow(ts0, cone_factor)
-  let con = (lat1_rad.abs() - half_pi).abs()
-  let rh1 = if con > eps {
-    let sinphi = @math.sin(lat1_rad)
-    let ts = netcdf_gctpc_tsfnz(eccentricity, lat1_rad, sinphi)
-    major * f0 * @math.pow(ts, cone_factor)
-  } else {
-    if lat1_rad * cone_factor <= 0.0 {
-      return Err("Lambert conformal first latitude is outside supported range")
-    }
-    0.0
-  }
-  let theta = cone_factor *
-    netcdf_mercator_adjust_lon_radians(lon1_rad - center_lon_rad)
-  let x0 = rh1 * @math.sin(theta)
-  let y0 = rh - rh1 * @math.cos(theta)
-  Ok({
-    major_axis: major,
-    eccentricity,
-    center_lon_rad,
-    cone_factor,
-    f0,
-    rh,
-    false_easting: -x0,
-    false_northing: -y0,
-    dx,
-    dy,
-  })
-}
-
-///|
-fn build_netcdf_lambert_conformal_latlon_values(
-  grid : @section3.Grib2GridTemplate330,
-) -> Result[(Array[Double], Array[Double]), String] {
-  let rad_to_deg = 57.295779513082320877
-  let info = match build_netcdf_lambert_conformal_projection_info(grid) {
-    Ok(v) => v
-    Err(error) => return Err(error)
-  }
-  let latitude_values : Array[Double] = []
-  let longitude_values : Array[Double] = []
-  let (x_origin, y_origin) = netcdf_projected_grid_output_origins(
-    grid.base.nx,
-    grid.base.ny,
-    grid.base.scanning_mode,
-  )
-  for j in 0..<grid.base.ny {
-    for i in 0..<grid.base.nx {
-      let x = netcdf_fma(x_origin + i.to_double(), info.dx, 0.0) -
-        info.false_easting
-      let y = info.rh -
-        netcdf_fma(y_origin + j.to_double(), info.dy, 0.0) +
-        info.false_northing
-      let (rh1, con) = if info.cone_factor > 0.0 {
-        ((x * x + y * y).sqrt(), 1.0)
-      } else {
-        (-(x * x + y * y).sqrt(), -1.0)
-      }
-      let theta = if rh1 != 0.0 { @math.atan2(con * x, con * y) } else { 0.0 }
-      let lat_rad = if rh1 != 0.0 || info.cone_factor > 0.0 {
-        let ts = @math.pow(
-          rh1 / (info.major_axis * info.f0),
-          1.0 / info.cone_factor,
-        )
-        match netcdf_gctpc_phi2z(info.eccentricity, ts) {
-          Ok(v) => v
-          Err(error) => return Err(error)
-        }
-      } else {
-        -1.57079632679489661923
-      }
-      let lon_rad = netcdf_mercator_adjust_lon_radians(
-        theta / info.cone_factor + info.center_lon_rad,
-      )
-      latitude_values.push(lat_rad * rad_to_deg)
-      longitude_values.push(netcdf_wrap_longitude_360(lon_rad * rad_to_deg))
-    }
-  }
-  netcdf_apply_known_lambert_conformal_corrections(grid, longitude_values)
-  Ok((latitude_values, longitude_values))
-}
-
-///|
-fn build_netcdf_grid_info(
-  meta : @lib.Grib2RecordMeta,
-  section3_bytes : Bytes,
-) -> Result[NetcdfGridInfo, String] {
-  if meta.section3_template.id() == 1 {
-    return build_netcdf_rotated_latlon_grid_info(section3_bytes)
-  }
-  if meta.section3_template.id() == 0 &&
-    meta.section3_ni > 0 &&
-    meta.section3_nj > 0 {
-    let latitude_values = match build_netcdf_latitude_values(meta) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    let longitude_values = match build_netcdf_longitude_values(meta) {
-      Ok(v) => v
-      Err(error) => return Err(error)
-    }
-    return Ok({
-      template_id: 0,
-      ni: meta.section3_ni,
-      nj: meta.section3_nj,
-      scanning_mode: meta.section3_scanning_mode,
-      uses_projected_xy: false,
-      x_bytes: Bytes::new(0),
-      y_bytes: Bytes::new(0),
-      x_grid_spacing_m: 0.0,
-      y_grid_spacing_m: 0.0,
-      latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
-      longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
-    })
-  }
-  let decoded = match @section3.decode_section3_bytes(section3_bytes) {
-    Ok(v) => v
-    Err(e) =>
-      return Err("failed to decode Section 3 for -netcdf: " + e.to_string())
-  }
-  match decoded.template {
-    @section3.GridTemplate310(grid) => {
-      let latitude_values = match build_netcdf_mercator_latitude_values(grid) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      let longitude_values = match
-        build_netcdf_mercator_longitude_values(grid) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      Ok({
-        template_id: 10,
-        ni: grid.ni,
-        nj: grid.nj,
-        scanning_mode: grid.scanning_mode,
-        uses_projected_xy: false,
-        x_bytes: Bytes::new(0),
-        y_bytes: Bytes::new(0),
-        x_grid_spacing_m: 0.0,
-        y_grid_spacing_m: 0.0,
-        latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
-        longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
-      })
-    }
-    @section3.GridTemplate320(grid) => {
-      let (latitude_values, longitude_values) = match
-        build_netcdf_polar_stereographic_latlon_values(grid) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      Ok({
-        template_id: 20,
-        ni: grid.nx,
-        nj: grid.ny,
-        scanning_mode: grid.scanning_mode,
-        uses_projected_xy: true,
-        x_bytes: build_netcdf_projected_axis_bytes(
-          grid.nx,
-          grid.dx.to_double() * 0.001,
-        ),
-        y_bytes: build_netcdf_projected_axis_bytes(
-          grid.ny,
-          grid.dy.to_double() * 0.001,
-        ),
-        x_grid_spacing_m: grid.dx.to_double() * 0.001,
-        y_grid_spacing_m: grid.dy.to_double() * 0.001,
-        latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
-        longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
-      })
-    }
-    @section3.GridTemplate330(grid) => {
-      let (latitude_values, longitude_values) = match
-        build_netcdf_lambert_conformal_latlon_values(grid) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      Ok({
-        template_id: 30,
-        ni: grid.base.nx,
-        nj: grid.base.ny,
-        scanning_mode: grid.base.scanning_mode,
-        uses_projected_xy: true,
-        x_bytes: build_netcdf_projected_axis_bytes(
-          grid.base.nx,
-          grid.base.dx.to_double() * 0.001,
-        ),
-        y_bytes: build_netcdf_projected_axis_bytes(
-          grid.base.ny,
-          grid.base.dy.to_double() * 0.001,
-        ),
-        x_grid_spacing_m: grid.base.dx.to_double() * 0.001,
-        y_grid_spacing_m: grid.base.dy.to_double() * 0.001,
-        latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
-        longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
-      })
-    }
-    @section3.GridTemplate340(grid) => {
-      let latitude_values = match
-        build_netcdf_gaussian_latitude_values(grid.n, grid.nj) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      let longitude_values = match
-        build_netcdf_gaussian_longitude_values(grid.ni, grid.lo1, grid.di) {
-        Ok(v) => v
-        Err(error) => return Err(error)
-      }
-      Ok({
-        template_id: 40,
-        ni: grid.ni,
-        nj: grid.nj,
-        scanning_mode: grid.scanning_mode,
-        uses_projected_xy: false,
-        x_bytes: Bytes::new(0),
-        y_bytes: Bytes::new(0),
-        x_grid_spacing_m: 0.0,
-        y_grid_spacing_m: 0.0,
-        latitude_bytes: build_netcdf_double_array_bytes(latitude_values),
-        longitude_bytes: build_netcdf_double_array_bytes(longitude_values),
-      })
-    }
-    _ => Err(netcdf_supported_grid_error())
-  }
-}
 
 ///|
 fn append_netcdf_double_bytes(out : Array[Byte], value : Double) -> Unit {
@@ -2380,16 +800,16 @@ fn build_netcdf_double_array_bytes(values : Array[Double]) -> Bytes {
 
 ///|
 fn build_reduced_gaussian_netcdf_record(
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
-  meta : @lib.Grib2RecordMeta,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
+  meta : @decode.Grib2RecordMeta,
 ) -> Result[NetcdfResolvedRecord, String] {
   let regularized_bytes = match
     build_reduced_gaussian_submessage_bytes(message, submessage, meta, "linear") {
     Ok(v) => v
     Err(error) => return Err(error)
   }
-  let regularized_context = match @lib.parse_grib2_file(regularized_bytes) {
+  let regularized_context = match @core.parse_grib2_file(regularized_bytes) {
     Ok(v) => v
     Err(error) =>
       return Err(
@@ -2403,7 +823,7 @@ fn build_reduced_gaussian_netcdf_record(
       "internal: reduced Gaussian regularization did not yield one record",
     )
   }
-  let regularized_meta = @lib.decode_records(regularized_context)[0]
+  let regularized_meta = @decode.decode_records(regularized_context)[0]
   let regularized_message = regularized_context.messages[0]
   let regularized_submessage = regularized_message.submessages[0]
   let grid_info = match
@@ -2415,7 +835,7 @@ fn build_reduced_gaussian_netcdf_record(
     Err(error) => return Err(error)
   }
   let unpacked = match
-    @lib.unpack_submessage_data(regularized_message, regularized_submessage) {
+    @decode.unpack_submessage_data(regularized_message, regularized_submessage) {
     Ok(v) => v
     Err(_) =>
       return Err(
@@ -2429,9 +849,9 @@ fn build_reduced_gaussian_netcdf_record(
 
 ///|
 fn resolve_netcdf_record(
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   record_ref : SelectedRecordRef,
-  metas : Array[@lib.Grib2RecordMeta],
+  metas : Array[@decode.Grib2RecordMeta],
 ) -> Result[NetcdfResolvedRecord, String] {
   let meta_index = record_ref.record_index - 1
   if meta_index < 0 || meta_index >= metas.length() {
@@ -2453,7 +873,7 @@ fn resolve_netcdf_record(
     Ok(v) => v
     Err(error) => return Err(error)
   }
-  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+  let unpacked = match @decode.unpack_submessage_data(message, submessage) {
     Ok(v) => v
     Err(_) =>
       return Err(
@@ -2531,7 +951,7 @@ fn build_netcdf_float_grid_bytes(
     }
     return Ok(Bytes::from_array(out))
   }
-  let scan = @lib.parse_scanning_mode(grid_info.scanning_mode)
+  let scan = @typed.parse_scanning_mode(grid_info.scanning_mode)
   for j = 1; j <= grid_info.nj; j = j + 1 {
     for i = 1; i <= grid_info.ni; i = i + 1 {
       let j_data = if scan.j_positive { j - 1 } else { grid_info.nj - j }
@@ -2894,7 +1314,7 @@ fn build_netcdf_bytes(
 
 ///|
 fn build_single_record_netcdf_plan(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
   grid_info : NetcdfGridInfo,
   values : Array[Double],
 ) -> Result[NetcdfOutputPlan, String] {
@@ -2941,7 +1361,7 @@ fn build_single_record_netcdf_plan(
 
 ///|
 fn finalize_prepared_netcdf_plan(
-  base_meta : @lib.Grib2RecordMeta,
+  base_meta : @decode.Grib2RecordMeta,
   base_grid_info : NetcdfGridInfo,
   reference_observations : Array[NetcdfReferenceObservation],
   prepared : Array[NetcdfPreparedRecord],
@@ -3028,7 +1448,7 @@ fn finalize_prepared_netcdf_plan(
 
 ///|
 fn build_single_record_netcdf_bytes(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
   grid_info : NetcdfGridInfo,
   values : Array[Double],
 ) -> Result[Bytes, String] {
@@ -3046,14 +1466,14 @@ fn build_single_record_netcdf_bytes(
 
 ///|
 fn build_selected_records_netcdf_plan(
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
 ) -> Result[(NetcdfOutputPlan, NetcdfPlanFatalReason?), String] {
   let refs = collect_selected_record_refs(context, selected)
   if refs.length() == 0 {
     return Err("-netcdf requires at least one selected record")
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   if refs.length() == 1 {
     let resolved = match resolve_netcdf_record(context, refs[0], metas) {
       Ok(v) => v
@@ -3072,7 +1492,7 @@ fn build_selected_records_netcdf_plan(
   }
   let prepared : Array[NetcdfPreparedRecord] = []
   let reference_observations : Array[NetcdfReferenceObservation] = []
-  let mut first_meta : @lib.Grib2RecordMeta? = None
+  let mut first_meta : @decode.Grib2RecordMeta? = None
   let mut first_grid_info : NetcdfGridInfo? = None
   let mut fatal_reason : NetcdfPlanFatalReason? = None
   for record_ref in refs {
@@ -3145,7 +1565,7 @@ fn build_selected_records_netcdf_plan(
 
 ///|
 fn build_selected_records_netcdf_bytes(
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
 ) -> Result[(Bytes, NetcdfPlanFatalReason?), String] {
   let (plan, fatal_reason) = match
@@ -3186,7 +1606,7 @@ fn netcdf_selected_record_index_for_plan(
 
 ///|
 fn netcdf_apply_mixed_grid_fresh_abort_artifact_compat(
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
   plan : NetcdfOutputPlan,
   bytes : Bytes,
@@ -3205,7 +1625,7 @@ fn netcdf_apply_mixed_grid_fresh_abort_artifact_compat(
         bytes.length() < 12188 {
         return bytes
       }
-      let metas = @lib.decode_records(context)
+      let metas = @decode.decode_records(context)
       let prefix_record_index = netcdf_selected_record_index_for_plan(
         selected,
         valid_prefix_count - 1,
@@ -3357,7 +1777,7 @@ fn merge_existing_netcdf_with_plan(
 ///|
 fn build_appended_netcdf_bytes(
   destination : String,
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
 ) -> Result[(Bytes, NetcdfPlanFatalReason?), String] {
   let (plan, fatal_reason) = match
@@ -3418,7 +1838,7 @@ fn build_appended_netcdf_bytes(
 ///|
 fn write_netcdf_output(
   destination : String,
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[NetcdfPlanFatalReason?, String] {

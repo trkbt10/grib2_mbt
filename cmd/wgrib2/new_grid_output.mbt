@@ -47,7 +47,7 @@ fn parse_new_grid_interpolation_method(
 }
 
 ///|
-fn new_grid_wgrib2_notice_inventory_line(meta : @lib.Grib2RecordMeta) -> String {
+fn new_grid_wgrib2_notice_inventory_line(meta : @decode.Grib2RecordMeta) -> String {
   meta.record_id +
   ":" +
   meta.message_offset.to_string() +
@@ -64,7 +64,7 @@ fn new_grid_wgrib2_notice_inventory_line(meta : @lib.Grib2RecordMeta) -> String 
 
 ///|
 fn new_grid_wgrib2_alternating_rows_notice_lines(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
 ) -> Array[String] {
   [
     "Warning: -new_grid_winds set to earth",
@@ -75,8 +75,8 @@ fn new_grid_wgrib2_alternating_rows_notice_lines(
 
 ///|
 fn new_grid_wgrib2_alternating_rows_pair_notice_lines(
-  first_meta : @lib.Grib2RecordMeta,
-  second_meta : @lib.Grib2RecordMeta,
+  first_meta : @decode.Grib2RecordMeta,
+  second_meta : @decode.Grib2RecordMeta,
 ) -> Array[String] {
   [
     "Warning: -new_grid_winds set to earth",
@@ -123,7 +123,7 @@ fn build_new_grid_target_grid(
 
 ///|
 fn build_new_grid_raw_source_grid(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
 ) -> Result[NewGridRawSourceGrid, String] {
   if meta.section3_template.id() != 0 ||
     meta.section3_ni <= 0 ||
@@ -186,7 +186,7 @@ fn build_new_grid_raw_source_grid(
 
 ///|
 fn build_new_grid_source_grid(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
 ) -> Result[NewGridRegularLatLonGrid, String] {
   if meta.section3_template.id() != 0 ||
     meta.section3_ni <= 0 ||
@@ -234,7 +234,7 @@ fn new_grid_positive_mod(value : Double, modulus : Double) -> Double {
 
 ///|
 fn build_new_grid_canonical_source_values(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
   unpacked : Array[Double],
 ) -> Result[Array[Double], String] {
   let total_points = meta.section3_ni * meta.section3_nj
@@ -318,7 +318,7 @@ fn new_grid_raw_source_value_at(
   if ii < 1 || ii > source.ni || j < 1 || j > source.nj {
     return None
   }
-  let scan = @lib.parse_scanning_mode(source.scan_mode)
+  let scan = @typed.parse_scanning_mode(source.scan_mode)
   let i_out = if scan.i_negative { source.ni - ii } else { ii - 1 }
   let j_out = if scan.j_positive { j - 1 } else { source.nj - j }
   let index = i_out + j_out * source.ni
@@ -806,9 +806,9 @@ fn new_grid_polfixv(
 fn build_new_grid_wind_submessage_bytes(
   option_name : String,
   section3 : Bytes,
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
-  meta : @lib.Grib2RecordMeta,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
+  meta : @decode.Grib2RecordMeta,
   values : Array[Double],
 ) -> Result[Bytes, String] {
   let (sec6, defined_values) = build_wind_section6_bytes_and_defined_values(
@@ -852,12 +852,12 @@ fn build_new_grid_wind_pair_submessage_bytes(
   lon_spec : String,
   lat_spec : String,
   interpolation : String?,
-  u_message : @lib.Grib2MessageContext,
-  u_submessage : @lib.Grib2SubmessageFrame,
-  u_meta : @lib.Grib2RecordMeta,
-  v_message : @lib.Grib2MessageContext,
-  v_submessage : @lib.Grib2SubmessageFrame,
-  v_meta : @lib.Grib2RecordMeta,
+  u_message : @context.Grib2MessageContext,
+  u_submessage : @context.Grib2SubmessageFrame,
+  u_meta : @decode.Grib2RecordMeta,
+  v_message : @context.Grib2MessageContext,
+  v_submessage : @context.Grib2SubmessageFrame,
+  v_meta : @decode.Grib2RecordMeta,
 ) -> Result[(Bytes, Bytes), String] {
   let interpolation_method = match
     parse_new_grid_interpolation_method(interpolation) {
@@ -887,7 +887,7 @@ fn build_new_grid_wind_pair_submessage_bytes(
     Err(e) => return Err(e)
   }
   let source_section3 = match
-    @lib.decode_submessage_section3(u_message, u_submessage) {
+    @decode.decode_submessage_section3(u_message, u_submessage) {
     Ok(v) => v
     Err(e) => return Err("failed to decode Section 3 for -new_grid: \{e}")
   }
@@ -898,7 +898,7 @@ fn build_new_grid_wind_pair_submessage_bytes(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  let u_unpacked = match @lib.unpack_submessage_data(u_message, u_submessage) {
+  let u_unpacked = match @decode.unpack_submessage_data(u_message, u_submessage) {
     Ok(v) => v.values
     Err(_) =>
       return Err(
@@ -907,7 +907,7 @@ fn build_new_grid_wind_pair_submessage_bytes(
         " for -new_grid",
       )
   }
-  let v_unpacked = match @lib.unpack_submessage_data(v_message, v_submessage) {
+  let v_unpacked = match @decode.unpack_submessage_data(v_message, v_submessage) {
     Ok(v) => v.values
     Err(_) =>
       return Err(
@@ -979,9 +979,9 @@ fn build_new_grid_submessage_bytes(
   lon_spec : String,
   lat_spec : String,
   interpolation : String?,
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
-  meta : @lib.Grib2RecordMeta,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
+  meta : @decode.Grib2RecordMeta,
 ) -> Result[Bytes, String] {
   let interpolation_method = match
     parse_new_grid_interpolation_method(interpolation) {
@@ -1008,7 +1008,7 @@ fn build_new_grid_submessage_bytes(
     Err(e) => return Err(e)
   }
   let source_section3 = match
-    @lib.decode_submessage_section3(message, submessage) {
+    @decode.decode_submessage_section3(message, submessage) {
     Ok(v) => v
     Err(e) => return Err("failed to decode Section 3 for -new_grid: \{e}")
   }
@@ -1019,7 +1019,7 @@ fn build_new_grid_submessage_bytes(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+  let unpacked = match @decode.unpack_submessage_data(message, submessage) {
     Ok(v) => v.values
     Err(_) =>
       return Err(
@@ -1077,7 +1077,7 @@ fn build_new_grid_submessage_bytes(
       )
   }
   let sec6 = if needs_bitmap {
-    @lib.encode_section6_bytes({
+    @decode.encode_section6_bytes({
       bitmap_indicator: 0,
       bitmap_raw: Bytes::from_array(bitmap_out),
     })

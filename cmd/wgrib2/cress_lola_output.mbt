@@ -44,7 +44,7 @@ fn cress_lola_apply_scale_factor(
 }
 
 ///|
-fn cress_lola_earth_radius_from_meta(meta : @lib.Grib2RecordMeta) -> Double {
+fn cress_lola_earth_radius_from_meta(meta : @decode.Grib2RecordMeta) -> Double {
   let (major, minor) : (Double, Double) = match meta.section3_shape_of_earth {
     0 => (6367470.0, 6367470.0)
     1 => {
@@ -177,7 +177,7 @@ fn build_cress_lola_target_grid(
 
 ///|
 fn build_cress_lola_source_field(
-  meta : @lib.Grib2RecordMeta,
+  meta : @decode.Grib2RecordMeta,
   unpacked : Array[Double],
   target : CressLolaTargetGrid,
 ) -> Result[CressLolaSourceField, String] {
@@ -192,7 +192,7 @@ fn build_cress_lola_source_field(
       total_points.to_string(),
     )
   }
-  let scan = @lib.parse_scanning_mode(meta.section3_scanning_mode)
+  let scan = @typed.parse_scanning_mode(meta.section3_scanning_mode)
   let lon1 = meta.section3_lon1_microdeg.to_double() / 1000000.0
   let lon2 = meta.section3_lon2_microdeg.to_double() / 1000000.0
   let lat1 = meta.section3_lat1_microdeg.to_double() / 1000000.0
@@ -453,7 +453,7 @@ fn build_cress_lola_masked_section6_and_defined_values(
     }
   }
   let sec6 = if has_undefined {
-    @lib.encode_section6_bytes({
+    @decode.encode_section6_bytes({
       bitmap_indicator: 0,
       bitmap_raw: Bytes::from_array(bitmap_raw),
     })
@@ -468,9 +468,9 @@ fn build_cress_lola_submessage_bytes(
   lon_spec : String,
   lat_spec : String,
   radii : Array[Double],
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
-  meta : @lib.Grib2RecordMeta,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
+  meta : @decode.Grib2RecordMeta,
 ) -> Result[Bytes, String] {
   if meta.section3_template.id() != 0 ||
     meta.section3_ni <= 0 ||
@@ -496,7 +496,7 @@ fn build_cress_lola_submessage_bytes(
     Err(e) => return Err(e)
   }
   let source_section3 = match
-    @lib.decode_submessage_section3(message, submessage) {
+    @decode.decode_submessage_section3(message, submessage) {
     Ok(v) => v
     Err(e) => return Err("failed to decode Section 3 for -cress_lola: \{e}")
   }
@@ -507,7 +507,7 @@ fn build_cress_lola_submessage_bytes(
     Ok(v) => v
     Err(e) => return Err(e)
   }
-  let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+  let unpacked = match @decode.unpack_submessage_data(message, submessage) {
     Ok(v) => v.values
     Err(_) =>
       return Err(
@@ -605,7 +605,7 @@ fn write_cress_lola_output_impl(
   lat_spec : String,
   destination : String,
   radii : Array[Double],
-  context : @lib.Grib2FileContext,
+  context : @context.Grib2FileContext,
   selected : Array[Int]?,
   append_mode : Bool,
 ) -> Result[Unit, String] {

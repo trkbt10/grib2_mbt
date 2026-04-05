@@ -52,18 +52,18 @@ fn bytes_be_u32(bytes : Bytes, offset : Int) -> Int {
 ///|
 fn decode_single_template48_output(
   path : String,
-) -> Result[(@lib.Grib2RecordMeta, @section4.Grib2ProductTemplate48), String] {
-  let context = match @lib.parse_with_io(native_read_bytes, path) {
+) -> Result[(@decode.Grib2RecordMeta, @section4.Grib2ProductTemplate48), String] {
+  let context = match @io.parse_with_io(native_read_bytes, path) {
     Ok(v) => v
     Err(e) => return Err("failed to parse output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   if metas.length() != 1 {
     return Err("expected single-record output")
   }
   let message = context.messages[0]
   let submessage = message.submessages[0]
-  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+  let section4 = match @decode.decode_submessage_section4(message, submessage) {
     Ok(v) => v
     Err(e) => return Err("failed to decode output section4: " + e.to_string())
   }
@@ -77,19 +77,19 @@ fn decode_single_template48_output(
 fn decode_template48_outputs(
   path : String,
 ) -> Result[
-  (Array[@lib.Grib2RecordMeta], Array[@section4.Grib2ProductTemplate48]),
+  (Array[@decode.Grib2RecordMeta], Array[@section4.Grib2ProductTemplate48]),
   String,
 ] {
-  let context = match @lib.parse_with_io(native_read_bytes, path) {
+  let context = match @io.parse_with_io(native_read_bytes, path) {
     Ok(v) => v
     Err(e) => return Err("failed to parse output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let templates : Array[@section4.Grib2ProductTemplate48] = []
   for index in 0..<metas.length() {
     let message = context.messages[index]
     let submessage = message.submessages[0]
-    let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    let section4 = match @decode.decode_submessage_section4(message, submessage) {
       Ok(v) => v
       Err(e) => return Err("failed to decode output section4: " + e.to_string())
     }
@@ -106,23 +106,23 @@ fn decode_template48_outputs_with_values(
   path : String,
 ) -> Result[
   (
-    Array[@lib.Grib2RecordMeta],
+    Array[@decode.Grib2RecordMeta],
     Array[@section4.Grib2ProductTemplate48],
     Array[Array[Double]],
   ),
   String,
 ] {
-  let context = match @lib.parse_with_io(native_read_bytes, path) {
+  let context = match @io.parse_with_io(native_read_bytes, path) {
     Ok(v) => v
     Err(e) => return Err("failed to parse output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let templates : Array[@section4.Grib2ProductTemplate48] = []
   let values : Array[Array[Double]] = []
   for index in 0..<metas.length() {
     let message = context.messages[index]
     let submessage = message.submessages[0]
-    let section4 = match @lib.decode_submessage_section4(message, submessage) {
+    let section4 = match @decode.decode_submessage_section4(message, submessage) {
       Ok(v) => v
       Err(e) => return Err("failed to decode output section4: " + e.to_string())
     }
@@ -130,7 +130,7 @@ fn decode_template48_outputs_with_values(
       @section4.ProductTemplate48(template48) => templates.push(template48)
       _ => return Err("expected template4.8 output")
     }
-    let unpacked = match @lib.unpack_submessage_data(message, submessage) {
+    let unpacked = match @decode.unpack_submessage_data(message, submessage) {
       Ok(v) => v.values
       Err(e) =>
         return Err("failed to unpack output data: " + unpack_error_string(e))
@@ -150,9 +150,9 @@ struct SyntheticForecastInputSpec {
 
 ///|
 struct ForecastTestSource {
-  context : @lib.Grib2FileContext
+  context : @context.Grib2FileContext
   record_ref : SelectedRecordRef
-  meta : @lib.Grib2RecordMeta
+  meta : @decode.Grib2RecordMeta
   base : @section4.Grib2ProductTemplate40
   section1_bytes : Bytes
   section3_bytes : Bytes
@@ -175,7 +175,7 @@ fn load_forecast_test_source_record(
   fixture : String,
   record_index : Int,
 ) -> Result[ForecastTestSource, String] {
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -200,7 +200,7 @@ fn load_forecast_test_source_record(
   }
   let message = context.messages[record_ref.message_index]
   let submessage = message.submessages[record_ref.submessage_index]
-  let section4 = match @lib.decode_submessage_section4(message, submessage) {
+  let section4 = match @decode.decode_submessage_section4(message, submessage) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -211,7 +211,7 @@ fn load_forecast_test_source_record(
     @section4.ProductTemplate40(v) => v
     _ => return Err("expected template4.0 forecast-processing source")
   }
-  let source_values = match @lib.unpack_submessage_data(message, submessage) {
+  let source_values = match @decode.unpack_submessage_data(message, submessage) {
     Ok(v) => normalize_forecast_test_values(v.values)
     Err(e) =>
       return Err(
@@ -341,12 +341,12 @@ fn build_synthetic_forecast_record(
     ],
     reserved_tail: b"",
   }
-  let decoded_section4 : @lib.Grib2Section4Decoded = {
+  let decoded_section4 : @decode.Grib2Section4Decoded = {
     number_of_coordinate_values: source.coordinate_value_count,
     template: @section4.ProductTemplate48(template48),
     coordinate_values_raw: source.coordinate_values_raw,
   }
-  let section4_bytes = @lib.encode_section4_bytes(decoded_section4)
+  let section4_bytes = @decode.encode_section4_bytes(decoded_section4)
   Ok({
     record_ref: source.record_ref,
     meta: source.meta,
@@ -752,8 +752,8 @@ fn assert_realworld_full_unmerge_fcst_case(
 
 ///|
 fn build_submessage_grib_bytes_with_section1_override_for_test(
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
   section1_override : Bytes?,
 ) -> Bytes {
   let sec1 = match section1_override {
@@ -793,8 +793,8 @@ fn build_submessage_grib_bytes_with_section1_override_for_test(
 
 ///|
 fn build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
   section1_override : Bytes?,
   section3_override : Bytes?,
 ) -> Bytes {
@@ -873,12 +873,12 @@ fn shift_section1_reference_time_for_test(
 ///|
 fn write_mixed_reference_netcdf_input(path : String) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err("failed to parse mixed-reference source: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   if metas.length() == 0 {
     return Err("mixed-reference netcdf source fixture is empty")
   }
@@ -923,12 +923,12 @@ fn write_mixed_reference_netcdf_input(path : String) -> Result[Unit, String] {
 ///|
 fn write_synthetic_mercator_netcdf_input(path : String) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err("failed to parse synthetic Mercator source: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err("failed to select synthetic Mercator source record")
@@ -1031,7 +1031,7 @@ fn write_synthetic_mercator_netcdf_input(path : String) -> Result[Unit, String] 
     message,
     submessage,
     None,
-    Some(@lib.encode_section3_bytes(section3)),
+    Some(@decode.encode_section3_bytes(section3)),
   )
   native_write_bytes(path, bytes)
 }
@@ -1041,7 +1041,7 @@ fn write_synthetic_mercator_mixed_reference_netcdf_input(
   path : String,
 ) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -1049,7 +1049,7 @@ fn write_synthetic_mercator_mixed_reference_netcdf_input(
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err("failed to select synthetic Mercator mixed-reference source")
@@ -1148,7 +1148,7 @@ fn write_synthetic_mercator_mixed_reference_netcdf_input(
     }),
     optional_points_raw: b"",
   }
-  let section3_bytes = @lib.encode_section3_bytes(section3)
+  let section3_bytes = @decode.encode_section3_bytes(section3)
   let original_bytes = build_submessage_grib_bytes_with_section1_and_section3_override_for_test(
     message,
     submessage,
@@ -1196,14 +1196,14 @@ fn write_synthetic_rotated_latlon_netcdf_input(
   path : String,
 ) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err(
         "failed to parse synthetic rotated lat-lon source: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err("failed to select synthetic rotated lat-lon source record")
@@ -1258,7 +1258,7 @@ fn write_synthetic_rotated_latlon_netcdf_input(
     }),
     optional_points_raw: b"",
   }
-  let mut section3_bytes = @lib.encode_section3_bytes(section3)
+  let mut section3_bytes = @decode.encode_section3_bytes(section3)
   section3_bytes = patch_grib_signed_u32_be(
     section3_bytes,
     14 + 32,
@@ -1292,7 +1292,7 @@ fn write_synthetic_rotated_latlon_mixed_reference_netcdf_input(
         "failed to write synthetic rotated lat-lon mixed-reference base: " + e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+  let context = match @io.parse_with_io(native_read_bytes, single_path) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -1300,7 +1300,7 @@ fn write_synthetic_rotated_latlon_mixed_reference_netcdf_input(
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err(
@@ -1349,14 +1349,14 @@ fn write_synthetic_polar_stereographic_netcdf_input(
   path : String,
 ) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err(
         "failed to parse synthetic polar stereographic source: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err("failed to select synthetic polar stereographic source record")
@@ -1406,7 +1406,7 @@ fn write_synthetic_polar_stereographic_netcdf_input(
     message,
     submessage,
     None,
-    Some(@lib.encode_section3_bytes(section3)),
+    Some(@decode.encode_section3_bytes(section3)),
   )
   native_write_bytes(path, bytes)
 }
@@ -1416,14 +1416,14 @@ fn write_synthetic_lambert_conformal_netcdf_input(
   path : String,
 ) -> Result[Unit, String] {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       return Err(
         "failed to parse synthetic Lambert conformal source: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err("failed to select synthetic Lambert conformal source record")
@@ -1479,7 +1479,7 @@ fn write_synthetic_lambert_conformal_netcdf_input(
     message,
     submessage,
     None,
-    Some(@lib.encode_section3_bytes(section3)),
+    Some(@decode.encode_section3_bytes(section3)),
   )
   native_write_bytes(path, bytes)
 }
@@ -1497,7 +1497,7 @@ fn write_synthetic_polar_stereographic_mixed_reference_netcdf_input(
         e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+  let context = match @io.parse_with_io(native_read_bytes, single_path) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -1505,7 +1505,7 @@ fn write_synthetic_polar_stereographic_mixed_reference_netcdf_input(
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err(
@@ -1561,7 +1561,7 @@ fn write_synthetic_lambert_conformal_mixed_reference_netcdf_input(
         "failed to write synthetic Lambert conformal mixed-reference base: " + e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, single_path) {
+  let context = match @io.parse_with_io(native_read_bytes, single_path) {
     Ok(v) => v
     Err(e) =>
       return Err(
@@ -1569,7 +1569,7 @@ fn write_synthetic_lambert_conformal_mixed_reference_netcdf_input(
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let refs = collect_selected_record_refs(context, Some([1]))
   if refs.length() != 1 {
     return Err(
@@ -1705,7 +1705,7 @@ test "try_build_simple_packed_sections_with_scaling uses wgrib2 half-up quantiza
     Some(v) => v
     None => fail("expected simple packed sections")
   }
-  let decoded5 = match @lib.decode_section5_bytes(sec5) {
+  let decoded5 = match @decode.decode_section5_bytes(sec5) {
     Ok(v) => v
     Err(e) => fail("failed to decode section5: " + e.to_string())
   }
@@ -1714,7 +1714,7 @@ test "try_build_simple_packed_sections_with_scaling uses wgrib2 half-up quantiza
     DataRepresentationTemplate50(t50) => {
       inspect(t50.bits_per_value, content="2")
       let unpacked = match
-        @lib.unpack_simple(
+        @decode.unpack_simple(
           sec7.sub(start=5).to_bytes(),
           t50.reference_value_ieee,
           t50.binary_scale_factor,
@@ -1737,7 +1737,7 @@ fn fake_section_frame(
   section_number : Int,
   start : Int,
   length : Int,
-) -> @lib.Grib2SectionFrame {
+) -> @context.Grib2SectionFrame {
   { section_number, start, length }
 }
 
@@ -1747,7 +1747,7 @@ fn sample_grib_out_test_section3_bytes(
   nj : Int,
   scanning_mode : Int,
 ) -> Bytes {
-  @lib.encode_section3_bytes({
+  @decode.encode_section3_bytes({
     source_of_grid_definition: 0,
     number_of_data_points: ni * nj,
     optional_points_octet_count: 0,
@@ -1955,13 +1955,13 @@ test "parse_cli_invocation supports AAIG aliases" {
 ///|
 test "format_data_value normalizes JMA text output through float32" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse JMA fixture: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -1986,13 +1986,13 @@ test "format_data_value rounds exact .5 values to even" {
 ///|
 test "format_data_value matches JMA tie points on second row" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_GSM_GPV_Rgl_FD0000_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse JMA fixture: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -2505,7 +2505,7 @@ test "unavailable_out_action_lines matches wgrib2 messages" {
 ///|
 test "netcdf_wgrib2_fatal_lines matches reduced Gaussian wgrib2 message" {
   let fixture = "fixtures/grib2_jpeg2000/eccodes_reduced_gaussian_surface_jpeg.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse reduced Gaussian fixture: " + e.to_string())
   }
@@ -2519,7 +2519,7 @@ test "netcdf_wgrib2_notice_lines matches rotated lat-lon wgrib2 message" {
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic rotated lat-lon fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -2540,7 +2540,7 @@ test "netcdf_wgrib2_notice_lines ignores polar stereographic like current wgrib2
     Err(e) =>
       fail("failed to write synthetic polar stereographic fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -2558,7 +2558,7 @@ test "netcdf_wgrib2_notice_lines ignores Lambert conformal like current wgrib2" 
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic Lambert conformal fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3413,16 +3413,16 @@ test "run_cli repacks jpeg2000 -grib_out record to simple packing" {
   let out = "target/cmd_main_grib_out_jpeg_test.grib2"
   let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out", out]
   inspect(run_cli(args), content="0")
-  let src_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let src_context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse source fixture: " + e.to_string())
   }
-  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+  let out_context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse -grib_out output: " + e.to_string())
   }
-  let src_meta = @lib.decode_records(src_context)[0]
-  let out_meta = @lib.decode_records(out_context)[0]
+  let src_meta = @decode.decode_records(src_context)[0]
+  let out_meta = @decode.decode_records(out_context)[0]
   inspect(src_meta.section5_template.id(), content="40")
   inspect(out_meta.section5_template.id(), content="0")
   inspect(
@@ -3449,16 +3449,16 @@ test "run_cli repacks complex -grib_out record to simple packing" {
   let out = "target/cmd_main_grib_out_complex_test.grib2"
   let args = ["grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out", out]
   inspect(run_cli(args), content="0")
-  let src_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let src_context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse source fixture: " + e.to_string())
   }
-  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+  let out_context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse -grib_out output: " + e.to_string())
   }
-  let src_meta = @lib.decode_records(src_context)[0]
-  let out_meta = @lib.decode_records(out_context)[0]
+  let src_meta = @decode.decode_records(src_context)[0]
+  let out_meta = @decode.decode_records(out_context)[0]
   inspect(src_meta.section5_template.id(), content="3")
   inspect(out_meta.section5_template.id(), content="0")
   inspect(
@@ -3486,7 +3486,7 @@ test "build_grib_out_section6_bytes materializes reused bitmap" {
   let dummy4 = fake_section_frame(4, 0, 0)
   let dummy5 = fake_section_frame(5, 0, 0)
   let dummy7 = fake_section_frame(7, 0, 0)
-  let message : @lib.Grib2MessageContext = {
+  let message : @context.Grib2MessageContext = {
     offset: 0,
     total_length: raw.length(),
     discipline: 0,
@@ -3529,7 +3529,7 @@ test "restore_input_scan_order_for_grib_out inverts WE:SN normalization" {
   let dummy5 = fake_section_frame(5, 0, 0)
   let dummy6 = fake_section_frame(6, 0, 0)
   let dummy7 = fake_section_frame(7, 0, 0)
-  let message : @lib.Grib2MessageContext = {
+  let message : @context.Grib2MessageContext = {
     offset: 0,
     total_length: section3.length(),
     discipline: 0,
@@ -3569,11 +3569,11 @@ test "run_cli repacks bitmaped simple-packed -grib_out record" {
   let out = "target/cmd_main_grib_out_bitmap_test.grib2"
   let args = ["grib2_mbt", fixture, "-for_n", "266:266:1", "-grib_out", out]
   inspect(run_cli(args), content="0")
-  let out_context = match @lib.parse_with_io(native_read_bytes, out) {
+  let out_context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse bitmap -grib_out output: " + e.to_string())
   }
-  let out_meta = @lib.decode_records(out_context)[0]
+  let out_meta = @decode.decode_records(out_context)[0]
   inspect(out_meta.section5_template.id(), content="0")
   inspect(out_meta.section6_bitmap_indicator, content="0")
   inspect(out_meta.section5_bits_per_value, content="10")
@@ -3602,11 +3602,11 @@ test "run_cli supports -ijsmall_grib full-domain limited mode" {
     out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse ijsmall_grib output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
 }
@@ -3619,11 +3619,11 @@ test "run_cli supports -small_grib full-domain limited mode" {
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-small_grib", "0:359", "-90:90", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse small_grib output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
 }
@@ -3637,11 +3637,11 @@ test "run_cli supports -lola identity remap mode=grib" {
     "grib",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse lola output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
 }
@@ -3655,11 +3655,11 @@ test "run_cli supports -cress_lola regular lat/lon output" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse cress_lola output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
 }
@@ -3676,14 +3676,14 @@ test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
     ]),
     content="0",
   )
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse off-grid jma_gsm cress_lola output: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="6")
   inspect(meta.section3_nj, content="5")
   inspect(meta.section3_scanning_mode, content="64")
@@ -3696,7 +3696,7 @@ test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
     ]),
     content="0",
   )
-  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+  let neg_context = match @io.parse_with_io(native_read_bytes, neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3704,7 +3704,7 @@ test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
         e.to_string(),
       )
   }
-  let neg_meta = @lib.decode_records(neg_context)[0]
+  let neg_meta = @decode.decode_records(neg_context)[0]
   inspect(neg_meta.section3_ni, content="6")
   inspect(neg_meta.section3_nj, content="5")
 
@@ -3716,7 +3716,7 @@ test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
     ]),
     content="0",
   )
-  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+  let negpos_context = match @io.parse_with_io(native_read_bytes, negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3724,7 +3724,7 @@ test "run_cli supports -cress_lola off-grid and mask output on jma_gsm" {
         e.to_string(),
       )
   }
-  let negpos_meta = @lib.decode_records(negpos_context)[0]
+  let negpos_meta = @decode.decode_records(negpos_context)[0]
   inspect(negpos_meta.section3_ni, content="6")
   inspect(negpos_meta.section3_nj, content="5")
 }
@@ -3744,12 +3744,12 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on jma_gsm" {
     e => fail("failed to read jma_gsm uv cress_lola output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse jma_gsm uv cress_lola output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -3776,7 +3776,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
       )
   }
   inspect(count_grib_magic(neg_bytes), content="2")
-  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+  let neg_context = match @io.parse_with_io(native_read_bytes, neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3784,7 +3784,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
         e.to_string(),
       )
   }
-  let neg_metas = @lib.decode_records(neg_context)
+  let neg_metas = @decode.decode_records(neg_context)
   inspect(neg_metas.length(), content="2")
   inspect(name_lookup_text(neg_metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(neg_metas[1].parameter_name), content="VGRD")
@@ -3807,7 +3807,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
       )
   }
   inspect(count_grib_magic(negpos_bytes), content="2")
-  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+  let negpos_context = match @io.parse_with_io(native_read_bytes, negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3815,7 +3815,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
         e.to_string(),
       )
   }
-  let negpos_metas = @lib.decode_records(negpos_context)
+  let negpos_metas = @decode.decode_records(negpos_context)
   inspect(negpos_metas.length(), content="2")
   inspect(name_lookup_text(negpos_metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(negpos_metas[1].parameter_name), content="VGRD")
@@ -3832,13 +3832,13 @@ test "run_cli supports -cress_lola off-grid output on pgrb2" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse off-grid cress_lola output: " + e.to_string())
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -3867,12 +3867,12 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on pgrb2" {
     e => fail("failed to read pgrb2 uv cress_lola output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse pgrb2 uv cress_lola output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -3892,7 +3892,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign output on pg
     ]),
     content="0",
   )
-  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+  let neg_context = match @io.parse_with_io(native_read_bytes, neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3900,7 +3900,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign output on pg
         e.to_string(),
       )
   }
-  let neg_meta = @lib.decode_records(neg_context)[0]
+  let neg_meta = @decode.decode_records(neg_context)[0]
   inspect(neg_meta.section3_ni, content="6")
   inspect(neg_meta.section3_nj, content="5")
 
@@ -3912,7 +3912,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign output on pg
     ]),
     content="0",
   )
-  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+  let negpos_context = match @io.parse_with_io(native_read_bytes, negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3920,7 +3920,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign output on pg
         e.to_string(),
       )
   }
-  let negpos_meta = @lib.decode_records(negpos_context)[0]
+  let negpos_meta = @decode.decode_records(negpos_context)[0]
   inspect(negpos_meta.section3_ni, content="6")
   inspect(negpos_meta.section3_nj, content="5")
 }
@@ -3945,7 +3945,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
       )
   }
   inspect(count_grib_magic(neg_bytes), content="2")
-  let neg_context = match @lib.parse_with_io(native_read_bytes, neg_out) {
+  let neg_context = match @io.parse_with_io(native_read_bytes, neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3953,7 +3953,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
         e.to_string(),
       )
   }
-  let neg_metas = @lib.decode_records(neg_context)
+  let neg_metas = @decode.decode_records(neg_context)
   inspect(neg_metas.length(), content="2")
 
   let negpos_out = "target/cmd_main_cress_lola_pgrb2_uv_offgrid_neg_pos_test.grib2"
@@ -3972,7 +3972,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
       )
   }
   inspect(count_grib_magic(negpos_bytes), content="2")
-  let negpos_context = match @lib.parse_with_io(native_read_bytes, negpos_out) {
+  let negpos_context = match @io.parse_with_io(native_read_bytes, negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -3980,7 +3980,7 @@ test "run_cli supports -cress_lola off-grid negative and mixed-sign UGRD/VGRD ou
         e.to_string(),
       )
   }
-  let negpos_metas = @lib.decode_records(negpos_context)
+  let negpos_metas = @decode.decode_records(negpos_context)
   inspect(negpos_metas.length(), content="2")
 }
 
@@ -3997,12 +3997,12 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on gfswave" {
     e => fail("failed to read gfswave uv cress_lola output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse gfswave uv cress_lola output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -4026,7 +4026,7 @@ test "run_cli supports -cress_lola off-grid negative-radius UGRD/VGRD output on 
       )
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4034,7 +4034,7 @@ test "run_cli supports -cress_lola off-grid negative-radius UGRD/VGRD output on 
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -4059,7 +4059,7 @@ test "run_cli keeps off-grid negative-pass mask for UGRD/VGRD output on gfswave"
       )
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4067,7 +4067,7 @@ test "run_cli keeps off-grid negative-pass mask for UGRD/VGRD output on gfswave"
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -4084,12 +4084,12 @@ test "run_cli supports -cress_lola off-grid bitmap output on pgrb2b" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse pgrb2b bitmap cress_lola output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="6")
   inspect(meta.section3_nj, content="5")
   inspect(meta.section6_bitmap_indicator, content="255")
@@ -4104,7 +4104,7 @@ test "run_cli supports -cress_lola off-grid negative-radius bitmap output on pgr
     out, "-50",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4112,7 +4112,7 @@ test "run_cli supports -cress_lola off-grid negative-radius bitmap output on pgr
         e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="6")
   inspect(meta.section3_nj, content="5")
   inspect(meta.section6_bitmap_indicator, content="0")
@@ -4127,7 +4127,7 @@ test "run_cli keeps off-grid negative-pass bitmap mask on pgrb2b" {
     out, "-1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4135,7 +4135,7 @@ test "run_cli keeps off-grid negative-pass bitmap mask on pgrb2b" {
         e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="6")
   inspect(meta.section3_nj, content="5")
   inspect(meta.section6_bitmap_indicator, content="255")
@@ -4152,12 +4152,12 @@ test "run_cli supports -cress_lola off-grid bitmap output on scan32/scan48 bitma
     ]),
     content="0",
   )
-  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+  let scan32_context = match @io.parse_with_io(native_read_bytes, scan32_out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan32 bitmap cress_lola output: " + e.to_string())
   }
-  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  let scan32_meta = @decode.decode_records(scan32_context)[0]
   inspect(scan32_meta.section3_ni, content="6")
   inspect(scan32_meta.section3_nj, content="5")
   inspect(scan32_meta.section6_bitmap_indicator, content="0")
@@ -4171,12 +4171,12 @@ test "run_cli supports -cress_lola off-grid bitmap output on scan32/scan48 bitma
     ]),
     content="0",
   )
-  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+  let scan48_context = match @io.parse_with_io(native_read_bytes, scan48_out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan48 bitmap cress_lola output: " + e.to_string())
   }
-  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  let scan48_meta = @decode.decode_records(scan48_context)[0]
   inspect(scan48_meta.section3_ni, content="6")
   inspect(scan48_meta.section3_nj, content="5")
   inspect(scan48_meta.section6_bitmap_indicator, content="255")
@@ -4194,7 +4194,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
     content="0",
   )
   let scan32_neg_context = match
-    @lib.parse_with_io(native_read_bytes, scan32_neg_out) {
+    @io.parse_with_io(native_read_bytes, scan32_neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4203,7 +4203,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
       )
   }
   inspect(
-    @lib.decode_records(scan32_neg_context)[0].section6_bitmap_indicator,
+    @decode.decode_records(scan32_neg_context)[0].section6_bitmap_indicator,
     content="0",
   )
   let scan32_negpos_out = "target/cmd_main_cress_lola_scan32_bitmap_offgrid_neg_pos_test.grib2"
@@ -4215,7 +4215,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
     content="0",
   )
   let scan32_negpos_context = match
-    @lib.parse_with_io(native_read_bytes, scan32_negpos_out) {
+    @io.parse_with_io(native_read_bytes, scan32_negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4224,7 +4224,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
       )
   }
   inspect(
-    @lib.decode_records(scan32_negpos_context)[0].section6_bitmap_indicator,
+    @decode.decode_records(scan32_negpos_context)[0].section6_bitmap_indicator,
     content="0",
   )
 
@@ -4238,7 +4238,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
     content="0",
   )
   let scan48_neg_context = match
-    @lib.parse_with_io(native_read_bytes, scan48_neg_out) {
+    @io.parse_with_io(native_read_bytes, scan48_neg_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4247,7 +4247,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
       )
   }
   inspect(
-    @lib.decode_records(scan48_neg_context)[0].section6_bitmap_indicator,
+    @decode.decode_records(scan48_neg_context)[0].section6_bitmap_indicator,
     content="0",
   )
   let scan48_negpos_out = "target/cmd_main_cress_lola_scan48_bitmap_offgrid_neg_pos_test.grib2"
@@ -4259,7 +4259,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
     content="0",
   )
   let scan48_negpos_context = match
-    @lib.parse_with_io(native_read_bytes, scan48_negpos_out) {
+    @io.parse_with_io(native_read_bytes, scan48_negpos_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4268,7 +4268,7 @@ test "run_cli keeps off-grid bitmap mask on scan32/scan48 bitmap fixtures" {
       )
   }
   inspect(
-    @lib.decode_records(scan48_negpos_context)[0].section6_bitmap_indicator,
+    @decode.decode_records(scan48_negpos_context)[0].section6_bitmap_indicator,
     content="0",
   )
 }
@@ -4282,12 +4282,12 @@ test "run_cli supports -cress_lola off-grid output on scan32 fixture" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse scan32 cress_lola output: " + e.to_string())
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -4312,12 +4312,12 @@ test "run_cli supports -cress_lola off-grid output on scan48 fixture" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse scan48 cress_lola output: " + e.to_string())
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -4346,12 +4346,12 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on scan32 fixture" 
     e => fail("failed to read scan32 uv cress_lola output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan32 uv cress_lola output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -4372,12 +4372,12 @@ test "run_cli supports -cress_lola off-grid UGRD/VGRD output on scan48 fixture" 
     e => fail("failed to read scan48 uv cress_lola output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan48 uv cress_lola output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -4396,14 +4396,14 @@ test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 fixture
     ]),
     content="0",
   )
-  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+  let scan32_context = match @io.parse_with_io(native_read_bytes, scan32_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan32 negative cress_lola output: " + e.to_string(),
       )
   }
-  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  let scan32_meta = @decode.decode_records(scan32_context)[0]
   inspect(scan32_meta.section3_ni, content="6")
   inspect(scan32_meta.section3_nj, content="5")
 
@@ -4416,14 +4416,14 @@ test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 fixture
     ]),
     content="0",
   )
-  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+  let scan48_context = match @io.parse_with_io(native_read_bytes, scan48_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan48 negative cress_lola output: " + e.to_string(),
       )
   }
-  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  let scan48_meta = @decode.decode_records(scan48_context)[0]
   inspect(scan48_meta.section3_ni, content="6")
   inspect(scan48_meta.section3_nj, content="5")
 }
@@ -4439,14 +4439,14 @@ test "run_cli keeps negative-pass mask on scan32/scan48 fixtures" {
     ]),
     content="0",
   )
-  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+  let scan32_context = match @io.parse_with_io(native_read_bytes, scan32_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan32 mixed-sign cress_lola output: " + e.to_string(),
       )
   }
-  let scan32_meta = @lib.decode_records(scan32_context)[0]
+  let scan32_meta = @decode.decode_records(scan32_context)[0]
   inspect(scan32_meta.section3_ni, content="6")
   inspect(scan32_meta.section3_nj, content="5")
 
@@ -4459,14 +4459,14 @@ test "run_cli keeps negative-pass mask on scan32/scan48 fixtures" {
     ]),
     content="0",
   )
-  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+  let scan48_context = match @io.parse_with_io(native_read_bytes, scan48_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan48 mixed-sign cress_lola output: " + e.to_string(),
       )
   }
-  let scan48_meta = @lib.decode_records(scan48_context)[0]
+  let scan48_meta = @decode.decode_records(scan48_context)[0]
   inspect(scan48_meta.section3_ni, content="6")
   inspect(scan48_meta.section3_nj, content="5")
 }
@@ -4489,14 +4489,14 @@ test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 UGRD/VG
       )
   }
   inspect(count_grib_magic(scan32_bytes), content="2")
-  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+  let scan32_context = match @io.parse_with_io(native_read_bytes, scan32_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan32 uv negative cress_lola output: " + e.to_string(),
       )
   }
-  let scan32_metas = @lib.decode_records(scan32_context)
+  let scan32_metas = @decode.decode_records(scan32_context)
   inspect(scan32_metas.length(), content="2")
 
   let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
@@ -4515,14 +4515,14 @@ test "run_cli supports -cress_lola negative-radius mask on scan32/scan48 UGRD/VG
       )
   }
   inspect(count_grib_magic(scan48_bytes), content="2")
-  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+  let scan48_context = match @io.parse_with_io(native_read_bytes, scan48_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan48 uv negative cress_lola output: " + e.to_string(),
       )
   }
-  let scan48_metas = @lib.decode_records(scan48_context)
+  let scan48_metas = @decode.decode_records(scan48_context)
   inspect(scan48_metas.length(), content="2")
 }
 
@@ -4545,7 +4545,7 @@ test "run_cli keeps negative-pass mask on scan32/scan48 UGRD/VGRD fixtures" {
       )
   }
   inspect(count_grib_magic(scan32_bytes), content="2")
-  let scan32_context = match @lib.parse_with_io(native_read_bytes, scan32_out) {
+  let scan32_context = match @io.parse_with_io(native_read_bytes, scan32_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4553,7 +4553,7 @@ test "run_cli keeps negative-pass mask on scan32/scan48 UGRD/VGRD fixtures" {
         e.to_string(),
       )
   }
-  let scan32_metas = @lib.decode_records(scan32_context)
+  let scan32_metas = @decode.decode_records(scan32_context)
   inspect(scan32_metas.length(), content="2")
 
   let scan48_fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
@@ -4573,7 +4573,7 @@ test "run_cli keeps negative-pass mask on scan32/scan48 UGRD/VGRD fixtures" {
       )
   }
   inspect(count_grib_magic(scan48_bytes), content="2")
-  let scan48_context = match @lib.parse_with_io(native_read_bytes, scan48_out) {
+  let scan48_context = match @io.parse_with_io(native_read_bytes, scan48_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4581,7 +4581,7 @@ test "run_cli keeps negative-pass mask on scan32/scan48 UGRD/VGRD fixtures" {
         e.to_string(),
       )
   }
-  let scan48_metas = @lib.decode_records(scan48_context)
+  let scan48_metas = @decode.decode_records(scan48_context)
   inspect(scan48_metas.length(), content="2")
 }
 
@@ -4594,12 +4594,12 @@ test "run_cli -cress_lola fills bitmap gaps for gfswave same-grid output" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse cress_lola gfswave output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
   inspect(meta.section6_bitmap_indicator, content="255")
@@ -4615,14 +4615,14 @@ test "run_cli supports -cress_lola off-grid output on gfswave" {
     out, "1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse off-grid cress_lola gfswave output: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
   inspect(meta.section3_scanning_mode, content="64")
@@ -4638,7 +4638,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave" {
     out, "-20",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4646,7 +4646,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave" {
         e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
   inspect(meta.section3_scanning_mode, content="64")
@@ -4662,7 +4662,7 @@ test "run_cli keeps off-grid negative-pass mask after later positive passes on g
     out, "-1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4670,7 +4670,7 @@ test "run_cli keeps off-grid negative-pass mask after later positive passes on g
         e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
   inspect(meta.section3_scanning_mode, content="64")
@@ -4688,7 +4688,7 @@ test "run_cli supports -cress_lola off-grid WIND/WDIR output on gfswave" {
     ]),
     content="0",
   )
-  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+  let wind_context = match @io.parse_with_io(native_read_bytes, wind_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4696,7 +4696,7 @@ test "run_cli supports -cress_lola off-grid WIND/WDIR output on gfswave" {
         e.to_string(),
       )
   }
-  let wind_meta = @lib.decode_records(wind_context)[0]
+  let wind_meta = @decode.decode_records(wind_context)[0]
   inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
   inspect(wind_meta.section3_ni, content="8")
   inspect(wind_meta.section3_nj, content="8")
@@ -4711,7 +4711,7 @@ test "run_cli supports -cress_lola off-grid WIND/WDIR output on gfswave" {
     ]),
     content="0",
   )
-  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+  let wdir_context = match @io.parse_with_io(native_read_bytes, wdir_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4719,7 +4719,7 @@ test "run_cli supports -cress_lola off-grid WIND/WDIR output on gfswave" {
         e.to_string(),
       )
   }
-  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  let wdir_meta = @decode.decode_records(wdir_context)[0]
   inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
   inspect(wdir_meta.section3_ni, content="8")
   inspect(wdir_meta.section3_nj, content="8")
@@ -4738,7 +4738,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave WIND
     ]),
     content="0",
   )
-  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+  let wind_context = match @io.parse_with_io(native_read_bytes, wind_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4746,7 +4746,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave WIND
         e.to_string(),
       )
   }
-  let wind_meta = @lib.decode_records(wind_context)[0]
+  let wind_meta = @decode.decode_records(wind_context)[0]
   inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
   inspect(wind_meta.section3_ni, content="8")
   inspect(wind_meta.section3_nj, content="8")
@@ -4761,7 +4761,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave WIND
     ]),
     content="0",
   )
-  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+  let wdir_context = match @io.parse_with_io(native_read_bytes, wdir_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4769,7 +4769,7 @@ test "run_cli supports -cress_lola off-grid negative-radius mask on gfswave WIND
         e.to_string(),
       )
   }
-  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  let wdir_meta = @decode.decode_records(wdir_context)[0]
   inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
   inspect(wdir_meta.section3_ni, content="8")
   inspect(wdir_meta.section3_nj, content="8")
@@ -4788,7 +4788,7 @@ test "run_cli keeps off-grid negative-pass mask on gfswave WIND/WDIR" {
     ]),
     content="0",
   )
-  let wind_context = match @lib.parse_with_io(native_read_bytes, wind_out) {
+  let wind_context = match @io.parse_with_io(native_read_bytes, wind_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4796,7 +4796,7 @@ test "run_cli keeps off-grid negative-pass mask on gfswave WIND/WDIR" {
         e.to_string(),
       )
   }
-  let wind_meta = @lib.decode_records(wind_context)[0]
+  let wind_meta = @decode.decode_records(wind_context)[0]
   inspect(name_lookup_text(wind_meta.parameter_name), content="WIND")
   inspect(wind_meta.section3_ni, content="8")
   inspect(wind_meta.section3_nj, content="8")
@@ -4811,7 +4811,7 @@ test "run_cli keeps off-grid negative-pass mask on gfswave WIND/WDIR" {
     ]),
     content="0",
   )
-  let wdir_context = match @lib.parse_with_io(native_read_bytes, wdir_out) {
+  let wdir_context = match @io.parse_with_io(native_read_bytes, wdir_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -4819,7 +4819,7 @@ test "run_cli keeps off-grid negative-pass mask on gfswave WIND/WDIR" {
         e.to_string(),
       )
   }
-  let wdir_meta = @lib.decode_records(wdir_context)[0]
+  let wdir_meta = @decode.decode_records(wdir_context)[0]
   inspect(name_lookup_text(wdir_meta.parameter_name), content="WDIR")
   inspect(wdir_meta.section3_ni, content="8")
   inspect(wdir_meta.section3_nj, content="8")
@@ -4836,12 +4836,12 @@ test "run_cli -cress_lola supports negative-radius mask on gfswave" {
     out, "-20",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse negative cress_lola output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
   inspect(meta.section6_bitmap_indicator, content="0")
@@ -4857,12 +4857,12 @@ test "run_cli -cress_lola keeps negative-pass mask after later positive passes" 
     out, "-1:2",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse mixed-sign cress_lola output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section5_template.id(), content="0")
   inspect(meta.section3_scanning_mode, content="64")
   inspect(meta.section6_bitmap_indicator, content="0")
@@ -4888,18 +4888,18 @@ test "run_cli supports -irr_grid nearest-neighbor template 130 output" {
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-irr_grid", "0:90:1:89", "100", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse irr_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="130")
   inspect(meta.section3_length, content="46")
   inspect(meta.section3_npts, content="2")
   inspect(meta.section5_num_defined_points, content="2")
   inspect(meta.section6_bitmap_indicator, content="255")
   let section6 = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -4947,11 +4947,11 @@ test "run_cli writes -grib_out_irr template 130 output for regular latlon input"
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr", "all", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse grib_out_irr output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="130")
   inspect(meta.section3_length, content="521310")
   inspect(meta.section3_npts, content="65160")
@@ -4979,12 +4979,12 @@ test "run_cli writes -grib_out_irr bitmap output for undefined irregular points"
     "grib2_mbt", fixture, "-for_n", "1:1:1", "-grib_out_irr", "all", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse grib_out_irr bitmap output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="130")
   inspect(meta.section3_length, content="797078")
   inspect(meta.section3_npts, content="99631")
@@ -4993,7 +4993,7 @@ test "run_cli writes -grib_out_irr bitmap output for undefined irregular points"
   inspect(meta.section6_length, content="12460")
   inspect(meta.section6_undef_points, content="70212")
   let section6 = match
-    @lib.decode_submessage_section6(
+    @decode.decode_submessage_section6(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5019,12 +5019,12 @@ test "run_cli writes -grib_out_irr defined-point output without bitmap" {
     "grib2_mbt", fixture, "-for_n", "266:266:1", "-grib_out_irr", "defined", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse grib_out_irr defined output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="130")
   inspect(meta.section3_length, content="176598")
   inspect(meta.section3_npts, content="22071")
@@ -5041,11 +5041,11 @@ test "run_cli writes -grib_out_irr2 template 101 output for defined points" {
     out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse grib_out_irr2 output: " + e.to_string())
   }
-  let records = @lib.decode_records(context)
+  let records = @decode.decode_records(context)
   inspect(records.length(), content="1")
   let meta = records[0]
   inspect(meta.section3_template.id(), content="101")
@@ -5055,7 +5055,7 @@ test "run_cli writes -grib_out_irr2 template 101 output for defined points" {
   inspect(meta.section5_bits_per_value, content="0")
   inspect(meta.section6_bitmap_indicator, content="255")
   let section3 = match
-    @lib.decode_submessage_section3(
+    @decode.decode_submessage_section3(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5082,12 +5082,12 @@ test "run_cli writes -grib_out_irr2 bitmap for undefined points" {
     out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse grib_out_irr2 bitmap output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="101")
   inspect(meta.section3_npts, content="10")
   inspect(meta.section5_num_defined_points, content="0")
@@ -5097,7 +5097,7 @@ test "run_cli writes -grib_out_irr2 bitmap for undefined points" {
   inspect(meta.section6_length, content="8")
   inspect(meta.section6_undef_points, content="10")
   let section6 = match
-    @lib.decode_submessage_section6(
+    @decode.decode_submessage_section6(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5118,12 +5118,12 @@ test "run_cli pads -grib_out_irr2 beyond source size with undefined points" {
     "00000000-0000-0000-0000-000000000000", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse padded grib_out_irr2 output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="101")
   inspect(meta.section3_npts, content="70000")
   inspect(meta.section5_num_defined_points, content="65160")
@@ -5166,11 +5166,11 @@ test "run_cli supports -new_grid latlon identity output" {
     e => fail("failed to read new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="1")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="360")
   inspect(meta.section3_nj, content="181")
@@ -5185,12 +5185,12 @@ test "run_cli supports -new_grid latlon bilinear scalar output on jma_gsm off-gr
     out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse off-grid jma_gsm new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
@@ -5205,7 +5205,7 @@ test "run_cli supports -new_grid latlon bilinear scalar output on jma_gsm off-gr
     content="0",
   )
   let neighbor_context = match
-    @lib.parse_with_io(native_read_bytes, neighbor_out) {
+    @io.parse_with_io(native_read_bytes, neighbor_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -5213,7 +5213,7 @@ test "run_cli supports -new_grid latlon bilinear scalar output on jma_gsm off-gr
         e.to_string(),
       )
   }
-  let neighbor_meta = @lib.decode_records(neighbor_context)[0]
+  let neighbor_meta = @decode.decode_records(neighbor_context)[0]
   inspect(neighbor_meta.section3_template.id(), content="0")
   inspect(neighbor_meta.section3_ni, content="8")
   inspect(neighbor_meta.section3_nj, content="8")
@@ -5236,12 +5236,12 @@ test "run_cli supports -new_grid latlon bilinear and neighbor UGRD/VGRD output o
     e => fail("failed to read jma_gsm uv new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse jma_gsm uv new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5264,14 +5264,14 @@ test "run_cli supports -new_grid latlon bilinear and neighbor UGRD/VGRD output o
   }
   inspect(count_grib_magic(neighbor_bytes), content="2")
   let neighbor_context = match
-    @lib.parse_with_io(native_read_bytes, neighbor_out) {
+    @io.parse_with_io(native_read_bytes, neighbor_out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse jma_gsm uv neighbor new_grid output: " + e.to_string(),
       )
   }
-  let neighbor_metas = @lib.decode_records(neighbor_context)
+  let neighbor_metas = @decode.decode_records(neighbor_context)
   inspect(neighbor_metas.length(), content="2")
   inspect(name_lookup_text(neighbor_metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(neighbor_metas[1].parameter_name), content="VGRD")
@@ -5288,11 +5288,11 @@ test "run_cli supports -new_grid latlon identity output with bitmap field" {
     "0:331:0.166667", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse bitmap new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section6_bitmap_indicator, content="0")
   inspect(meta.section5_num_defined_points, content="29419")
   inspect(meta.section6_undef_points, content="70212")
@@ -5418,17 +5418,17 @@ test "run_cli supports -new_grid latlon bilinear scalar output" {
     out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse bilinear new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
   inspect(meta.section6_bitmap_indicator, content="255")
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5450,13 +5450,13 @@ test "run_cli supports -new_grid latlon bilinear scalar output on scan32 fixture
     "-89:5:0.5", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan32 bilinear new_grid output: " + e.to_string())
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5510,11 +5510,11 @@ test "run_cli matches wgrib2 empty output for -new_grid_interpolation neighbor o
 ///|
 test "new_grid alternating-row wind pair notice lines match wgrib2 order" {
   let fixture = "fixtures/grib2_derived/noaa_gfs_pgrb2_scan48_uv_records11_12.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse scan48 uv fixture: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let lines = new_grid_wgrib2_alternating_rows_pair_notice_lines(
     metas[0],
     metas[1],
@@ -5556,12 +5556,12 @@ test "run_cli supports -new_grid_interpolation neighbor on scan32 fixture" {
     "-new_grid", "latlon", "0.25:6:0.5", "-89:5:0.5", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan32 neighbor new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_ni, content="6")
   inspect(metas[0].section3_nj, content="5")
@@ -5583,14 +5583,14 @@ test "run_cli supports -new_grid_interpolation neighbor on scan32 UGRD/VGRD fixt
       )
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse scan32 uv neighbor new_grid output: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5605,11 +5605,11 @@ test "run_cli supports -new_grid_interpolation neighbor scalar output" {
     "-new_grid", "latlon", "0.5:8:1", "-89.5:8:1", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse neighbor new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
@@ -5629,12 +5629,12 @@ test "run_cli supports -new_grid_interpolation neighbor UGRD/VGRD output" {
     e => fail("failed to read neighbor uv new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse neighbor uv new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5649,12 +5649,12 @@ test "run_cli supports -new_grid_interpolation neighbor bitmap output" {
     "-new_grid", "latlon", "130.5:8:1", "30.5:8:1", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse neighbor bitmap new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
@@ -5691,12 +5691,12 @@ test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output on gfswave" {
     e => fail("failed to read gfswave uv new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse gfswave uv new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5713,7 +5713,7 @@ test "run_cli supports -new_grid_interpolation neighbor scalar gfswave output" {
     "-new_grid", "latlon", "260:301:0.166667", "0:331:0.166667", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -5721,7 +5721,7 @@ test "run_cli supports -new_grid_interpolation neighbor scalar gfswave output" {
         e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="301")
   inspect(meta.section3_nj, content="331")
@@ -5744,14 +5744,14 @@ test "run_cli supports -new_grid_interpolation neighbor UGRD/VGRD output on gfsw
       )
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse gfswave uv neighbor new_grid output: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5789,12 +5789,12 @@ test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output on scan32 fixt
     e => fail("failed to read scan32 uv new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse scan32 uv new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5850,12 +5850,12 @@ test "run_cli supports -new_grid latlon bilinear UGRD/VGRD output" {
     e => fail("failed to read bilinear uv new_grid output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse bilinear uv new_grid output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(name_lookup_text(metas[0].parameter_name), content="UGRD")
   inspect(name_lookup_text(metas[1].parameter_name), content="VGRD")
@@ -5874,12 +5874,12 @@ test "run_cli supports -new_grid latlon bilinear bitmap output" {
     "30.5:8:1", out,
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse bilinear bitmap new_grid output: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(meta.section3_template.id(), content="0")
   inspect(meta.section3_ni, content="8")
   inspect(meta.section3_nj, content="8")
@@ -5887,7 +5887,7 @@ test "run_cli supports -new_grid latlon bilinear bitmap output" {
   inspect(meta.section5_num_defined_points, content="21")
   inspect(meta.section6_undef_points, content="43")
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -5920,7 +5920,7 @@ test "run_cli supports -new_grid bitmap output on scan32 bitmap fixture" {
     content="0",
   )
   let bilinear_context = match
-    @lib.parse_with_io(native_read_bytes, bilinear_out) {
+    @io.parse_with_io(native_read_bytes, bilinear_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -5928,7 +5928,7 @@ test "run_cli supports -new_grid bitmap output on scan32 bitmap fixture" {
         e.to_string(),
       )
   }
-  let bilinear_meta = @lib.decode_records(bilinear_context)[0]
+  let bilinear_meta = @decode.decode_records(bilinear_context)[0]
   inspect(bilinear_meta.section3_ni, content="6")
   inspect(bilinear_meta.section3_nj, content="5")
   inspect(bilinear_meta.section6_bitmap_indicator, content="0")
@@ -5942,7 +5942,7 @@ test "run_cli supports -new_grid bitmap output on scan32 bitmap fixture" {
     content="0",
   )
   let neighbor_context = match
-    @lib.parse_with_io(native_read_bytes, neighbor_out) {
+    @io.parse_with_io(native_read_bytes, neighbor_out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -5950,7 +5950,7 @@ test "run_cli supports -new_grid bitmap output on scan32 bitmap fixture" {
         e.to_string(),
       )
   }
-  let neighbor_meta = @lib.decode_records(neighbor_context)[0]
+  let neighbor_meta = @decode.decode_records(neighbor_context)[0]
   inspect(neighbor_meta.section3_ni, content="6")
   inspect(neighbor_meta.section3_nj, content="5")
   inspect(neighbor_meta.section6_bitmap_indicator, content="0")
@@ -6042,11 +6042,11 @@ test "run_cli supports -new_grid latlon bilinear WDIR output" {
 ///|
 test "build_netcdf axis values match wgrib2 rounding for gfswave" {
   let fixture = "fixtures/grib2_noaa/gfswave.t00z.atlocn.0p16.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse gfswave fixture: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let latitudes = match build_netcdf_latitude_values(meta) {
     Ok(v) => v
     Err(e) => fail("failed to build netcdf latitude values: " + e)
@@ -6124,11 +6124,11 @@ test "build_netcdf Mercator axis values follow COARDS orientation" {
 ///|
 test "netcdf forecast helpers preserve verification metadata and unit mapping" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse forecast fixture: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   inspect(netcdf_record_reference_time_type(meta), content="3")
   inspect(
     netcdf_record_reference_time_description(meta),
@@ -6144,75 +6144,75 @@ test "netcdf forecast helpers preserve verification metadata and unit mapping" {
 ///|
 test "netcdf unit mapping follows wgrib2 conventions" {
   let fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2b.1p00.f000.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse pgrb2b fixture: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[2]
+  let meta = @decode.decode_records(context)[2]
   let (long_name, units) = netcdf_long_name_units(meta)
   inspect(long_name, content="Relative Humidity")
   inspect(units, content="percent")
   inspect(
-    netcdf_variable_name(@lib.decode_records(context)[265]),
+    netcdf_variable_name(@decode.decode_records(context)[265]),
     content="SOILL_0M0D1mbelowground",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(context)[266]),
+    netcdf_variable_name(@decode.decode_records(context)[266]),
     content="SOILL_0D1M0D4mbelowground",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(context)[286]),
+    netcdf_variable_name(@decode.decode_records(context)[286]),
     content="TMP_60M30mbaboveground",
   )
 
   let pgrb2_fixture = "fixtures/grib2_noaa/gfs.t00z.pgrb2.1p00.f000.grib2"
   let pgrb2_context = match
-    @lib.parse_with_io(native_read_bytes, pgrb2_fixture) {
+    @io.parse_with_io(native_read_bytes, pgrb2_fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse pgrb2 fixture: " + e.to_string())
   }
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[14]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[14]),
     content="HGT_0D01mb",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[15]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[15]),
     content="TMP_0D01mb",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[603]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[603]),
     content="PWAT_entireatmosphere_consideredasasinglelayer_",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[607]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[607]),
     content="LCDC_lowcloudlayer",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[611]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[611]),
     content="HGT_cloudceiling",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[612]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[612]),
     content="HLCY_3000M0maboveground",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[655]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[655]),
     content="HGT_highesttroposphericfreezinglevel",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[666]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[666]),
     content="RH_0D33M1sigmalayer",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[670]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[670]),
     content="TMP_0D995sigmalevel",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[662]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[662]),
     content="N4LFTX_surface",
   )
   inspect(
-    netcdf_variable_name(@lib.decode_records(pgrb2_context)[684]),
+    netcdf_variable_name(@decode.decode_records(pgrb2_context)[684]),
     content="UGRD_PV_EQ_2eM06_Km_2_kg_s_surface",
   )
 }
@@ -6281,12 +6281,12 @@ test "writes synthetic Mercator netcdf fixture" {
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic Mercator netcdf fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse synthetic Mercator fixture: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="10")
 }
@@ -6307,7 +6307,7 @@ test "writes synthetic Mercator mixed-reference netcdf fixture" {
       )
   }
   inspect(count_grib_magic(bytes).to_string(), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -6315,7 +6315,7 @@ test "writes synthetic Mercator mixed-reference netcdf fixture" {
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(metas[0].section3_template.id(), content="10")
   inspect(metas[1].section3_template.id(), content="10")
@@ -6332,14 +6332,14 @@ test "writes synthetic rotated lat-lon netcdf fixture" {
     Ok(v) => v
     Err(e) => fail("failed to read synthetic rotated lat-lon fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic rotated lat-lon fixture: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(bytes.length() > 0, content="true")
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="1")
@@ -6363,7 +6363,7 @@ test "writes synthetic rotated lat-lon mixed-reference netcdf fixture" {
         "failed to read synthetic rotated lat-lon mixed-reference fixture: " + e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -6371,7 +6371,7 @@ test "writes synthetic rotated lat-lon mixed-reference netcdf fixture" {
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(count_grib_magic(bytes).to_string(), content="2")
   inspect(metas.length(), content="2")
   inspect(metas[0].section3_template.id(), content="1")
@@ -6390,7 +6390,7 @@ test "writes synthetic polar stereographic netcdf fixture" {
     Ok(v) => v
     Err(e) => fail("failed to read synthetic polar stereographic fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -6398,7 +6398,7 @@ test "writes synthetic polar stereographic netcdf fixture" {
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(bytes.length() > 0, content="true")
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="20")
@@ -6423,7 +6423,7 @@ test "writes synthetic polar stereographic mixed-reference netcdf fixture" {
         e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -6431,7 +6431,7 @@ test "writes synthetic polar stereographic mixed-reference netcdf fixture" {
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(count_grib_magic(bytes).to_string(), content="2")
   inspect(metas.length(), content="2")
   inspect(metas[0].section3_template.id(), content="20")
@@ -6450,14 +6450,14 @@ test "writes synthetic Lambert conformal netcdf fixture" {
     Ok(v) => v
     Err(e) => fail("failed to read synthetic Lambert conformal fixture: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic Lambert conformal fixture: " + e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(bytes.length() > 0, content="true")
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="30")
@@ -6482,7 +6482,7 @@ test "writes synthetic Lambert conformal mixed-reference netcdf fixture" {
         e,
       )
   }
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -6490,7 +6490,7 @@ test "writes synthetic Lambert conformal mixed-reference netcdf fixture" {
         e.to_string(),
       )
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(count_grib_magic(bytes).to_string(), content="2")
   inspect(metas.length(), content="2")
   inspect(metas[0].section3_template.id(), content="30")
@@ -6580,12 +6580,12 @@ test "run_cli supports synthetic Mercator -netcdf output" {
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic Mercator netcdf input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse synthetic Mercator netcdf input: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -6669,11 +6669,11 @@ test "run_cli supports synthetic Mercator mixed-reference -netcdf and append" {
 ///|
 test "run_cli supports JPEG2000 regular lat/lon -netcdf output" {
   let fixture = "fixtures/grib2_jpeg2000/eccodes_jpeg.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse JPEG2000 netcdf input: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -6705,11 +6705,11 @@ test "run_cli supports JPEG2000 regular lat/lon -netcdf output" {
 ///|
 test "run_cli supports bitmap254 regular lat/lon -netcdf output" {
   let fixture = "fixtures/grib2_derived/noaa_gfswave_global_bitmap254_records5_6.grib2"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse bitmap254 netcdf input: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -6796,12 +6796,12 @@ test "run_cli supports rotated lat-lon -netcdf output with wgrib2 notice lines" 
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic rotated lat-lon input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse synthetic rotated lat-lon input: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -6907,12 +6907,12 @@ test "build_netcdf rotated lat-lon axis values match wgrib2 at corrected points"
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic rotated lat-lon input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse synthetic rotated lat-lon input: " + e.to_string())
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -6972,14 +6972,14 @@ test "run_cli supports synthetic polar stereographic -netcdf output" {
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic polar stereographic input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic polar stereographic input: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -7079,14 +7079,14 @@ test "build_netcdf polar stereographic longitude values match wgrib2 at correcte
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic polar stereographic input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic polar stereographic input: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -7131,14 +7131,14 @@ test "run_cli supports synthetic Lambert conformal -netcdf output" {
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic Lambert conformal input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic Lambert conformal input: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -7238,14 +7238,14 @@ test "build_netcdf Lambert conformal longitude values match wgrib2 at corrected 
     Ok(_) => ()
     Err(e) => fail("failed to write synthetic Lambert conformal input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail(
         "failed to parse synthetic Lambert conformal input: " + e.to_string(),
       )
   }
-  let meta = @lib.decode_records(context)[0]
+  let meta = @decode.decode_records(context)[0]
   let message = context.messages[0]
   let submessage = message.submessages[0]
   let grid_info = match
@@ -7290,12 +7290,12 @@ test "run_cli supports mixed-reference analysis -netcdf output" {
     Ok(_) => ()
     Err(e) => fail("failed to write mixed-reference netcdf input: " + e)
   }
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) =>
       fail("failed to parse mixed-reference netcdf input: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   let out = "target/cmd_main_netcdf_mixed_reference.nc"
   inspect(
     run_cli(["grib2_mbt", fixture, "-for_n", "1:2:1", "-netcdf", out]),
@@ -11313,7 +11313,7 @@ test "run_cli supports -append for mixed-reference analysis netcdf" {
 ///|
 test "write_netcdf_output fills missing variable-time slots" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse sparse netcdf fixture: " + e.to_string())
   }
@@ -11332,7 +11332,7 @@ test "write_netcdf_output fills missing variable-time slots" {
 ///|
 test "write_netcdf_output append preserves sparse variable-time fill slots" {
   let fixture = "fixtures/grib2_jma/Z__C_RJTD_20241206000000_MSM_GPV_Rjp_L-pall_FH18-33_grib2.bin"
-  let context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse sparse append fixture: " + e.to_string())
   }
@@ -11405,13 +11405,13 @@ test "run_cli supports -submsg_uv U/V pair combine" {
   inspect(count_grib_magic(bytes), content="1")
   let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
   inspect(magic, content="b\"GRIB\"")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse submsg_uv output: " + e.to_string())
   }
   inspect(context.messages.length(), content="1")
   inspect(context.messages[0].submessages.length(), content="2")
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(metas[0].section4_parameter_number, content="2")
   inspect(metas[1].section4_parameter_number, content="3")
@@ -11429,13 +11429,13 @@ test "run_cli supports -ncep_uv U/V pair combine" {
   inspect(count_grib_magic(bytes), content="1")
   let magic = bytes.sub(start=0, end=4).to_bytes().to_string()
   inspect(magic, content="b\"GRIB\"")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse ncep_uv output: " + e.to_string())
   }
   inspect(context.messages.length(), content="1")
   inspect(context.messages[0].submessages.length(), content="2")
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="2")
   inspect(metas[0].section4_parameter_number, content="2")
   inspect(metas[1].section4_parameter_number, content="3")
@@ -11451,7 +11451,7 @@ test "run_cli -submsg_uv leaves unpaired records raw and merges U/V pair" {
     e => fail("failed to read mixed submsg_uv output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="3")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse mixed submsg_uv output: " + e.to_string())
   }
@@ -11469,7 +11469,7 @@ test "run_cli supports -reduced_gaussian_grid neighbor output" {
     "grib2_mbt", fixture, "-for_n", "1:1", "-reduced_gaussian_grid", out, "-1", "neighbor",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -11479,12 +11479,12 @@ test "run_cli supports -reduced_gaussian_grid neighbor output" {
   }
   inspect(context.messages.length(), content="1")
   inspect(context.messages[0].submessages.length(), content="1")
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="40")
   inspect(metas[0].section5_template.id(), content="0")
   let section3 = match
-    @lib.decode_submessage_section3(
+    @decode.decode_submessage_section3(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -11504,7 +11504,7 @@ test "run_cli supports -reduced_gaussian_grid neighbor output" {
       fail("expected GridTemplate340 for reduced_gaussian_grid neighbor output")
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -11527,7 +11527,7 @@ test "run_cli supports -reduced_gaussian_grid linear output" {
     "grib2_mbt", fixture, "-for_n", "1:1", "-reduced_gaussian_grid", out, "-1", "linear",
   ]
   inspect(run_cli(args), content="0")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) =>
       fail(
@@ -11536,12 +11536,12 @@ test "run_cli supports -reduced_gaussian_grid linear output" {
   }
   inspect(context.messages.length(), content="1")
   inspect(context.messages[0].submessages.length(), content="1")
-  let metas = @lib.decode_records(context)
+  let metas = @decode.decode_records(context)
   inspect(metas.length(), content="1")
   inspect(metas[0].section3_template.id(), content="40")
   inspect(metas[0].section5_template.id(), content="0")
   let section3 = match
-    @lib.decode_submessage_section3(
+    @decode.decode_submessage_section3(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -11561,7 +11561,7 @@ test "run_cli supports -reduced_gaussian_grid linear output" {
       fail("expected GridTemplate340 for reduced_gaussian_grid linear output")
   }
   let unpacked = match
-    @lib.unpack_submessage_data(
+    @decode.unpack_submessage_data(
       context.messages[0],
       context.messages[0].submessages[0],
     ) {
@@ -12770,12 +12770,12 @@ test "run_cli supports -ave_var multi-record transform" {
     Ok(v) => v
     Err(e) => fail(e)
   }
-  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let source_context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse source: " + e.to_string())
   }
   let source_section4 = match
-    @lib.decode_submessage_section4(
+    @decode.decode_submessage_section4(
       source_context.messages[0],
       source_context.messages[0].submessages[0],
     ) {
@@ -12826,23 +12826,23 @@ test "run_cli supports -ens_processing multi-message transform" {
     e => fail("failed to read ens_processing output: " + e.to_string())
   }
   inspect(count_grib_magic(bytes), content="9")
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse ens_processing output: " + e.to_string())
   }
-  let metas = @lib.decode_records(context)
-  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let metas = @decode.decode_records(context)
+  let source_context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse source: " + e.to_string())
   }
-  let source_metas = @lib.decode_records(source_context)
+  let source_metas = @decode.decode_records(source_context)
   let derived_codes : Array[Int] = []
   let member_counts : Array[Int] = []
   let percentile_values : Array[Int] = []
   let process_codes : Array[Int] = []
   for index in 0..<metas.length() {
     let section4 = match
-      @lib.decode_submessage_section4(
+      @decode.decode_submessage_section4(
         context.messages[index],
         context.messages[index].submessages[0],
       ) {
@@ -12924,26 +12924,26 @@ test "run_cli supports -ens_qc outputs for gfswave" {
   inspect(count_grib_magic(stats_bytes), content="4")
   inspect(count_grib_magic(extreme_bytes), content="1")
   inspect(txt_body, content="WIND:surface:max scaled extreme=0.000000\n")
-  let stats_context = match @lib.parse_with_io(native_read_bytes, stats_out) {
+  let stats_context = match @io.parse_with_io(native_read_bytes, stats_out) {
     Ok(v) => v
     Err(e) => fail("failed to parse ens_qc stats output: " + e.to_string())
   }
   let extreme_context = match
-    @lib.parse_with_io(native_read_bytes, extreme_out) {
+    @io.parse_with_io(native_read_bytes, extreme_out) {
     Ok(v) => v
     Err(e) => fail("failed to parse ens_qc extreme output: " + e.to_string())
   }
-  let source_context = match @lib.parse_with_io(native_read_bytes, fixture) {
+  let source_context = match @io.parse_with_io(native_read_bytes, fixture) {
     Ok(v) => v
     Err(e) => fail("failed to parse ens_qc source fixture: " + e.to_string())
   }
-  let stats_metas = @lib.decode_records(stats_context)
-  let extreme_metas = @lib.decode_records(extreme_context)
-  let source_metas = @lib.decode_records(source_context)
+  let stats_metas = @decode.decode_records(stats_context)
+  let extreme_metas = @decode.decode_records(extreme_context)
+  let source_metas = @decode.decode_records(source_context)
   let stats_derived_codes : Array[Int] = []
   for index in 0..<stats_metas.length() {
     let section4 = match
-      @lib.decode_submessage_section4(
+      @decode.decode_submessage_section4(
         stats_context.messages[index],
         stats_context.messages[index].submessages[0],
       ) {
@@ -12957,7 +12957,7 @@ test "run_cli supports -ens_qc outputs for gfswave" {
     }
   }
   let extreme_section4 = match
-    @lib.decode_submessage_section4(
+    @decode.decode_submessage_section4(
       extreme_context.messages[0],
       extreme_context.messages[0].submessages[0],
     ) {
@@ -15014,11 +15014,11 @@ test "run_cli supports -wind_uv derived output from speed/dir input" {
   }
   inspect(bytes.length() > 16, content="true")
   inspect(count_grib_magic(bytes), content="2")
-  let context = match @lib.parse_with_io(native_read_bytes, uv_out) {
+  let context = match @io.parse_with_io(native_read_bytes, uv_out) {
     Ok(v) => v
     Err(e) => fail("failed to parse wind_uv output: " + e.to_string())
   }
-  let records = @lib.decode_records(context)
+  let records = @decode.decode_records(context)
   inspect(records.length(), content="2")
   inspect(records[0].section5_template.id(), content="0")
   inspect(records[0].section6_bitmap_indicator, content="255")
@@ -15034,11 +15034,11 @@ test "run_cli supports -wind_speed on jpeg2000 U/V input" {
     run_cli(["grib2_mbt", fixture, "-for_n", "3:4", "-wind_speed", out]),
     content="0",
   )
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse wind_speed jpeg output: " + e.to_string())
   }
-  let records = @lib.decode_records(context)
+  let records = @decode.decode_records(context)
   inspect(records.length(), content="1")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="1")
@@ -15054,11 +15054,11 @@ test "run_cli supports -wind_dir on jpeg2000 U/V input" {
     run_cli(["grib2_mbt", fixture, "-for_n", "3:4", "-wind_dir", out]),
     content="0",
   )
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse wind_dir jpeg output: " + e.to_string())
   }
-  let records = @lib.decode_records(context)
+  let records = @decode.decode_records(context)
   inspect(records.length(), content="1")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="0")
@@ -15074,11 +15074,11 @@ test "run_cli supports -wind_uv on jpeg2000 speed dir input" {
     run_cli(["grib2_mbt", fixture, "-for_n", "1:2", "-wind_uv", out]),
     content="0",
   )
-  let context = match @lib.parse_with_io(native_read_bytes, out) {
+  let context = match @io.parse_with_io(native_read_bytes, out) {
     Ok(v) => v
     Err(e) => fail("failed to parse wind_uv jpeg output: " + e.to_string())
   }
-  let records = @lib.decode_records(context)
+  let records = @decode.decode_records(context)
   inspect(records.length(), content="2")
   inspect(records[0].section4_parameter_category, content="2")
   inspect(records[0].section4_parameter_number, content="2")

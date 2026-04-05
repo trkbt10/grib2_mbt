@@ -11,15 +11,15 @@ fn format_section7_unpack_error(error : @section7.UnpackError) -> String {
 
 ///|
 fn unpack_jpeg2000_submessage_with_public_api(
-  message : @lib.Grib2MessageContext,
-  submessage : @lib.Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[@section7.UnpackedGridData, String] {
   let section5_decoded = match
-    @lib.decode_submessage_section5(message, submessage) {
+    @decode.decode_submessage_section5(message, submessage) {
     Ok(v) => v
     Err(error) => return Err("failed to decode Section 5: \{error}")
   }
-  let raw_data = match @lib.get_submessage_raw_data(message, submessage) {
+  let raw_data = match @decode.get_submessage_raw_data(message, submessage) {
     Ok(v) => v
     Err(error) =>
       return Err(
@@ -60,7 +60,7 @@ fn assert_fixture_jpeg2000_public_paths_succeed(
     for submessage_index in 0..<message.submessages.length() {
       let submessage = message.submessages[submessage_index]
       let section5_decoded = match
-        @lib.decode_submessage_section5(message, submessage) {
+        @decode.decode_submessage_section5(message, submessage) {
         Ok(v) => v
         Err(error) =>
           return Err(
@@ -88,7 +88,7 @@ fn assert_fixture_jpeg2000_public_paths_succeed(
             )
           }
           let expanded = match
-            @lib.unpack_submessage_data(message, submessage) {
+            @decode.unpack_submessage_data(message, submessage) {
             Ok(v) => v
             Err(error) =>
               return Err(

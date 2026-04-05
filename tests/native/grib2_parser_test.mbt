@@ -81,24 +81,24 @@ test "wgrib2 compatibility snapshots: NOAA wave" {
 ///|
 test "section0 and section8 minimal message parse and rebuild" {
   let bytes = minimal_grib2_message_bytes()
-  let parsed = match @lib.parse_grib2_file(bytes) {
+  let parsed = match @core.parse_grib2_file(bytes) {
     Ok(context) => context
     Err(error) => fail(error.to_string())
   }
   inspect(parsed.message_count(), content="1")
   inspect(parsed.record_count(), content="1")
   inspect(parsed.messages[0].total_length, content="50")
-  inspect(@lib.rebuild_raw(parsed) == bytes, content="true")
+  inspect(@decode.rebuild_raw(parsed) == bytes, content="true")
 }
 
 ///|
 test "parser rejects broken section8 magic" {
-  let broken = @lib.binary_bytes_with_u8_at(
+  let broken = @core.binary_bytes_with_u8_at(
     minimal_grib2_message_bytes(),
     49,
     56,
   )
-  let rejected = match @lib.parse_grib2_file(broken) {
+  let rejected = match @core.parse_grib2_file(broken) {
     Ok(_) => false
     Err(_) => true
   }
@@ -107,12 +107,12 @@ test "parser rejects broken section8 magic" {
 
 ///|
 test "parser rejects section0 high length in strict 32-bit range" {
-  let broken = @lib.binary_bytes_with_u32_be_at(
+  let broken = @core.binary_bytes_with_u32_be_at(
     minimal_grib2_message_bytes(),
     8,
     1,
   )
-  let rejected = match @lib.parse_grib2_file(broken) {
+  let rejected = match @core.parse_grib2_file(broken) {
     Ok(_) => false
     Err(_) => true
   }

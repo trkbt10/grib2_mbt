@@ -1,5 +1,10 @@
 import {
-  "trkbt10/grib2_mbt" @lib,
+  "trkbt10/grib2_mbt/context" @context,
+  "trkbt10/grib2_mbt/core" @core,
+  "trkbt10/grib2_mbt/decode" @decode,
+  "trkbt10/grib2_mbt/io" @io,
+  "trkbt10/grib2_mbt/wgrib2" @wgrib2,
+  "trkbt10/grib2_mbt/typed" @typed,
   "trkbt10/grib2_mbt/typed/section5" @section5,
   "trkbt10/grib2_mbt/typed/section7" @section7,
   "moonbitlang/x/fs" @fs,
