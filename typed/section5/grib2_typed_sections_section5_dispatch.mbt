@@ -1,8 +1,8 @@
 ///|
 pub fn decode_section5_bytes(
   section : Bytes,
-) -> Result[Grib2Section5Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 5) {
+) -> Result[Grib2Section5Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 5) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -13,7 +13,7 @@ pub fn decode_section5_bytes(
       ),
     )
   }
-  let template_number = typed_read_u16_be(section, 9)
+  let template_number = @section1.typed_read_u16_be(section, 9)
   let template_payload = section.sub(start=11).to_bytes()
   let template = if template_number == 0 {
     match typed_decode_template_50(template_payload) {
@@ -83,13 +83,13 @@ pub fn decode_section5_bytes(
   } else {
     DataRepresentationTemplateUnknown(template_number, template_payload)
   }
-  Ok({ number_of_data_points: typed_read_u32_be(section, 5), template })
+  Ok({ number_of_data_points: @section1.typed_read_u32_be(section, 5), template })
 }
 
 ///|
 pub fn encode_section5_bytes(section : Grib2Section5Decoded) -> Bytes {
   let payload : Array[Byte] = []
-  typed_push_u32_be(payload, section.number_of_data_points)
+  @section1.typed_push_u32_be(payload, section.number_of_data_points)
   let (template_number, template_raw) = match section.template {
     DataRepresentationTemplate50(template_50) =>
       (0, typed_encode_template_50(template_50))
@@ -120,7 +120,7 @@ pub fn encode_section5_bytes(section : Grib2Section5Decoded) -> Bytes {
     DataRepresentationTemplateUnknown(template_number, raw) =>
       (template_number, raw)
   }
-  typed_push_u16_be(payload, template_number)
-  typed_push_bytes(payload, template_raw)
-  typed_build_section(5, Bytes::from_array(payload))
+  @section1.typed_push_u16_be(payload, template_number)
+  @section1.typed_push_bytes(payload, template_raw)
+  @section1.typed_build_section(5, Bytes::from_array(payload))
 }

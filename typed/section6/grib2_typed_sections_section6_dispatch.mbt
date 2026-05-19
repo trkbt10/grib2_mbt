@@ -1,8 +1,8 @@
 ///|
 pub fn decode_section6_bytes(
   section : Bytes,
-) -> Result[Grib2Section6Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 6) {
+) -> Result[Grib2Section6Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 6) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -18,5 +18,5 @@ pub fn decode_section6_bytes(
 
 ///|
 pub fn encode_section6_bytes(section : Grib2Section6Decoded) -> Bytes {
-  typed_build_section(6, typed_encode_section6_payload(section))
+  @section1.typed_build_section(6, typed_encode_section6_payload(section))
 }

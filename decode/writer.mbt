@@ -10,28 +10,28 @@ fn write_error(message : String) -> Grib2WriteError {
 
 ///|
 fn writer_read_u32_be(bytes : Bytes, offset : Int) -> Int {
-  binary_read_u32_be_uint(bytes, offset).reinterpret_as_int()
+  @core.binary_read_u32_be_uint(bytes, offset).reinterpret_as_int()
 }
 
 ///|
 fn writer_read_u8_as_int(bytes : Bytes, offset : Int) -> Int {
-  binary_read_u8_as_int(bytes, offset)
+  @core.binary_read_u8_as_int(bytes, offset)
 }
 
 ///|
 fn writer_has_grib_magic(raw : Bytes) -> Bool {
-  raw.length() >= 4 && binary_has_magic_at(raw, 0, b'G', b'R', b'I', b'B')
+  raw.length() >= 4 && @core.binary_has_magic_at(raw, 0, b'G', b'R', b'I', b'B')
 }
 
 ///|
 fn writer_has_end_magic(raw : Bytes) -> Bool {
-  binary_has_magic_tail(raw, b'7', b'7', b'7', b'7')
+  @core.binary_has_magic_tail(raw, b'7', b'7', b'7', b'7')
 }
 
 ///|
 fn writer_section_bytes(
-  message : Grib2MessageContext,
-  section : Grib2SectionFrame,
+  message : @context.Grib2MessageContext,
+  section : @context.Grib2SectionFrame,
 ) -> Bytes {
   let start = section.start - message.offset
   let end = start + section.length
@@ -40,7 +40,7 @@ fn writer_section_bytes(
 
 ///|
 fn check_typed_sections_roundtrip(
-  message : Grib2MessageContext,
+  message : @context.Grib2MessageContext,
   message_index : Int,
 ) -> Result[Unit, Grib2WriteError] {
   let section1_raw = writer_section_bytes(message, message.section1)
@@ -125,8 +125,8 @@ fn check_typed_sections_roundtrip(
 
 ///|
 fn check_message_section(
-  message : Grib2MessageContext,
-  section : Grib2SectionFrame,
+  message : @context.Grib2MessageContext,
+  section : @context.Grib2SectionFrame,
   message_index : Int,
   section_index : Int,
 ) -> Result[Unit, Grib2WriteError] {
@@ -214,7 +214,7 @@ fn check_message_section(
 
 ///|
 fn check_submessage_frame(
-  submessage : Grib2SubmessageFrame,
+  submessage : @context.Grib2SubmessageFrame,
   message_index : Int,
   submessage_index : Int,
 ) -> Result[Unit, Grib2WriteError] {
@@ -299,7 +299,7 @@ fn check_submessage_frame(
 
 ///|
 fn check_message_invariants(
-  message : Grib2MessageContext,
+  message : @context.Grib2MessageContext,
   expected_offset : Int,
   message_index : Int,
 ) -> Result[Unit, Grib2WriteError] {
@@ -483,7 +483,7 @@ fn check_message_invariants(
 
 ///|
 pub fn validate_context_invariants(
-  context : Grib2FileContext,
+  context : @context.Grib2FileContext,
 ) -> Result[Unit, Grib2WriteError] {
   let mut expected_offset = 0
   for message_index in 0..<context.messages.length() {
@@ -498,7 +498,7 @@ pub fn validate_context_invariants(
 }
 
 ///|
-pub fn rebuild_raw(context : Grib2FileContext) -> Bytes {
+pub fn rebuild_raw(context : @context.Grib2FileContext) -> Bytes {
   loop (0, b"") {
     (index, out) =>
       if index == context.messages.length() {
@@ -511,7 +511,7 @@ pub fn rebuild_raw(context : Grib2FileContext) -> Bytes {
 
 ///|
 pub fn rebuild_strict(
-  context : Grib2FileContext,
+  context : @context.Grib2FileContext,
 ) -> Result[Bytes, Grib2WriteError] {
   match validate_context_invariants(context) {
     Ok(_) => Ok(rebuild_raw(context))

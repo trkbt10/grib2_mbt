@@ -94,7 +94,7 @@ pub fn unpack_ieee(
     }
     let values : Array[Double] = []
     for i = 0; i < num_points; i = i + 1 {
-      let bits = typed_read_u32_be(data, i * 4)
+      let bits = @section1.typed_read_u32_be(data, i * 4)
       values.push(ieee754_single_to_double(bits))
     }
     Ok({ values, num_points })
@@ -110,8 +110,8 @@ pub fn unpack_ieee(
     let values : Array[Double] = []
     for i = 0; i < num_points; i = i + 1 {
       let off = i * 8
-      let hi = typed_read_u32_be(data, off)
-      let lo = typed_read_u32_be(data, off + 4)
+      let hi = @section1.typed_read_u32_be(data, off)
+      let lo = @section1.typed_read_u32_be(data, off + 4)
       values.push(ieee754_double_to_double(hi, lo))
     }
     Ok({ values, num_points })

@@ -30,8 +30,8 @@ pub using @typed {
 /// - Template 5.40 (JPEG2000) - delegated to section7 unpacker
 /// - Template 5.41 (PNG) - delegated to section7 unpacker
 pub fn unpack_submessage_data(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[@typed.UnpackedGridData, @typed.UnpackError] {
   // Decode Section 5
   let section5 = match decode_submessage_section5(message, submessage) {
@@ -92,7 +92,7 @@ fn nan_value() -> Double {
 }
 
 ///|
-fn same_section_frame(lhs : Grib2SectionFrame, rhs : Grib2SectionFrame) -> Bool {
+fn same_section_frame(lhs : @context.Grib2SectionFrame, rhs : @context.Grib2SectionFrame) -> Bool {
   lhs.section_number == rhs.section_number &&
   lhs.start == rhs.start &&
   lhs.length == rhs.length
@@ -100,8 +100,8 @@ fn same_section_frame(lhs : Grib2SectionFrame, rhs : Grib2SectionFrame) -> Bool 
 
 ///|
 pub fn find_submessage_index(
-  message : Grib2MessageContext,
-  target : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  target : @context.Grib2SubmessageFrame,
 ) -> Int? {
   for index in 0..<message.submessages.length() {
     let candidate = message.submessages[index]
@@ -118,8 +118,8 @@ pub fn find_submessage_index(
 
 ///|
 pub fn resolve_bitmap_raw(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
   section6 : @typed.Grib2Section6Decoded,
 ) -> Result[Bytes?, @typed.UnpackError] {
   if section6.bitmap_indicator == 255 {
@@ -163,8 +163,8 @@ pub fn resolve_bitmap_raw(
 
 ///|
 fn apply_bitmap_to_unpacked(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
   unpacked_defined : @typed.UnpackedGridData,
 ) -> Result[@typed.UnpackedGridData, @typed.UnpackError] {
   let section6 = match decode_submessage_section6(message, submessage) {
@@ -228,8 +228,8 @@ fn apply_bitmap_to_unpacked(
 ///|
 /// Normalize unpacked data ordering to wgrib2's WE:SN output convention.
 pub fn normalize_unpacked_to_wgrib2_scan_order(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
   unpacked : @typed.UnpackedGridData,
 ) -> Result[@typed.UnpackedGridData, @typed.UnpackError] {
   let section3 = match decode_submessage_section3(message, submessage) {
@@ -388,8 +388,8 @@ fn build_row_offsets(row_counts : Array[Int]) -> Array[Int] {
 
 ///|
 fn extract_submessage_section7_raw_data(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Bytes, @typed.UnpackError] {
   let frame = submessage.section7
   if frame.section_number != 7 {
@@ -418,8 +418,8 @@ fn extract_submessage_section7_raw_data(
 /// Get raw packed data bytes for JS-side decoding.
 /// Use this for JPEG2000/PNG data that requires external decoders.
 pub fn get_submessage_raw_data(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Bytes, @typed.UnpackError] {
   extract_submessage_section7_raw_data(message, submessage)
 }
@@ -428,8 +428,8 @@ pub fn get_submessage_raw_data(
 /// Get data representation parameters for JS-side decoding.
 /// Returns the Section 5 template data needed for external decoders.
 pub fn get_submessage_data_representation(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section5Decoded, @typed.UnpackError] {
   match decode_submessage_section5(message, submessage) {
     Ok(s5) => Ok(s5)

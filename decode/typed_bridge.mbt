@@ -26,8 +26,8 @@ pub using @typed {
 
 ///|
 fn typed_message_section_bytes(
-  message : Grib2MessageContext,
-  frame : Grib2SectionFrame,
+  message : @context.Grib2MessageContext,
+  frame : @context.Grib2SectionFrame,
 ) -> Bytes {
   let start = frame.start - message.offset
   let end = frame.end_offset() - message.offset
@@ -36,20 +36,20 @@ fn typed_message_section_bytes(
 
 ///|
 fn typed_read_u16_be_bridge(bytes : Bytes, offset : Int) -> Int {
-  binary_read_u16_be(bytes, offset)
+  @core.binary_read_u16_be(bytes, offset)
 }
 
 ///|
 pub fn decode_message_section1(
-  message : Grib2MessageContext,
+  message : @context.Grib2MessageContext,
 ) -> Result[Grib2Section1Decoded, Grib2SectionCodecError] {
   decode_section1_bytes(typed_message_section_bytes(message, message.section1))
 }
 
 ///|
 pub fn decode_submessage_section2(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section2Decoded?, Grib2SectionCodecError] {
   match submessage.section2 {
     Some(section2) =>
@@ -64,8 +64,8 @@ pub fn decode_submessage_section2(
 
 ///|
 pub fn decode_submessage_section3(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section3Decoded, Grib2SectionCodecError] {
   decode_section3_bytes(
     typed_message_section_bytes(message, submessage.section3),
@@ -74,8 +74,8 @@ pub fn decode_submessage_section3(
 
 ///|
 pub fn decode_submessage_section4(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section4Decoded, Grib2SectionCodecError] {
   decode_section4_bytes(
     typed_message_section_bytes(message, submessage.section4),
@@ -84,8 +84,8 @@ pub fn decode_submessage_section4(
 
 ///|
 pub fn decode_submessage_section5(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section5Decoded, Grib2SectionCodecError] {
   decode_section5_bytes(
     typed_message_section_bytes(message, submessage.section5),
@@ -94,8 +94,8 @@ pub fn decode_submessage_section5(
 
 ///|
 pub fn decode_submessage_section6(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section6Decoded, Grib2SectionCodecError] {
   decode_section6_bytes(
     typed_message_section_bytes(message, submessage.section6),
@@ -104,8 +104,8 @@ pub fn decode_submessage_section6(
 
 ///|
 pub fn decode_submessage_section7(
-  message : Grib2MessageContext,
-  submessage : Grib2SubmessageFrame,
+  message : @context.Grib2MessageContext,
+  submessage : @context.Grib2SubmessageFrame,
 ) -> Result[Grib2Section7Decoded, Grib2SectionCodecError] {
   let section5 = typed_message_section_bytes(message, submessage.section5)
   if section5.length() < 11 {

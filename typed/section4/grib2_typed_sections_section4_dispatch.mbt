@@ -1,8 +1,8 @@
 ///|
 pub fn decode_section4_bytes(
   section : Bytes,
-) -> Result[Grib2Section4Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 4) {
+) -> Result[Grib2Section4Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 4) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -13,8 +13,8 @@ pub fn decode_section4_bytes(
       ),
     )
   }
-  let number_of_coordinate_values = typed_read_u16_be(section, 5)
-  let template_number = typed_read_u16_be(section, 7)
+  let number_of_coordinate_values = @section1.typed_read_u16_be(section, 5)
+  let template_number = @section1.typed_read_u16_be(section, 7)
   let payload = section.sub(start=9)
   let coord_len = number_of_coordinate_values * 4
   if payload.length() < coord_len {
@@ -729,7 +729,7 @@ pub fn decode_section4_bytes(
 ///|
 pub fn encode_section4_bytes(section : Grib2Section4Decoded) -> Bytes {
   let payload : Array[Byte] = []
-  typed_push_u16_be(payload, section.number_of_coordinate_values)
+  @section1.typed_push_u16_be(payload, section.number_of_coordinate_values)
   let (template_number, template_raw) = match section.template {
     ProductTemplate40(template_40) => (0, typed_encode_template_40(template_40))
     ProductTemplate41(template_41) => (1, typed_encode_template_41(template_41))
@@ -999,8 +999,8 @@ pub fn encode_section4_bytes(section : Grib2Section4Decoded) -> Bytes {
       (1101, typed_encode_template_41101(template_41101))
     ProductTemplateUnknown(template_number, raw) => (template_number, raw)
   }
-  typed_push_u16_be(payload, template_number)
-  typed_push_bytes(payload, template_raw)
-  typed_push_bytes(payload, section.coordinate_values_raw)
-  typed_build_section(4, Bytes::from_array(payload))
+  @section1.typed_push_u16_be(payload, template_number)
+  @section1.typed_push_bytes(payload, template_raw)
+  @section1.typed_push_bytes(payload, section.coordinate_values_raw)
+  @section1.typed_build_section(4, Bytes::from_array(payload))
 }

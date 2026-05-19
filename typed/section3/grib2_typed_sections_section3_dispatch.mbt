@@ -1,8 +1,8 @@
 ///|
 pub fn decode_section3_bytes(
   section : Bytes,
-) -> Result[Grib2Section3Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 3) {
+) -> Result[Grib2Section3Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 3) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -13,7 +13,7 @@ pub fn decode_section3_bytes(
       ),
     )
   }
-  let template_number = typed_read_u16_be(section, 12)
+  let template_number = @section1.typed_read_u16_be(section, 12)
   let template_payload = section.sub(start=14)
   let (template, optional_points_raw) = if template_number == 0 {
     match typed_decode_template_30(template_payload) {
@@ -254,7 +254,7 @@ pub fn decode_section3_bytes(
   }
   Ok({
     source_of_grid_definition: section[5].to_uint().reinterpret_as_int(),
-    number_of_data_points: typed_read_u32_be(section, 6),
+    number_of_data_points: @section1.typed_read_u32_be(section, 6),
     optional_points_octet_count: section[10].to_uint().reinterpret_as_int(),
     optional_points_interpretation: section[11].to_uint().reinterpret_as_int(),
     template,
@@ -266,7 +266,7 @@ pub fn decode_section3_bytes(
 pub fn encode_section3_bytes(section : Grib2Section3Decoded) -> Bytes {
   let payload : Array[Byte] = []
   payload.push(section.source_of_grid_definition.to_byte())
-  typed_push_u32_be(payload, section.number_of_data_points)
+  @section1.typed_push_u32_be(payload, section.number_of_data_points)
   payload.push(section.optional_points_octet_count.to_byte())
   payload.push(section.optional_points_interpretation.to_byte())
   let (template_number, template_raw) = match section.template {
@@ -344,8 +344,8 @@ pub fn encode_section3_bytes(section : Grib2Section3Decoded) -> Bytes {
       (32769, typed_encode_template_332769(template_332769))
     GridTemplateUnknown(template_number, raw) => (template_number, raw)
   }
-  typed_push_u16_be(payload, template_number)
-  typed_push_bytes(payload, template_raw)
-  typed_push_bytes(payload, section.optional_points_raw)
-  typed_build_section(3, Bytes::from_array(payload))
+  @section1.typed_push_u16_be(payload, template_number)
+  @section1.typed_push_bytes(payload, template_raw)
+  @section1.typed_push_bytes(payload, section.optional_points_raw)
+  @section1.typed_build_section(3, Bytes::from_array(payload))
 }

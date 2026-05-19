@@ -112,7 +112,7 @@ ensure_mbt_cmd_ready() {
   fi
   case "${MBT_CMD}" in
     _build/*|./_build/*|"${ROOT_DIR}"/_build/*)
-      moon build cmd/main --target native >/dev/null
+      moon build cmd/wgrib2 --target native >/dev/null
       ;;
   esac
 }

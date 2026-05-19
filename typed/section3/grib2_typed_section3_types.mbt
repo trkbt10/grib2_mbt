@@ -303,12 +303,12 @@ pub(all) struct Grib2GridTemplate361 {
   n : Int
   m : Int
   bi_fourier_truncation_type : Int
-  lx : Grib2U64Be
-  lux : Grib2U64Be
-  lcx : Grib2U64Be
-  ly : Grib2U64Be
-  luy : Grib2U64Be
-  lcy : Grib2U64Be
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
   shape_of_earth : Int
   scale_factor_radius : Int
   scaled_value_radius : Int
@@ -330,12 +330,12 @@ pub(all) struct Grib2GridTemplate362 {
   n : Int
   m : Int
   bi_fourier_truncation_type : Int
-  lx : Grib2U64Be
-  lux : Grib2U64Be
-  lcx : Grib2U64Be
-  ly : Grib2U64Be
-  luy : Grib2U64Be
-  lcy : Grib2U64Be
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
   shape_of_earth : Int
   scale_factor_radius : Int
   scaled_value_radius : Int
@@ -357,12 +357,12 @@ pub(all) struct Grib2GridTemplate363 {
   n : Int
   m : Int
   bi_fourier_truncation_type : Int
-  lx : Grib2U64Be
-  lux : Grib2U64Be
-  lcx : Grib2U64Be
-  ly : Grib2U64Be
-  luy : Grib2U64Be
-  lcy : Grib2U64Be
+  lx : @section1.Grib2U64Be
+  lux : @section1.Grib2U64Be
+  lcx : @section1.Grib2U64Be
+  ly : @section1.Grib2U64Be
+  luy : @section1.Grib2U64Be
+  lcy : @section1.Grib2U64Be
   shape_of_earth : Int
   scale_factor_radius : Int
   scaled_value_radius : Int

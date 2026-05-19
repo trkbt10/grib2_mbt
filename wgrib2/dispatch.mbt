@@ -187,7 +187,7 @@ pub(all) enum Grib2InventoryMode {
 
 ///|
 pub fn render_inventory_lines(
-  context : Grib2FileContext,
+  context : @context.Grib2FileContext,
   mode : Grib2InventoryMode,
 ) -> Array[String] {
   match mode {

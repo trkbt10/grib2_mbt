@@ -1,8 +1,8 @@
 ///|
 pub fn decode_section2_bytes(
   section : Bytes,
-) -> Result[Grib2Section2Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 2) {
+) -> Result[Grib2Section2Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 2) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -34,6 +34,6 @@ pub fn encode_section2_bytes(section : Grib2Section2Decoded) -> Bytes {
     LocalUseTemplateUnknown(template_number, raw) => (template_number, raw)
   }
   out.push(template_number.to_byte())
-  typed_push_bytes(out, template_payload)
-  typed_build_section(2, Bytes::from_array(out))
+  @section1.typed_push_bytes(out, template_payload)
+  @section1.typed_build_section(2, Bytes::from_array(out))
 }

@@ -1,7 +1,7 @@
 ///|
 fn typed_decode_section6_payload(
   payload : Bytes,
-) -> Result[Grib2Section6Decoded, Grib2SectionCodecError] {
+) -> Result[Grib2Section6Decoded, @section1.Grib2SectionCodecError] {
   if payload.length() < 1 {
     return Err(
       @section1.Grib2SectionCodecError::InvalidSectionLength(

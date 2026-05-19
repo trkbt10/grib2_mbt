@@ -1,6 +1,6 @@
 ///|
 priv struct ParsedMessageStep {
-  message : Grib2MessageContext
+  message : @context.Grib2MessageContext
   next_offset : Int
 }
 
@@ -33,7 +33,7 @@ fn has_end_magic(bytes : Bytes, offset : Int) -> Bool {
 fn parse_total_length(
   bytes : Bytes,
   message_offset : Int,
-) -> Result[Int, Grib2ParseError] {
+) -> Result[Int, @context.Grib2ParseError] {
   let hi = read_u32_be(bytes, message_offset + 8).reinterpret_as_int()
   let lo = read_u32_be(bytes, message_offset + 12).reinterpret_as_int()
   if hi != 0 {
@@ -61,8 +61,8 @@ fn parse_total_length(
 
 ///|
 fn parse_submessages(
-  sections : Array[Grib2SectionFrame],
-) -> Result[Array[Grib2SubmessageFrame], Grib2ParseError] {
+  sections : Array[@context.Grib2SectionFrame],
+) -> Result[Array[@context.Grib2SubmessageFrame], @context.Grib2ParseError] {
   if sections.length() == 0 {
     return Err(InvalidSectionOrder("section list is empty"))
   }
@@ -76,8 +76,8 @@ fn parse_submessages(
       ),
     )
   }
-  let submessages : Array[Grib2SubmessageFrame] = []
-  let mut current_section3 : Grib2SectionFrame? = None
+  let submessages : Array[@context.Grib2SubmessageFrame] = []
+  let mut current_section3 : @context.Grib2SectionFrame? = None
   loop 1 {
     index => {
       if index == sections.length() {
@@ -177,8 +177,8 @@ fn scan_sections(
   bytes : Bytes,
   offset : Int,
   message_end : Int,
-) -> Result[Array[Grib2SectionFrame], Grib2ParseError] {
-  let sections : Array[Grib2SectionFrame] = []
+) -> Result[Array[@context.Grib2SectionFrame], @context.Grib2ParseError] {
+  let sections : Array[@context.Grib2SectionFrame] = []
   let section_limit = message_end - 4
   loop offset {
     section_cursor => {
@@ -238,7 +238,7 @@ fn scan_sections(
 fn parse_one_message(
   bytes : Bytes,
   offset : Int,
-) -> Result[ParsedMessageStep, Grib2ParseError] {
+) -> Result[ParsedMessageStep, @context.Grib2ParseError] {
   let file_length = bytes.length()
   if offset + 16 > file_length {
     return Err(
@@ -315,8 +315,8 @@ fn parse_one_message(
 ///|
 pub fn parse_grib2_file(
   bytes : Bytes,
-) -> Result[Grib2FileContext, Grib2ParseError] {
-  let messages : Array[Grib2MessageContext] = []
+) -> Result[@context.Grib2FileContext, @context.Grib2ParseError] {
+  let messages : Array[@context.Grib2MessageContext] = []
   loop 0 {
     offset => {
       if offset == bytes.length() {

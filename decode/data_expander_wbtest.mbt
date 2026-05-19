@@ -3,7 +3,7 @@ fn fake_section_frame(
   section_number : Int,
   start : Int,
   length : Int,
-) -> Grib2SectionFrame {
+) -> @context.Grib2SectionFrame {
   { section_number, start, length }
 }
 
@@ -46,7 +46,7 @@ test "bitmap indicator 254 reuses previous explicit bitmap" {
   let dummy4 = fake_section_frame(4, 0, 0)
   let dummy5 = fake_section_frame(5, 0, 0)
   let dummy7 = fake_section_frame(7, 0, 0)
-  let message : Grib2MessageContext = {
+  let message : @context.Grib2MessageContext = {
     offset: 0,
     total_length: raw.length(),
     discipline: 0,

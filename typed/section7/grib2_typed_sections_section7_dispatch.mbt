@@ -2,8 +2,8 @@
 pub fn decode_section7_bytes(
   section : Bytes,
   template_number : Int,
-) -> Result[Grib2Section7Decoded, Grib2SectionCodecError] {
-  match typed_validate_section_header(section, 7) {
+) -> Result[Grib2Section7Decoded, @section1.Grib2SectionCodecError] {
+  match @section1.typed_validate_section_header(section, 7) {
     Ok(_) => ()
     Err(error) => return Err(error)
   }
@@ -85,5 +85,5 @@ pub fn encode_section7_bytes(section : Grib2Section7Decoded) -> Bytes {
     DataTemplate753(template_753) => typed_encode_template_753(template_753)
     DataTemplateUnknown(_, raw) => raw
   }
-  typed_build_section(7, payload)
+  @section1.typed_build_section(7, payload)
 }

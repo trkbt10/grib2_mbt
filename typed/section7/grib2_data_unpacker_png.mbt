@@ -135,7 +135,7 @@ fn decode_png_samples(data : Bytes) -> Result[Array[Int], UnpackError] {
   let mut seen_iend = false
   let idat : Array[Byte] = []
   while offset + 8 <= data.length() {
-    let chunk_len = typed_read_u32_be(data, offset)
+    let chunk_len = @section1.typed_read_u32_be(data, offset)
     if chunk_len < 0 {
       return Err(UnsupportedTemplate("invalid PNG chunk length"))
     }
@@ -157,8 +157,8 @@ fn decode_png_samples(data : Bytes) -> Result[Array[Int], UnpackError] {
         return Err(InsufficientData("IHDR too short"))
       }
       seen_ihdr = true
-      width = typed_read_u32_be(chunk_data, 0)
-      height = typed_read_u32_be(chunk_data, 4)
+      width = @section1.typed_read_u32_be(chunk_data, 0)
+      height = @section1.typed_read_u32_be(chunk_data, 4)
       bit_depth = chunk_data[8].to_uint().reinterpret_as_int()
       color_type = chunk_data[9].to_uint().reinterpret_as_int()
       compression_method = chunk_data[10].to_uint().reinterpret_as_int()
