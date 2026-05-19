@@ -8,15 +8,6 @@
 /// - zlib-compressed IDAT payload
 
 ///|
-fn png_read_u32_be(data : Bytes, offset : Int) -> Int {
-  let b0 = data[offset].to_uint().reinterpret_as_int()
-  let b1 = data[offset + 1].to_uint().reinterpret_as_int()
-  let b2 = data[offset + 2].to_uint().reinterpret_as_int()
-  let b3 = data[offset + 3].to_uint().reinterpret_as_int()
-  (b0 << 24) | (b1 << 16) | (b2 << 8) | b3
-}
-
-///|
 fn png_signature_ok(data : Bytes) -> Bool {
   if data.length() < 8 {
     return false
@@ -144,7 +135,7 @@ fn decode_png_samples(data : Bytes) -> Result[Array[Int], UnpackError] {
   let mut seen_iend = false
   let idat : Array[Byte] = []
   while offset + 8 <= data.length() {
-    let chunk_len = png_read_u32_be(data, offset)
+    let chunk_len = typed_read_u32_be(data, offset)
     if chunk_len < 0 {
       return Err(UnsupportedTemplate("invalid PNG chunk length"))
     }
@@ -166,8 +157,8 @@ fn decode_png_samples(data : Bytes) -> Result[Array[Int], UnpackError] {
         return Err(InsufficientData("IHDR too short"))
       }
       seen_ihdr = true
-      width = png_read_u32_be(chunk_data, 0)
-      height = png_read_u32_be(chunk_data, 4)
+      width = typed_read_u32_be(chunk_data, 0)
+      height = typed_read_u32_be(chunk_data, 4)
       bit_depth = chunk_data[8].to_uint().reinterpret_as_int()
       color_type = chunk_data[9].to_uint().reinterpret_as_int()
       compression_method = chunk_data[10].to_uint().reinterpret_as_int()
@@ -360,40 +351,6 @@ fn decode_png_samples(data : Bytes) -> Result[Array[Int], UnpackError] {
 }
 
 ///|
-fn png_pow2(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for _i = 0; _i < n; _i = _i + 1 {
-      result = result * 2.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for _i = 0; _i < -n; _i = _i + 1 {
-      result = result / 2.0
-    }
-    result
-  }
-}
-
-///|
-fn png_pow10(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for _i = 0; _i < n; _i = _i + 1 {
-      result = result * 10.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for _i = 0; _i < -n; _i = _i + 1 {
-      result = result / 10.0
-    }
-    result
-  }
-}
-
-///|
 /// Unpack PNG compressed data (Template 5.41).
 pub fn unpack_png(
   data : Bytes,
@@ -422,8 +379,8 @@ pub fn unpack_png(
     )
   }
   let ref_value = ieee754_single_to_double(template.reference_value_ieee)
-  let binary_scale = png_pow2(u16_to_i16(template.binary_scale_factor))
-  let decimal_scale = png_pow10(u16_to_i16(template.decimal_scale_factor))
+  let binary_scale = pow2(u16_to_i16(template.binary_scale_factor))
+  let decimal_scale = pow10(u16_to_i16(template.decimal_scale_factor))
   let values : Array[Double] = []
   for sample in samples {
     values.push((ref_value + sample.to_double() * binary_scale) / decimal_scale)

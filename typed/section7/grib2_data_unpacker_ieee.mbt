@@ -8,15 +8,6 @@
 /// - 3: IEEE 128-bit (not implemented)
 
 ///|
-fn ieee_read_u32_be(data : Bytes, offset : Int) -> Int {
-  let b0 = data[offset].to_uint().reinterpret_as_int()
-  let b1 = data[offset + 1].to_uint().reinterpret_as_int()
-  let b2 = data[offset + 2].to_uint().reinterpret_as_int()
-  let b3 = data[offset + 3].to_uint().reinterpret_as_int()
-  (b0 << 24) | (b1 << 16) | (b2 << 8) | b3
-}
-
-///|
 fn ieee754_double_from_parts(
   sign : Int,
   exponent : Int,
@@ -103,7 +94,7 @@ pub fn unpack_ieee(
     }
     let values : Array[Double] = []
     for i = 0; i < num_points; i = i + 1 {
-      let bits = ieee_read_u32_be(data, i * 4)
+      let bits = typed_read_u32_be(data, i * 4)
       values.push(ieee754_single_to_double(bits))
     }
     Ok({ values, num_points })
@@ -119,8 +110,8 @@ pub fn unpack_ieee(
     let values : Array[Double] = []
     for i = 0; i < num_points; i = i + 1 {
       let off = i * 8
-      let hi = ieee_read_u32_be(data, off)
-      let lo = ieee_read_u32_be(data, off + 4)
+      let hi = typed_read_u32_be(data, off)
+      let lo = typed_read_u32_be(data, off + 4)
       values.push(ieee754_double_to_double(hi, lo))
     }
     Ok({ values, num_points })

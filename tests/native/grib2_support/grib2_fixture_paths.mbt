@@ -10,7 +10,7 @@ let grib2_fixture_dir_noaa = "fixtures/grib2_noaa/"
 let grib2_fixture_dir_jpeg2000 = "fixtures/grib2_jpeg2000/"
 
 ///|
-let grib2_fixture_dir_wgrib2_snapshots = "fixtures/wgrib2_snapshots/"
+let grib2_fixture_dir_wgrib2_snapshots = "fixtures/wgrib2_snapshots/inventory/"
 
 ///|
 fn grib2_fixture_path_in_jma_dir(file_name : String) -> String {

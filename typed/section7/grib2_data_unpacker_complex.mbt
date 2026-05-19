@@ -217,8 +217,8 @@ fn apply_complex_scaling(
   decimal_scale_factor : Int,
 ) -> Array[Double] {
   let ref_value = ieee754_single_to_double(reference_value_ieee)
-  let binary_scale = complex_pow2(u16_to_i16(binary_scale_factor))
-  let decimal_scale = complex_pow10(u16_to_i16(decimal_scale_factor))
+  let binary_scale = pow2(u16_to_i16(binary_scale_factor))
+  let decimal_scale = pow10(u16_to_i16(decimal_scale_factor))
   let n = scaled_integers.length()
   let values : Array[Double] = Array::make(n, 0.0)
   for i in 0..<n {
@@ -241,8 +241,8 @@ fn apply_complex_scaling_with_missing(
   secondary_missing_value_substitute : Int,
 ) -> Array[Double] {
   let ref_value = ieee754_single_to_double(reference_value_ieee)
-  let binary_scale = complex_pow2(u16_to_i16(binary_scale_factor))
-  let decimal_scale = complex_pow10(u16_to_i16(decimal_scale_factor))
+  let binary_scale = pow2(u16_to_i16(binary_scale_factor))
+  let decimal_scale = pow10(u16_to_i16(decimal_scale_factor))
   let primary_missing = ieee754_single_to_double(
     primary_missing_value_substitute,
   )
@@ -264,40 +264,6 @@ fn apply_complex_scaling_with_missing(
     }
   }
   values
-}
-
-///|
-fn complex_pow2(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for _ in 0..<n {
-      result = result * 2.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for _ in 0..<-n {
-      result = result / 2.0
-    }
-    result
-  }
-}
-
-///|
-fn complex_pow10(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for _ in 0..<n {
-      result = result * 10.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for _ in 0..<-n {
-      result = result / 10.0
-    }
-    result
-  }
 }
 
 ///|

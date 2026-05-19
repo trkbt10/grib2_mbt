@@ -1,20 +1,4 @@
 ///|
-fn jp2_read_u16_be(data : Bytes, offset : Int) -> Int {
-  let b0 = data[offset].to_uint().reinterpret_as_int()
-  let b1 = data[offset + 1].to_uint().reinterpret_as_int()
-  (b0 << 8) | b1
-}
-
-///|
-fn jp2_read_u32_be(data : Bytes, offset : Int) -> Int {
-  let b0 = data[offset].to_uint().reinterpret_as_int()
-  let b1 = data[offset + 1].to_uint().reinterpret_as_int()
-  let b2 = data[offset + 2].to_uint().reinterpret_as_int()
-  let b3 = data[offset + 3].to_uint().reinterpret_as_int()
-  (b0 << 24) | (b1 << 16) | (b2 << 8) | b3
-}
-
-///|
 priv struct Jpeg2000SizInfo {
   width : Int
   height : Int
@@ -283,7 +267,7 @@ fn parse_qcc_segment(
   let component = if cqcc_len == 1 {
     data[payload_start + 2].to_uint().reinterpret_as_int()
   } else {
-    jp2_read_u16_be(data, payload_start + 2)
+    typed_read_u16_be(data, payload_start + 2)
   }
   let sqcc_offset = payload_start + 2 + cqcc_len
   let sqcc = data[sqcc_offset].to_uint().reinterpret_as_int()
@@ -322,7 +306,7 @@ fn parse_rgn_segment(
   let component = if crgn_len == 1 {
     data[payload_start + 2].to_uint().reinterpret_as_int()
   } else {
-    jp2_read_u16_be(data, payload_start + 2)
+    typed_read_u16_be(data, payload_start + 2)
   }
   let srgn_offset = payload_start + 2 + crgn_len
   let srgn = data[srgn_offset].to_uint().reinterpret_as_int()
@@ -347,7 +331,7 @@ fn parse_cod_segment(
   }
   let scod = data[payload_start + 2].to_uint().reinterpret_as_int()
   let progression_order = data[payload_start + 3].to_uint().reinterpret_as_int()
-  let num_layers = jp2_read_u16_be(data, payload_start + 4)
+  let num_layers = typed_read_u16_be(data, payload_start + 4)
   let multiple_component_transform = data[payload_start + 6]
     .to_uint()
     .reinterpret_as_int()
@@ -448,7 +432,7 @@ fn parse_coc_segment(
   let component = if ccoc_len == 1 {
     data[payload_start + 2].to_uint().reinterpret_as_int()
   } else {
-    jp2_read_u16_be(data, payload_start + 2)
+    typed_read_u16_be(data, payload_start + 2)
   }
   let scoc_offset = payload_start + 2 + ccoc_len
   let scoc = data[scoc_offset].to_uint().reinterpret_as_int()
@@ -544,11 +528,11 @@ fn parse_poc_segment(
       p += 1
       v
     } else {
-      let v = jp2_read_u16_be(data, p)
+      let v = typed_read_u16_be(data, p)
       p += 2
       v
     }
-    let lye = jp2_read_u16_be(data, p)
+    let lye = typed_read_u16_be(data, p)
     p += 2
     let re = data[p].to_uint().reinterpret_as_int()
     p += 1
@@ -557,7 +541,7 @@ fn parse_poc_segment(
       p += 1
       v
     } else {
-      let v = jp2_read_u16_be(data, p)
+      let v = typed_read_u16_be(data, p)
       p += 2
       v
     }
@@ -631,9 +615,9 @@ fn parse_tlm_segment(
       p += 2
     }
     let tile_part_len = if tile_part_length_size == 2 {
-      jp2_read_u16_be(data, p)
+      typed_read_u16_be(data, p)
     } else {
-      jp2_read_u32_be(data, p)
+      typed_read_u32_be(data, p)
     }
     p += tile_part_length_size
     if tile_part_len <= 0 {
@@ -723,7 +707,7 @@ fn parse_ppm_segment(
     if p + 4 > end {
       return Err(InsufficientData("PPM Nppm field is truncated"))
     }
-    let nppm = jp2_read_u32_be(data, p)
+    let nppm = typed_read_u32_be(data, p)
     p += 4
     if nppm < 0 {
       return Err(UnsupportedTemplate("invalid PPM Nppm value: \{nppm}"))
@@ -752,16 +736,16 @@ fn parse_siz_segment(
   if payload_start + segment_len > data.length() {
     return Err(InsufficientData("SIZ segment is truncated"))
   }
-  let xsiz = jp2_read_u32_be(data, payload_start + 4)
-  let ysiz = jp2_read_u32_be(data, payload_start + 8)
-  let xosiz = jp2_read_u32_be(data, payload_start + 12)
-  let yosiz = jp2_read_u32_be(data, payload_start + 16)
+  let xsiz = typed_read_u32_be(data, payload_start + 4)
+  let ysiz = typed_read_u32_be(data, payload_start + 8)
+  let xosiz = typed_read_u32_be(data, payload_start + 12)
+  let yosiz = typed_read_u32_be(data, payload_start + 16)
   let width = xsiz - xosiz
   let height = ysiz - yosiz
   if width <= 0 || height <= 0 {
     return Err(UnsupportedTemplate("invalid SIZ image dimensions"))
   }
-  let csiz = jp2_read_u16_be(data, payload_start + 36)
+  let csiz = typed_read_u16_be(data, payload_start + 36)
   if csiz <= 0 {
     return Err(UnsupportedTemplate("SIZ component count must be > 0"))
   }
@@ -816,7 +800,7 @@ fn locate_jpeg2000_codestream_start(data : Bytes) -> Result[Int, UnpackError] {
   let mut first_box = true
   let mut seen_signature = false
   while offset + 8 <= data.length() {
-    let lbox = jp2_read_u32_be(data, offset)
+    let lbox = typed_read_u32_be(data, offset)
     let tbox = data.sub(start=offset + 4, end=offset + 8).to_bytes()
     let mut box_header_len = 8
     let box_len = if lbox == 0 {
@@ -825,8 +809,8 @@ fn locate_jpeg2000_codestream_start(data : Bytes) -> Result[Int, UnpackError] {
       if offset + 16 > data.length() {
         return Err(InsufficientData("JP2 extended box header is truncated"))
       }
-      let hi = jp2_read_u32_be(data, offset + 8)
-      let lo = jp2_read_u32_be(data, offset + 12)
+      let hi = typed_read_u32_be(data, offset + 8)
+      let lo = typed_read_u32_be(data, offset + 12)
       if hi != 0 {
         return Err(
           UnsupportedTemplate("JP2 boxes larger than 4GiB are not supported"),
@@ -914,13 +898,13 @@ fn parse_tile_parts(
     if offset + 12 > data.length() {
       return Err(InsufficientData("truncated SOT segment"))
     }
-    let lsot = jp2_read_u16_be(data, offset + 2)
+    let lsot = typed_read_u16_be(data, offset + 2)
     if lsot != 10 {
       return Err(
         UnsupportedTemplate("invalid SOT segment length (Lsot): \{lsot}"),
       )
     }
-    let psot = jp2_read_u32_be(data, offset + 6)
+    let psot = typed_read_u32_be(data, offset + 6)
     if psot <= 0 {
       return Err(UnsupportedTemplate("unsupported SOT Psot value: \{psot}"))
     }
@@ -1046,7 +1030,7 @@ fn find_tile_part_payload_start(
         InsufficientData("truncated marker segment length in tile-part header"),
       )
     }
-    let segment_len = jp2_read_u16_be(data, p)
+    let segment_len = typed_read_u16_be(data, p)
     if segment_len < 2 {
       return Err(
         UnsupportedTemplate("invalid marker segment length in tile-part"),
@@ -1186,7 +1170,7 @@ fn parse_jpeg2000_codestream_info(
     if offset + 2 > data.length() {
       return Err(InsufficientData("truncated JPEG2000 marker segment length"))
     }
-    let segment_len = jp2_read_u16_be(data, offset)
+    let segment_len = typed_read_u16_be(data, offset)
     if segment_len < 2 {
       return Err(UnsupportedTemplate("invalid JPEG2000 marker segment length"))
     }

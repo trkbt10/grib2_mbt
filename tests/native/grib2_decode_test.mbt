@@ -687,11 +687,15 @@ test "derived scan48 fixture normalizes values to wgrib2 output order" {
     Ok(v) => v
     Err(error) => fail(error)
   }
+  // Reference values are taken from `wgrib2 -bin` on the same fixture, which
+  // emits the unpacked float32 grid in wgrib2 scan order. The eps below
+  // matches the 1 ULP of float32 quantization applied by wgrib2 itself.
   let expected : Array[Double] = [
-    102136.0, 102012.0, 102284.0, 101924.0, 101940.0, 101916.0, 101380.0, 101916.0,
+    102135.84375, 102011.84375, 102283.84375, 101923.84375, 101939.84375, 101915.84375,
+    101379.84375, 101915.84375,
   ]
   inspect(
-    values_prefix_matches(data.values, expected, 0.000000001),
+    values_prefix_matches(data.values, expected, 0.0001),
     content="true",
   )
 }

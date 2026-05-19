@@ -3852,6 +3852,23 @@ fn reduced_gaussian_source_cosine_weights(
 }
 
 ///|
+fn cosine_weighted_row_length(
+  message : Grib2MessageContext,
+  submessage : Grib2SubmessageFrame,
+) -> Int? {
+  let section3 = match decode_submessage_section3(message, submessage) {
+    Ok(s3) => s3
+    Err(_) => return None
+  }
+  let info = @typed.get_section3_grid_info(section3.template)
+  if info.ni > 0 && info.nj > 0 {
+    Some(info.ni)
+  } else {
+    None
+  }
+}
+
+///|
 fn cosine_weights_for_stats(
   message : Grib2MessageContext,
   submessage : Grib2SubmessageFrame,
@@ -3899,15 +3916,41 @@ fn cosine_weighted_mean_string(
   if weights.length() != data.values.length() {
     return None
   }
+  // wgrib2's -stats computes cos_wt_mean while reading the grid in its
+  // original (source) scan order. After normalization to WE:SN, the rows are
+  // flipped relative to wgrib2's accumulation order, which shifts the last
+  // printed digit for fields where the partial sums nearly cancel. Sum row
+  // index nj-1 first so the per-row weighted contributions follow wgrib2's
+  // North→South accumulation tree.
+  let row_length = cosine_weighted_row_length(message, submessage)
   let mut weighted_sum = 0.0
   let mut weight_sum = 0.0
-  for index in 0..<data.values.length() {
-    let value = quantize_wgrib2_stats_value(data.values[index])
-    if is_defined_wgrib2_stats_value(value) {
-      let weight = weights[index]
-      weighted_sum += value * weight
-      weight_sum += weight
+  match row_length {
+    Some(ni) if ni > 0 && data.values.length() % ni == 0 => {
+      let nj = data.values.length() / ni
+      for j_src in 0..<nj {
+        let j_out = nj - 1 - j_src
+        let weight = weights[j_out * ni]
+        let mut row_defined = 0
+        for i in 0..<ni {
+          let value = quantize_wgrib2_stats_value(data.values[j_out * ni + i])
+          if is_defined_wgrib2_stats_value(value) {
+            weighted_sum += value * weight
+            row_defined += 1
+          }
+        }
+        weight_sum += weight * row_defined.to_double()
+      }
     }
+    _ =>
+      for index in 0..<data.values.length() {
+        let value = quantize_wgrib2_stats_value(data.values[index])
+        if is_defined_wgrib2_stats_value(value) {
+          let weight = weights[index]
+          weighted_sum += value * weight
+          weight_sum += weight
+        }
+      }
   }
   if weight_sum == 0.0 {
     return Some("undefined")

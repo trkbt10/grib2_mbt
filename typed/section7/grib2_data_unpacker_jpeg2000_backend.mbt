@@ -5,40 +5,6 @@
 /// - Template 5.41 remains a small compatibility stub because GRIB2 defines it as PNG.
 
 ///|
-fn jpeg2000_pow2(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for i = 0; i < n; i = i + 1 {
-      result = result * 2.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for i = 0; i < -n; i = i + 1 {
-      result = result / 2.0
-    }
-    result
-  }
-}
-
-///|
-fn jpeg2000_pow10(n : Int) -> Double {
-  if n >= 0 {
-    let mut result = 1.0
-    for i = 0; i < n; i = i + 1 {
-      result = result * 10.0
-    }
-    result
-  } else {
-    let mut result = 1.0
-    for i = 0; i < -n; i = i + 1 {
-      result = result / 10.0
-    }
-    result
-  }
-}
-
-///|
 fn is_raw_j2k_codestream(data : Bytes) -> Bool {
   data.length() >= 2 &&
   data[0].to_uint().reinterpret_as_int() == 0xFF &&
@@ -144,8 +110,8 @@ fn decode_and_scale_external_sample_values(
     )
   }
   let ref_value = ieee754_single_to_double(template.reference_value_ieee)
-  let binary_scale = jpeg2000_pow2(u16_to_i16(template.binary_scale_factor))
-  let decimal_scale = jpeg2000_pow10(u16_to_i16(template.decimal_scale_factor))
+  let binary_scale = pow2(u16_to_i16(template.binary_scale_factor))
+  let decimal_scale = pow10(u16_to_i16(template.decimal_scale_factor))
   let values : Array[Double] = []
   let mut offset = 0
   for _ in 0..<coded_points {
