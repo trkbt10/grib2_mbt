@@ -2440,10 +2440,7 @@ fn is_reduced_gaussian_interp_linear(interp_method : String) -> Bool {
 
 ///|
 fn is_reduced_gaussian_template_id(template_id : Int) -> Bool {
-  template_id == 40 ||
-  template_id == 41 ||
-  template_id == 42 ||
-  template_id == 43
+  @common.is_reduced_gaussian_template_id(template_id)
 }
 
 ///|
